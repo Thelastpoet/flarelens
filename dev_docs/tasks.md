@@ -210,36 +210,36 @@
 
 #### API — Detection Engine
 
-- [ ] T096 [US3] Create threshold detector in `apps/api/src/services/detection/threshold.ts` — evaluate current metric value against user-defined rules (operator + threshold), return matched rules with severity
-- [ ] T097 [US3] Create baseline detector in `apps/api/src/services/detection/baseline.ts` — compare current value to baseline avg/stddev, compute deviation, apply thresholds (2σ warning, 3σ high, 5σ critical)
-- [ ] T098 [US3] Create velocity detector in `apps/api/src/services/detection/velocity.ts` — compute rate-of-change and acceleration across consecutive data points, flag rapid increases and sustained acceleration
-- [ ] T099 [US3] Create attribution analyzer in `apps/api/src/services/detection/attribution.ts` — when anomaly detected, query CF GraphQL with dimension breakdowns (endpoint, user-agent, country, ASN), compute contribution percentages vs baseline
-- [ ] T100 [US3] Create anomaly detection orchestrator in `apps/api/src/services/detection/index.ts` — runs all 3 layers, merges results, creates anomaly record in D1, enqueues alert-dispatch message to Queue
+- [X] T096 [US3] Create threshold detector in `apps/api/src/services/detection/threshold.ts` — evaluate current metric value against user-defined rules (operator + threshold), return matched rules with severity
+- [X] T097 [US3] Create baseline detector in `apps/api/src/services/detection/baseline.ts` — compare current value to baseline avg/stddev, compute deviation, apply thresholds (2σ warning, 3σ high, 5σ critical)
+- [X] T098 [US3] Create velocity detector in `apps/api/src/services/detection/velocity.ts` — compute rate-of-change and acceleration across consecutive data points, flag rapid increases and sustained acceleration
+- [X] T099 [US3] Create attribution analyzer in `apps/api/src/services/detection/attribution.ts` — when anomaly detected, query CF GraphQL with dimension breakdowns (endpoint, user-agent, country, ASN), compute contribution percentages vs baseline
+- [X] T100 [US3] Create anomaly detection orchestrator in `apps/api/src/services/detection/index.ts` — runs all 3 layers, merges results, creates anomaly record in D1, enqueues alert-dispatch message to Queue
 
 #### API — Alert Dispatch
 
-- [ ] T101 [US3] Create alert deduplication service in `apps/api/src/services/alerts/dedup.ts` — KV-based check using `alert_dedup:{account}:{rule}:{resource}` key with TTL based on notify_frequency
-- [ ] T102 [US3] Create email notification sender in `apps/api/src/services/alerts/channels/email.ts` — render HTML template with anomaly context, send via Resend API
-- [ ] T103 [P] [US3] Create in-app notification sender in `apps/api/src/services/alerts/channels/in-app.ts` — insert notification row into D1 notifications table
-- [ ] T104 [US3] Create alert dispatcher in `apps/api/src/services/alerts/dispatcher.ts` — fan out to enabled channels (email, in-app), record delivery status in alert_deliveries table, respect deduplication
-- [ ] T105 [US3] Create Queue consumer handler in `apps/api/src/queues/alert-dispatch.ts` — consume `alert-dispatch` queue messages, call dispatcher; configure in wrangler.jsonc
+- [X] T101 [US3] Create alert deduplication service in `apps/api/src/services/alerts/dedup.ts` — KV-based check using `alert_dedup:{account}:{rule}:{resource}` key with TTL based on notify_frequency
+- [X] T102 [US3] Create email notification sender in `apps/api/src/services/alerts/channels/email.ts` — render HTML template with anomaly context, send via Resend API
+- [X] T103 [P] [US3] Create in-app notification sender in `apps/api/src/services/alerts/channels/in-app.ts` — insert notification row into D1 notifications table
+- [X] T104 [US3] Create alert dispatcher in `apps/api/src/services/alerts/dispatcher.ts` — fan out to enabled channels (email, in-app), record delivery status in alert_deliveries table, respect deduplication
+- [X] T105 [US3] Create Queue consumer handler in `apps/api/src/queues/alert-dispatch.ts` — consume `alert-dispatch` queue messages, call dispatcher; configure in wrangler.jsonc
 
 #### API — Anomaly & Notification Routes
 
-- [ ] T106 [P] [US3] Implement `GET /anomalies` in `apps/api/src/routes/anomalies.ts` — list anomalies with pagination, filterable by status/severity/resource, sorted by detected_at desc
-- [ ] T107 [P] [US3] Implement `GET /anomalies/:id` in `apps/api/src/routes/anomalies.ts` — anomaly detail including attribution breakdown
-- [ ] T108 [P] [US3] Implement `PATCH /anomalies/:id/dismiss` in `apps/api/src/routes/anomalies.ts` — set status to dismissed, record dismissed_by
-- [ ] T109 [P] [US3] Implement `GET /notifications` in `apps/api/src/routes/notifications.ts` — in-app notification inbox, filterable by read/unread
-- [ ] T110 [P] [US3] Implement `PATCH /notifications/:id/read` in `apps/api/src/routes/notifications.ts` — mark single notification as read
-- [ ] T111 [P] [US3] Implement `POST /notifications/mark-all-read` in `apps/api/src/routes/notifications.ts` — mark all notifications as read for account
-- [ ] T112 [US3] Register anomaly and notification routes in `apps/api/src/index.ts`
+- [X] T106 [P] [US3] Implement `GET /anomalies` in `apps/api/src/routes/anomalies.ts` — list anomalies with pagination, filterable by status/severity/resource, sorted by detected_at desc
+- [X] T107 [P] [US3] Implement `GET /anomalies/:id` in `apps/api/src/routes/anomalies.ts` — anomaly detail including attribution breakdown
+- [X] T108 [P] [US3] Implement `PATCH /anomalies/:id/dismiss` in `apps/api/src/routes/anomalies.ts` — set status to dismissed, record dismissed_by
+- [X] T109 [P] [US3] Implement `GET /notifications` in `apps/api/src/routes/notifications.ts` — in-app notification inbox, filterable by read/unread
+- [X] T110 [P] [US3] Implement `PATCH /notifications/:id/read` in `apps/api/src/routes/notifications.ts` — mark single notification as read
+- [X] T111 [P] [US3] Implement `POST /notifications/mark-all-read` in `apps/api/src/routes/notifications.ts` — mark all notifications as read for account
+- [X] T112 [US3] Register anomaly and notification routes in `apps/api/src/index.ts`
 
 #### Web — Anomalies & Notifications
 
-- [ ] T113 [P] [US3] Create anomalies list page at `apps/web/src/routes/(app)/anomalies/+page.svelte` — filterable table (severity, resource, status, detected time), dismiss action, click to detail
-- [ ] T114 [US3] Create anomaly detail page at `apps/web/src/routes/(app)/anomalies/[id]/+page.svelte` — anomaly info card, attribution breakdown (contributors bar chart), metric vs baseline chart, dismiss button
-- [ ] T115 [P] [US3] Create notification inbox component at `apps/web/src/lib/components/notifications/NotificationInbox.svelte` — dropdown from bell icon in top bar, lists recent notifications, mark-read/mark-all-read actions
-- [ ] T116 [P] [US3] Create notification badge component at `apps/web/src/lib/components/notifications/NotificationBadge.svelte` — unread count badge on bell icon, polls or uses WebSocket
+- [X] T113 [P] [US3] Create anomalies list page at `apps/web/src/routes/(app)/anomalies/+page.svelte` — filterable table (severity, resource, status, detected time), dismiss action, click to detail
+- [X] T114 [US3] Create anomaly detail page at `apps/web/src/routes/(app)/anomalies/[id]/+page.svelte` — anomaly info card, attribution breakdown (contributors bar chart), metric vs baseline chart, dismiss button
+- [X] T115 [P] [US3] Create notification inbox component at `apps/web/src/lib/components/notifications/NotificationInbox.svelte` — dropdown from bell icon in top bar, lists recent notifications, mark-read/mark-all-read actions
+- [X] T116 [P] [US3] Create notification badge component at `apps/web/src/lib/components/notifications/NotificationBadge.svelte` — unread count badge on bell icon, polls or uses WebSocket
 
 **Checkpoint**: complete — users can register, connect CF, view dashboard, and receive anomaly alerts
 

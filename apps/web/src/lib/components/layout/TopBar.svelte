@@ -1,9 +1,25 @@
 <script lang="ts">
+import NotificationBadge from '$lib/components/notifications/NotificationBadge.svelte';
+import NotificationInbox from '$lib/components/notifications/NotificationInbox.svelte';
 import Icon from '$lib/components/ui/Icon.svelte';
-import { notifications } from '$lib/data/mock';
 
 let { title = '' }: { title?: string } = $props();
-const unread = notifications.filter((n) => n.severity !== 'info').length;
+
+let notificationCount = $state(0);
+let notifications = $state<{ id: string; title: string; body: string; read: 0 | 1; created_at: string }[]>([]);
+let inboxOpen = $state(false);
+
+$effect(() => {
+	fetch('/api/notifications?read=false&per_page=10', { credentials: 'include' })
+		.then((r) => r.json())
+		.then((data: { data?: typeof notifications; total?: number }) => {
+			notifications = data.data ?? [];
+			notificationCount = data.total ?? notifications.length;
+		})
+		.catch(() => {
+			notificationCount = 0;
+		});
+});
 </script>
 
 <header class="flex items-center h-14 px-6 bg-white border-b border-gray-200 gap-4">
@@ -16,12 +32,26 @@ const unread = notifications.filter((n) => n.severity !== 'info').length;
 	<div class="flex-1"></div>
 
 	<!-- Notification bell -->
-	<button class="relative p-2 rounded-lg text-gray-500 hover:bg-gray-50">
-		<Icon name="bell" class="w-5 h-5" />
-		{#if unread > 0}
-			<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500"></span>
+	<div class="relative">
+		<button
+			class="relative p-2 rounded-lg text-gray-500 hover:bg-gray-50"
+			onclick={() => inboxOpen = !inboxOpen}
+			aria-label="Toggle notifications"
+		>
+			<Icon name="bell" class="w-5 h-5" />
+			<NotificationBadge count={notificationCount} />
+		</button>
+
+		{#if inboxOpen}
+			<NotificationInbox {notifications} unreadCount={notificationCount} />
+			<!-- Backdrop to close inbox -->
+			<button
+				class="fixed inset-0 z-40"
+				aria-label="Close notifications"
+				onclick={() => inboxOpen = false}
+			></button>
 		{/if}
-	</button>
+	</div>
 
 	<!-- User avatar -->
 	<div class="flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-600 text-sm font-semibold cursor-pointer">
