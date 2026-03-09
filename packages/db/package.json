@@ -1,18 +1,21 @@
 {
-  "name": "@flarelens/db",
-  "version": "0.0.1",
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts",
-    "./repository": "./src/repository.ts",
-    "./repositories/*": "./src/repositories/*.ts"
-  },
-  "scripts": {
-    "check": "tsc --noEmit"
-  },
-  "packageManager": "pnpm@10.30.3",
-  "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260307.1",
-    "typescript": "^5.9.3"
-  }
+	"name": "@flarelens/db",
+	"version": "0.0.1",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./repository": "./src/repository.ts",
+		"./repositories/*": "./src/repositories/*.ts"
+	},
+	"scripts": {
+		"check": "tsc --noEmit"
+	},
+	"packageManager": "pnpm@10.30.3",
+	"devDependencies": {
+		"@cloudflare/workers-types": "^4.20260307.1",
+		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"@flarelens/shared": "workspace:*"
+	}
 }

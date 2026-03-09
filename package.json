@@ -1,17 +1,17 @@
 {
-  "name": "flarelens",
-  "private": true,
-  "scripts": {
-    "dev": "pnpm -r --parallel dev",
-    "build": "pnpm -r build",
-    "check": "pnpm -r check",
-    "lint": "biome check .",
-    "format": "biome format --write .",
-    "test": "pnpm -r test"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.4.6",
-    "typescript": "^5.9.3",
-    "wrangler": "^4.71.0"
-  }
+	"name": "flarelens",
+	"private": true,
+	"scripts": {
+		"dev": "pnpm -r --parallel dev",
+		"build": "pnpm -r build",
+		"check": "pnpm -r check",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"test": "pnpm -r test"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.6",
+		"typescript": "^5.9.3",
+		"wrangler": "^4.71.0"
+	}
 }

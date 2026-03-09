@@ -1,1 +1,16 @@
-// Populated in Phase 2
+export { AccountsRepository } from './repositories/accounts.js';
+export { AnomaliesRepository } from './repositories/anomalies.js';
+export { AuditLogsRepository } from './repositories/audit-logs.js';
+export { BaselinesRepository } from './repositories/baselines.js';
+export { BillingSnapshotsRepository } from './repositories/billing-snapshots.js';
+export { CfTokensRepository } from './repositories/cf-tokens.js';
+export { DeveloperTokensRepository } from './repositories/developer-tokens.js';
+export { IntegrationsRepository } from './repositories/integrations.js';
+export { MitigationsRepository } from './repositories/mitigations.js';
+export { NotificationsRepository } from './repositories/notifications.js';
+export { ResourcesRepository } from './repositories/resources.js';
+export { RulesRepository } from './repositories/rules.js';
+export { TeamMembersRepository } from './repositories/team-members.js';
+export { UsersRepository } from './repositories/users.js';
+export { ZoneSnapshotsRepository } from './repositories/zone-snapshots.js';
+export { BaseRepository } from './repository.js';

@@ -1,9 +1,10 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "declarationDir": "./dist",
-    "types": ["@cloudflare/workers-types"]
-  },
-  "include": ["src"]
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"outDir": "./dist",
+		"declaration": true,
+		"declarationDir": "./dist",
+		"types": ["@cloudflare/workers-types"]
+	},
+	"include": ["src"]
 }

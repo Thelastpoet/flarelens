@@ -47,55 +47,55 @@
 
 ### 2A: Shared Types & Utilities
 
-- [ ] T011 [P] Define domain types in `packages/shared/src/types.ts` — User, Account, TeamMember, CfToken, Resource, Rule, Anomaly, Notification, Integration, Mitigation, AuditLog, BillingSnapshot, DeveloperToken
-- [ ] T012 [P] Create ULID generator utility in `packages/shared/src/id.ts` (use `ulidx` or hand-roll with `crypto.getRandomValues`)
-- [ ] T013 [P] Create Zod validation schemas in `packages/shared/src/schemas/` — `auth.ts` (register, login, reset-password), `rules.ts` (create/update rule), `cf-tokens.ts` (add token), `resources.ts`, `integrations.ts`, `settings.ts`
-- [ ] T014 [P] Create error types in `packages/shared/src/errors.ts` — AppError base class, NotFoundError, ValidationError, ForbiddenError, UnauthorizedError, ConflictError
-- [ ] T015 [P] Create constants in `packages/shared/src/constants.ts` — plan limits, severity levels, resource types, metric names, time windows, role permissions matrix
+- [X] T011 [P] Define domain types in `packages/shared/src/types.ts` — User, Account, TeamMember, CfToken, Resource, Rule, Anomaly, Notification, Integration, Mitigation, AuditLog, BillingSnapshot, DeveloperToken
+- [X] T012 [P] Create ULID generator utility in `packages/shared/src/id.ts` (use `ulidx` or hand-roll with `crypto.getRandomValues`)
+- [X] T013 [P] Create Zod validation schemas in `packages/shared/src/schemas/` — `auth.ts` (register, login, reset-password), `rules.ts` (create/update rule), `cf-tokens.ts` (add token), `resources.ts`, `integrations.ts`, `settings.ts`
+- [X] T014 [P] Create error types in `packages/shared/src/errors.ts` — AppError base class, NotFoundError, ValidationError, ForbiddenError, UnauthorizedError, ConflictError
+- [X] T015 [P] Create constants in `packages/shared/src/constants.ts` — plan limits, severity levels, resource types, metric names, time windows, role permissions matrix
 
 ### 2B: Database Layer
 
-- [ ] T016 [P] Create base repository helper in `packages/db/src/repository.ts` — account-scoped query builder that enforces `WHERE account_id = ?` on every query
-- [ ] T017 [P] Create `packages/db/src/repositories/users.ts` — findByEmail, findById, create, updateProfile, updatePassword
-- [ ] T018 [P] Create `packages/db/src/repositories/accounts.ts` — findById, create, updateSettings, updatePlan
-- [ ] T019 [P] Create `packages/db/src/repositories/team-members.ts` — list, findByUserId, create (invite), accept, updateRole, remove
-- [ ] T020 [P] Create `packages/db/src/repositories/cf-tokens.ts` — list (masked), create, verify, revoke, findActiveByAccount
-- [ ] T021 [P] Create `packages/db/src/repositories/resources.ts` — list, create, update, delete, findByAccount, syncFromCF
-- [ ] T022 [P] Create `packages/db/src/repositories/rules.ts` — list, create, update, delete, toggle, findEnabledByAccount
-- [ ] T023 [P] Create `packages/db/src/repositories/anomalies.ts` — list (filterable), create, dismiss, resolve, findByResource
-- [ ] T024 [P] Create `packages/db/src/repositories/notifications.ts` — list (unread/all), create, markRead, markAllRead, archiveAll
-- [ ] T025 [P] Create `packages/db/src/repositories/audit-logs.ts` — list (paginated, filterable), create, exportQuery
-- [ ] T026 [P] Create `packages/db/src/repositories/integrations.ts` — list, upsert, delete, findByType
-- [ ] T027 [P] Create `packages/db/src/repositories/mitigations.ts` — list, create, update, delete, toggle, findTriggerable
-- [ ] T028 [P] Create `packages/db/src/repositories/billing-snapshots.ts` — getCurrent, create, update, listInvoices
-- [ ] T029 [P] Create `packages/db/src/repositories/developer-tokens.ts` — list, create, revoke, findByHash
-- [ ] T030 [P] Create `packages/db/src/repositories/zone-snapshots.ts` — upsert, getLatest, getTimeSeries, cleanupOld
-- [ ] T031 [P] Create `packages/db/src/repositories/baselines.ts` — upsert, findByResourceMetric, recalculate
+- [X] T016 [P] Create base repository helper in `packages/db/src/repository.ts` — account-scoped query builder that enforces `WHERE account_id = ?` on every query
+- [X] T017 [P] Create `packages/db/src/repositories/users.ts` — findByEmail, findById, create, updateProfile, updatePassword
+- [X] T018 [P] Create `packages/db/src/repositories/accounts.ts` — findById, create, updateSettings, updatePlan
+- [X] T019 [P] Create `packages/db/src/repositories/team-members.ts` — list, findByUserId, create (invite), accept, updateRole, remove
+- [X] T020 [P] Create `packages/db/src/repositories/cf-tokens.ts` — list (masked), create, verify, revoke, findActiveByAccount
+- [X] T021 [P] Create `packages/db/src/repositories/resources.ts` — list, create, update, delete, findByAccount, syncFromCF
+- [X] T022 [P] Create `packages/db/src/repositories/rules.ts` — list, create, update, delete, toggle, findEnabledByAccount
+- [X] T023 [P] Create `packages/db/src/repositories/anomalies.ts` — list (filterable), create, dismiss, resolve, findByResource
+- [X] T024 [P] Create `packages/db/src/repositories/notifications.ts` — list (unread/all), create, markRead, markAllRead, archiveAll
+- [X] T025 [P] Create `packages/db/src/repositories/audit-logs.ts` — list (paginated, filterable), create, exportQuery
+- [X] T026 [P] Create `packages/db/src/repositories/integrations.ts` — list, upsert, delete, findByType
+- [X] T027 [P] Create `packages/db/src/repositories/mitigations.ts` — list, create, update, delete, toggle, findTriggerable
+- [X] T028 [P] Create `packages/db/src/repositories/billing-snapshots.ts` — getCurrent, create, update, listInvoices
+- [X] T029 [P] Create `packages/db/src/repositories/developer-tokens.ts` — list, create, revoke, findByHash
+- [X] T030 [P] Create `packages/db/src/repositories/zone-snapshots.ts` — upsert, getLatest, getTimeSeries, cleanupOld
+- [X] T031 [P] Create `packages/db/src/repositories/baselines.ts` — upsert, findByResourceMetric, recalculate
 
 ### 2C: Auth & Session
 
-- [ ] T032 Create password hashing module in `apps/api/src/auth/password.ts` — use `bcryptjs` (scrypt or WASM bcrypt, NOT Argon2id which is too slow ~14s on Workers); hash and verify functions
-- [ ] T033 Create session manager in `apps/api/src/auth/session.ts` — createSession (generate token, SHA-256 hash, store in KV with TTL), validateSession (lookup, check expiry, sliding window refresh), destroySession
-- [ ] T034 Create token encryption module in `apps/api/src/auth/crypto.ts` — encryptToken and decryptToken using AES-256-GCM with `crypto.subtle`, random IV per token
+- [X] T032 Create password hashing module in `apps/api/src/auth/password.ts` — use `bcryptjs` (scrypt or WASM bcrypt, NOT Argon2id which is too slow ~14s on Workers); hash and verify functions
+- [X] T033 Create session manager in `apps/api/src/auth/session.ts` — createSession (generate token, SHA-256 hash, store in KV with TTL), validateSession (lookup, check expiry, sliding window refresh), destroySession
+- [X] T034 Create token encryption module in `apps/api/src/auth/crypto.ts` — encryptToken and decryptToken using AES-256-GCM with `crypto.subtle`, random IV per token
 
 ### 2D: API Middleware & Framework
 
-- [ ] T035 Create Hono app factory in `apps/api/src/app.ts` — instantiate Hono with typed `Env`, register global middleware
-- [ ] T036 Create auth middleware in `apps/api/src/middleware/auth.ts` — extract `__session` cookie, validate via session manager, attach `{ user_id, account_id, role }` to context; return 401 if invalid
-- [ ] T037 Create RBAC middleware in `apps/api/src/middleware/rbac.ts` — `requireRole(...roles)` factory that checks session role against allowed roles; return 403 if forbidden
-- [ ] T038 Create validation middleware in `apps/api/src/middleware/validate.ts` — `validate(schema)` factory that parses `c.req.json()` with Zod, attaches result to context or returns 400
-- [ ] T039 Create rate-limit middleware in `apps/api/src/middleware/rate-limit.ts` — KV-based counter per `account_id + endpoint group`, configurable limits per group (auth: 10/15min, reads: 300/1min, writes: 60/1min)
-- [ ] T040 [P] Create CORS middleware in `apps/api/src/middleware/cors.ts` — allow origins from env, credentials, standard methods/headers
-- [ ] T041 [P] Create error handler in `apps/api/src/middleware/error-handler.ts` — catch AppError subtypes, format consistent JSON error responses, log unexpected errors
-- [ ] T042 Create repository injection middleware in `apps/api/src/middleware/repos.ts` — instantiate all repositories scoped to `session.account_id`, attach to Hono context
-- [ ] T043 Create audit-log helper in `apps/api/src/middleware/audit.ts` — `logAudit()` function that captures user, IP, user-agent, action, entity; writes to D1 audit_logs
+- [X] T035 Create Hono app factory in `apps/api/src/app.ts` — instantiate Hono with typed `Env`, register global middleware
+- [X] T036 Create auth middleware in `apps/api/src/middleware/auth.ts` — extract `__session` cookie, validate via session manager, attach `{ user_id, account_id, role }` to context; return 401 if invalid
+- [X] T037 Create RBAC middleware in `apps/api/src/middleware/rbac.ts` — `requireRole(...roles)` factory that checks session role against allowed roles; return 403 if forbidden
+- [X] T038 Create validation middleware in `apps/api/src/middleware/validate.ts` — `validate(schema)` factory that parses `c.req.json()` with Zod, attaches result to context or returns 400
+- [X] T039 Create rate-limit middleware in `apps/api/src/middleware/rate-limit.ts` — KV-based counter per `account_id + endpoint group`, configurable limits per group (auth: 10/15min, reads: 300/1min, writes: 60/1min)
+- [X] T040 [P] Create CORS middleware in `apps/api/src/middleware/cors.ts` — allow origins from env, credentials, standard methods/headers
+- [X] T041 [P] Create error handler in `apps/api/src/middleware/error-handler.ts` — catch AppError subtypes, format consistent JSON error responses, log unexpected errors
+- [X] T042 Create repository injection middleware in `apps/api/src/middleware/repos.ts` — instantiate all repositories scoped to `session.account_id`, attach to Hono context
+- [X] T043 Create audit-log helper in `apps/api/src/middleware/audit.ts` — `logAudit()` function that captures user, IP, user-agent, action, entity; writes to D1 audit_logs
 
 ### 2E: Web App Foundation
 
-- [ ] T044 [P] Install Tailwind CSS 4 + `@tailwindcss/vite` in `apps/web/`, configure `app.css` with `@import "tailwindcss"`
-- [ ] T045 [P] Create layout in `apps/web/src/routes/+layout.svelte` — root layout with `<slot>`, global styles import
-- [ ] T046 [P] Create auth store in `apps/web/src/lib/stores/auth.ts` — Svelte 5 runes-based store for current user, session status, login/logout actions
-- [ ] T047 [P] Create API client in `apps/web/src/lib/api.ts` — typed fetch wrapper that hits API worker, handles auth cookies, parses errors, returns typed responses
+- [X] T044 [P] Install Tailwind CSS 4 + `@tailwindcss/vite` in `apps/web/`, configure `app.css` with `@import "tailwindcss"`
+- [X] T045 [P] Create layout in `apps/web/src/routes/+layout.svelte` — root layout with `<slot>`, global styles import
+- [X] T046 [P] Create auth store in `apps/web/src/lib/stores/auth.svelte.ts` — Svelte 5 runes-based store for current user, session status, login/logout actions
+- [X] T047 [P] Create API client in `apps/web/src/lib/api.ts` — typed fetch wrapper that hits API worker, handles auth cookies, parses errors, returns typed responses
 
 **Checkpoint**: Foundation ready — user story implementation can now begin in parallel
 
@@ -111,47 +111,47 @@
 
 #### API Routes — Auth
 
-- [ ] T048 [P] [US1] Implement `POST /auth/register` in `apps/api/src/routes/auth.ts` — validate input (name, email, password), check duplicate email, hash password, create user + account + team_member (admin), create session, set cookie, return user profile
-- [ ] T049 [P] [US1] Implement `POST /auth/login` in `apps/api/src/routes/auth.ts` — validate credentials, verify password hash, create session, set cookie, return user profile
-- [ ] T050 [P] [US1] Implement `POST /auth/logout` in `apps/api/src/routes/auth.ts` — destroy session in KV, clear cookie
-- [ ] T051 [P] [US1] Implement `GET /auth/me` in `apps/api/src/routes/auth.ts` — return current user profile from session
-- [ ] T052 [US1] Implement `POST /auth/forgot-password` in `apps/api/src/routes/auth.ts` — generate reset token, store in KV (1h TTL), send email via Resend
-- [ ] T053 [US1] Implement `POST /auth/reset-password` in `apps/api/src/routes/auth.ts` — validate token from KV, update password hash, delete token, invalidate existing sessions
+- [X] T048 [P] [US1] Implement `POST /auth/register` in `apps/api/src/routes/auth.ts` — validate input (name, email, password), check duplicate email, hash password, create user + account + team_member (admin), create session, set cookie, return user profile
+- [X] T049 [P] [US1] Implement `POST /auth/login` in `apps/api/src/routes/auth.ts` — validate credentials, verify password hash, create session, set cookie, return user profile
+- [X] T050 [P] [US1] Implement `POST /auth/logout` in `apps/api/src/routes/auth.ts` — destroy session in KV, clear cookie
+- [X] T051 [P] [US1] Implement `GET /auth/me` in `apps/api/src/routes/auth.ts` — return current user profile from session
+- [X] T052 [US1] Implement `POST /auth/forgot-password` in `apps/api/src/routes/auth.ts` — generate reset token, store in KV (1h TTL), send email via Resend
+- [X] T053 [US1] Implement `POST /auth/reset-password` in `apps/api/src/routes/auth.ts` — validate token from KV, update password hash, delete token, invalidate existing sessions
 
 #### API Routes — CF Tokens & Resources
 
-- [ ] T054 [P] [US1] Implement `POST /cf-tokens` in `apps/api/src/routes/cf-tokens.ts` — validate token format, encrypt with AES-256-GCM, store in D1, trigger verification
-- [ ] T055 [P] [US1] Implement `GET /cf-tokens` in `apps/api/src/routes/cf-tokens.ts` — list tokens with masked values (show last 4 chars only)
-- [ ] T056 [US1] Implement `POST /cf-tokens/:id/verify` in `apps/api/src/routes/cf-tokens.ts` — decrypt token, call CF API `GET /user/tokens/verify`, check permissions, update status
-- [ ] T057 [US1] Implement `DELETE /cf-tokens/:id` in `apps/api/src/routes/cf-tokens.ts` — soft-revoke token, pause all associated resources
-- [ ] T058 [US1] Create CF API client in `apps/api/src/services/cloudflare/client.ts` — typed wrapper for CF REST + GraphQL APIs, handles auth headers, rate-limit backoff, error mapping
-- [ ] T059 [US1] Implement `POST /resources/sync` in `apps/api/src/routes/resources.ts` — for each active CF token: call CF REST API to list zones, workers, R2 buckets, KV namespaces, D1 databases; upsert into resources table; mark removed ones inactive
-- [ ] T060 [P] [US1] Implement `GET /resources` in `apps/api/src/routes/resources.ts` — list all monitored resources with status, type, last sync time
-- [ ] T061 [P] [US1] Implement `PATCH /resources/:id` in `apps/api/src/routes/resources.ts` — update monitoring status (pause/resume)
-- [ ] T062 [P] [US1] Implement `DELETE /resources/:id` in `apps/api/src/routes/resources.ts` — remove resource from monitoring
+- [X] T054 [P] [US1] Implement `POST /cf-tokens` in `apps/api/src/routes/cf-tokens.ts` — validate token format, encrypt with AES-256-GCM, store in D1, trigger verification
+- [X] T055 [P] [US1] Implement `GET /cf-tokens` in `apps/api/src/routes/cf-tokens.ts` — list tokens with masked values (show last 4 chars only)
+- [X] T056 [US1] Implement `POST /cf-tokens/:id/verify` in `apps/api/src/routes/cf-tokens.ts` — decrypt token, call CF API `GET /user/tokens/verify`, check permissions, update status
+- [X] T057 [US1] Implement `DELETE /cf-tokens/:id` in `apps/api/src/routes/cf-tokens.ts` — soft-revoke token, pause all associated resources
+- [X] T058 [US1] Create CF API client in `apps/api/src/services/cloudflare/client.ts` — typed wrapper for CF REST + GraphQL APIs, handles auth headers, rate-limit backoff, error mapping
+- [X] T059 [US1] Implement `POST /resources/sync` in `apps/api/src/routes/resources.ts` — for each active CF token: call CF REST API to list zones, workers, R2 buckets, KV namespaces, D1 databases; upsert into resources table; mark removed ones inactive
+- [X] T060 [P] [US1] Implement `GET /resources` in `apps/api/src/routes/resources.ts` — list all monitored resources with status, type, last sync time
+- [X] T061 [P] [US1] Implement `PATCH /resources/:id` in `apps/api/src/routes/resources.ts` — update monitoring status (pause/resume)
+- [X] T062 [P] [US1] Implement `DELETE /resources/:id` in `apps/api/src/routes/resources.ts` — remove resource from monitoring
 
 #### API — Route Registration
 
-- [ ] T063 [US1] Register all auth, cf-token, and resource routes in `apps/api/src/index.ts` — mount route groups with appropriate middleware chains (public for auth, protected + RBAC for tokens/resources)
+- [X] T063 [US1] Register all auth, cf-token, and resource routes in `apps/api/src/index.ts` — mount route groups with appropriate middleware chains (public for auth, protected + RBAC for tokens/resources)
 
 #### Web — Auth Pages
 
-- [ ] T064 [P] [US1] Create registration page at `apps/web/src/routes/(auth)/register/+page.svelte` — form: name, email, password, confirm password; calls `POST /auth/register`; redirects to onboarding on success
-- [ ] T065 [P] [US1] Create login page at `apps/web/src/routes/(auth)/login/+page.svelte` — form: email, password; calls `POST /auth/login`; redirects to dashboard on success
-- [ ] T066 [P] [US1] Create forgot-password page at `apps/web/src/routes/(auth)/forgot-password/+page.svelte` — form: email; calls `POST /auth/forgot-password`; shows confirmation message
-- [ ] T067 [P] [US1] Create reset-password page at `apps/web/src/routes/(auth)/reset-password/+page.svelte` — form: new password + confirm; reads token from URL; calls `POST /auth/reset-password`
+- [X] T064 [P] [US1] Create registration page at `apps/web/src/routes/(auth)/register/+page.svelte` — form: name, email, password, confirm password; calls `POST /auth/register`; redirects to onboarding on success
+- [X] T065 [P] [US1] Create login page at `apps/web/src/routes/(auth)/login/+page.svelte` — form: email, password; calls `POST /auth/login`; redirects to dashboard on success
+- [X] T066 [P] [US1] Create forgot-password page at `apps/web/src/routes/(auth)/forgot-password/+page.svelte` — form: email; calls `POST /auth/forgot-password`; shows confirmation message
+- [X] T067 [P] [US1] Create reset-password page at `apps/web/src/routes/(auth)/reset-password/+page.svelte` — form: new password + confirm; reads token from URL; calls `POST /auth/reset-password`
 
 #### Web — Onboarding Flow
 
-- [ ] T068 [US1] Create onboarding layout at `apps/web/src/routes/(app)/onboarding/+layout.svelte` — step indicator (1: Connect CF, 2: Select Zones, 3: Done)
-- [ ] T069 [US1] Create step 1 at `apps/web/src/routes/(app)/onboarding/connect/+page.svelte` — CF API token input, permission requirements listed, calls `POST /cf-tokens` then `POST /cf-tokens/:id/verify`
-- [ ] T070 [US1] Create step 2 at `apps/web/src/routes/(app)/onboarding/zones/+page.svelte` — calls `POST /resources/sync`, displays discovered resources with checkboxes, user selects which to monitor
-- [ ] T071 [US1] Create step 3 at `apps/web/src/routes/(app)/onboarding/success/+page.svelte` — celebration screen, "Go to Dashboard" CTA
+- [X] T068 [US1] Create onboarding layout at `apps/web/src/routes/(app)/onboarding/+layout.svelte` — step indicator (1: Connect CF, 2: Select Zones, 3: Done)
+- [X] T069 [US1] Create step 1 at `apps/web/src/routes/(app)/onboarding/connect/+page.svelte` — CF API token input, permission requirements listed, calls `POST /cf-tokens` then `POST /cf-tokens/:id/verify`
+- [X] T070 [US1] Create step 2 at `apps/web/src/routes/(app)/onboarding/zones/+page.svelte` — calls `POST /resources/sync`, displays discovered resources with checkboxes, user selects which to monitor
+- [X] T071 [US1] Create step 3 at `apps/web/src/routes/(app)/onboarding/success/+page.svelte` — celebration screen, "Go to Dashboard" CTA
 
 #### Web — App Shell
 
-- [ ] T072 [US1] Create authenticated layout at `apps/web/src/routes/(app)/+layout.svelte` — sidebar nav (Dashboard, Analytics, Anomalies, Rules, Integrations, Inventory, Billing, Settings, Audit), top bar with user avatar + notification bell, mobile-responsive
-- [ ] T073 [US1] Create auth guard in `apps/web/src/routes/(app)/+layout.ts` — load function checks session via `GET /auth/me`, redirects to `/login` if unauthenticated
+- [X] T072 [US1] Create authenticated layout at `apps/web/src/routes/(app)/+layout.svelte` — sidebar nav (Dashboard, Analytics, Anomalies, Rules, Integrations, Inventory, Billing, Settings, Audit), top bar with user avatar + notification bell, mobile-responsive
+- [X] T073 [US1] Create auth guard in `apps/web/src/routes/(app)/+layout.ts` — load function checks session via `GET /auth/me`, redirects to `/login` if unauthenticated
 
 **Checkpoint**: User Story 1 complete — users can register, authenticate, connect CF tokens, and see monitored resources
 
@@ -167,34 +167,34 @@
 
 #### API — Analytics Service
 
-- [ ] T074 [US2] Create CF GraphQL query builder in `apps/api/src/services/cloudflare/graphql.ts` — typed functions for `httpRequests1mGroups`, `workersInvocationsAdaptive`, R2/KV/D1 adaptive queries; parameterized by zone/account tag, time range, limit
-- [ ] T075 [US2] Create analytics service in `apps/api/src/services/analytics.ts` — orchestrates CF GraphQL queries + Analytics Engine reads + D1 snapshot/baseline lookups to build dashboard response objects
+- [X] T074 [US2] Create CF GraphQL query builder in `apps/api/src/services/cloudflare/graphql.ts` — typed functions for `httpRequests1mGroups`, `workersInvocationsAdaptive`, R2/KV/D1 adaptive queries; parameterized by zone/account tag, time range, limit
+- [X] T075 [US2] Create analytics service in `apps/api/src/services/analytics.ts` — orchestrates CF GraphQL queries + Analytics Engine reads + D1 snapshot/baseline lookups to build dashboard response objects
 
 #### API — Analytics Routes
 
-- [ ] T076 [P] [US2] Implement `GET /analytics/overview` in `apps/api/src/routes/analytics.ts` — total requests, cached %, estimated cost, active anomalies count, top-level summary for all monitored resources
-- [ ] T077 [P] [US2] Implement `GET /analytics/traffic` in `apps/api/src/routes/analytics.ts` — time-series of requests (cached/uncached), filterable by zone, time range, interval
-- [ ] T078 [P] [US2] Implement `GET /analytics/cost` in `apps/api/src/routes/analytics.ts` — cost breakdown by service (Workers, CDN, R2, KV, D1), daily/hourly aggregation
-- [ ] T079 [P] [US2] Implement `GET /analytics/top-endpoints` in `apps/api/src/routes/analytics.ts` — top N endpoints by request count from CF GraphQL
-- [ ] T080 [P] [US2] Implement `GET /analytics/geo` in `apps/api/src/routes/analytics.ts` — traffic by country from CF GraphQL `countryMap`
-- [ ] T081 [P] [US2] Implement `GET /analytics/clients` in `apps/api/src/routes/analytics.ts` — user-agent distribution
-- [ ] T082 [P] [US2] Implement `GET /analytics/baseline` in `apps/api/src/routes/analytics.ts` — current metric values vs. baseline (from baselines table), deviation percentage
-- [ ] T083 [P] [US2] Implement `GET /analytics/bot-activity` in `apps/api/src/routes/analytics.ts` — detected bot user-agents with traffic share
-- [ ] T084 [P] [US2] Implement `GET /analytics/performance` in `apps/api/src/routes/analytics.ts` — latency percentiles, slowest routes, error rate from CF GraphQL
-- [ ] T085 [P] [US2] Implement `GET /analytics/errors` in `apps/api/src/routes/analytics.ts` — error breakdown by status code, time-series of error rates
-- [ ] T086 [US2] Register analytics routes in `apps/api/src/index.ts` — mount under `/analytics` with auth + rate-limit middleware
+- [X] T076 [P] [US2] Implement `GET /analytics/overview` in `apps/api/src/routes/analytics.ts` — total requests, cached %, estimated cost, active anomalies count, top-level summary for all monitored resources
+- [X] T077 [P] [US2] Implement `GET /analytics/traffic` in `apps/api/src/routes/analytics.ts` — time-series of requests (cached/uncached), filterable by zone, time range, interval
+- [X] T078 [P] [US2] Implement `GET /analytics/cost` in `apps/api/src/routes/analytics.ts` — cost breakdown by service (Workers, CDN, R2, KV, D1), daily/hourly aggregation
+- [X] T079 [P] [US2] Implement `GET /analytics/top-endpoints` in `apps/api/src/routes/analytics.ts` — top N endpoints by request count from CF GraphQL
+- [X] T080 [P] [US2] Implement `GET /analytics/geo` in `apps/api/src/routes/analytics.ts` — traffic by country from CF GraphQL `countryMap`
+- [X] T081 [P] [US2] Implement `GET /analytics/clients` in `apps/api/src/routes/analytics.ts` — user-agent distribution
+- [X] T082 [P] [US2] Implement `GET /analytics/baseline` in `apps/api/src/routes/analytics.ts` — current metric values vs. baseline (from baselines table), deviation percentage
+- [X] T083 [P] [US2] Implement `GET /analytics/bot-activity` in `apps/api/src/routes/analytics.ts` — detected bot user-agents with traffic share
+- [X] T084 [P] [US2] Implement `GET /analytics/performance` in `apps/api/src/routes/analytics.ts` — latency percentiles, slowest routes, error rate from CF GraphQL
+- [X] T085 [P] [US2] Implement `GET /analytics/errors` in `apps/api/src/routes/analytics.ts` — error breakdown by status code, time-series of error rates
+- [X] T086 [US2] Register analytics routes in `apps/api/src/index.ts` — mount under `/analytics` with auth + rate-limit middleware
 
 #### Web — Dashboard
 
-- [ ] T087 [P] [US2] Create dashboard overview at `apps/web/src/routes/(app)/dashboard/+page.svelte` — summary cards (total requests, cached %, estimated cost, active anomalies), zone selector dropdown
-- [ ] T088 [P] [US2] Create traffic chart component at `apps/web/src/lib/components/charts/TrafficChart.svelte` — line chart (requests over time, cached vs uncached), uses lightweight chart lib (Chart.js or uPlot)
-- [ ] T089 [P] [US2] Create cost breakdown component at `apps/web/src/lib/components/charts/CostBreakdown.svelte` — stacked bar or donut chart showing cost per service
-- [ ] T090 [P] [US2] Create baseline overlay component at `apps/web/src/lib/components/charts/BaselineOverlay.svelte` — traffic vs baseline band visualization with deviation highlighting
-- [ ] T091 [P] [US2] Create top endpoints component at `apps/web/src/lib/components/dashboard/TopEndpoints.svelte` — ranked list with request counts and % of total
-- [ ] T092 [P] [US2] Create geo traffic component at `apps/web/src/lib/components/dashboard/GeoTraffic.svelte` — country list with traffic counts (or simple map)
-- [ ] T093 [P] [US2] Create bot activity component at `apps/web/src/lib/components/dashboard/BotActivity.svelte` — bot user-agent list with traffic share percentages
-- [ ] T094 [US2] Create analytics detail pages at `apps/web/src/routes/(app)/analytics/+page.svelte` — tabbed view (Traffic, Performance, Cost, Errors) rendering respective chart components with extended time-range controls
-- [ ] T095 [US2] Wire dashboard page load function at `apps/web/src/routes/(app)/dashboard/+page.ts` — fetch overview, traffic, baseline, top-endpoints, bot-activity in parallel; pass to page as data
+- [X] T087 [P] [US2] Create dashboard overview at `apps/web/src/routes/(app)/dashboard/+page.svelte` — summary cards (total requests, cached %, estimated cost, active anomalies), zone selector dropdown
+- [X] T088 [P] [US2] Create traffic chart component at `apps/web/src/lib/components/charts/TrafficChart.svelte` — line chart (requests over time, cached vs uncached), uses lightweight chart lib (Chart.js or uPlot)
+- [X] T089 [P] [US2] Create cost breakdown component at `apps/web/src/lib/components/charts/CostBreakdown.svelte` — stacked bar or donut chart showing cost per service
+- [X] T090 [P] [US2] Create baseline overlay component at `apps/web/src/lib/components/charts/BaselineOverlay.svelte` — traffic vs baseline band visualization with deviation highlighting
+- [X] T091 [P] [US2] Create top endpoints component at `apps/web/src/lib/components/dashboard/TopEndpoints.svelte` — ranked list with request counts and % of total
+- [X] T092 [P] [US2] Create geo traffic component at `apps/web/src/lib/components/dashboard/GeoTraffic.svelte` — country list with traffic counts (or simple map)
+- [X] T093 [P] [US2] Create bot activity component at `apps/web/src/lib/components/dashboard/BotActivity.svelte` — bot user-agent list with traffic share percentages
+- [X] T094 [US2] Create analytics detail pages at `apps/web/src/routes/(app)/analytics/+page.svelte` — tabbed view (Traffic, Performance, Cost, Errors) rendering respective chart components with extended time-range controls
+- [X] T095 [US2] Wire dashboard page load function at `apps/web/src/routes/(app)/dashboard/+page.ts` — fetch overview, traffic, baseline, top-endpoints, bot-activity in parallel; pass to page as data
 
 **Checkpoint**: User Story 2 complete — dashboard shows live traffic metrics, cost estimates, baselines, and attribution data
 

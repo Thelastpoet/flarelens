@@ -2,8 +2,12 @@
 // Uses only the Web Crypto API (crypto.subtle / crypto.randomUUID),
 // which are available in the Cloudflare Workers runtime.
 
-import { SESSION_TTL_SECONDS, SESSION_KEY_PREFIX, SESSION_COOKIE_NAME } from '@flarelens/shared/constants';
-import type { SessionContext, Role } from '@flarelens/shared/types';
+import {
+	SESSION_COOKIE_NAME,
+	SESSION_KEY_PREFIX,
+	SESSION_TTL_SECONDS,
+} from '@flarelens/shared/constants';
+import type { Role, SessionContext } from '@flarelens/shared/types';
 
 // Re-export so consumers can use this module as a single import for session types.
 export type { SessionContext };
