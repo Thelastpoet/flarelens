@@ -3,6 +3,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "pnpm -r --parallel dev",
+		"preview": "pnpm -r --parallel preview",
 		"build": "pnpm -r build",
 		"check": "pnpm -r check",
 		"lint": "biome check .",
