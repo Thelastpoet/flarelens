@@ -17,7 +17,7 @@ function closeInviteModal() {
           <div class="size-6 text-[var(--color-primary)] flex items-center justify-center">
             <span class="material-symbols-outlined" style="font-size: 28px;">security</span>
           </div>
-          <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight">Budget Guard</h2>
+          <h2 class="text-slate-900 text-xl font-bold leading-tight tracking-tight">FlareLens</h2>
         </div>
         <div class="flex flex-1 justify-end gap-8">
           <div class="flex items-center gap-4">
@@ -49,7 +49,7 @@ function closeInviteModal() {
 
             <!-- Headline -->
             <div class="flex flex-col items-center gap-3 text-center">
-              <h1 class="text-3xl font-bold leading-tight tracking-tight text-slate-900">You're all set! Budget Guard is now active.</h1>
+              <h1 class="text-3xl font-bold leading-tight tracking-tight text-slate-900">You're all set! FlareLens is now active.</h1>
               <p class="text-base text-slate-600 max-w-md">
                 We've started analyzing your Cloudflare activity. Your first report will be ready shortly.
               </p>

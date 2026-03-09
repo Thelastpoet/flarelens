@@ -251,11 +251,11 @@
 
 **Independent Test**: Visit root URL → see hero, features, pricing tiers, footer → CTA leads to register
 
-- [ ] T117 [P] [US4] Create landing layout at `apps/web/src/routes/(public)/+layout.svelte` — public nav bar (logo, Features, Pricing, Login, Sign Up), footer with legal links
-- [ ] T118 [P] [US4] Create landing hero section at `apps/web/src/routes/(public)/+page.svelte` — headline, subtext, CTA button, hero illustration/screenshot
-- [ ] T119 [P] [US4] Create features section component at `apps/web/src/lib/components/landing/Features.svelte` — grid of feature cards (monitoring, anomaly detection, alerts, attribution, guardian mode)
-- [ ] T120 [P] [US4] Create pricing section component at `apps/web/src/lib/components/landing/Pricing.svelte` — Free / Pro / Team tier cards with feature comparison, CTA per tier
-- [ ] T121 [P] [US4] Create footer component at `apps/web/src/lib/components/landing/Footer.svelte` — links, legal (Terms, Privacy), social
+- [~] T117 [P] [US4] Create landing layout at `apps/web/src/routes/(public)/+layout.svelte` — public nav bar (logo, Features, Pricing, Login, Sign Up), footer with legal links — UI exists inline in `+page.svelte`, backend wiring deferred
+- [~] T118 [P] [US4] Create landing hero section at `apps/web/src/routes/(public)/+page.svelte` — headline, subtext, CTA button, hero illustration/screenshot — UI exists in `apps/web/src/routes/+page.svelte`, backend wiring deferred
+- [~] T119 [P] [US4] Create features section component at `apps/web/src/lib/components/landing/Features.svelte` — grid of feature cards — inline in `+page.svelte`, backend wiring deferred
+- [~] T120 [P] [US4] Create pricing section component at `apps/web/src/lib/components/landing/Pricing.svelte` — Free / Pro / Team tier cards — inline in `+page.svelte`, backend wiring deferred
+- [~] T121 [P] [US4] Create footer component at `apps/web/src/lib/components/landing/Footer.svelte` — links, legal, social — inline in `+page.svelte`, backend wiring deferred
 
 **Checkpoint**: Public-facing landing page complete
 
@@ -267,14 +267,14 @@
 
 **Independent Test**: Create rule → see it listed → toggle on/off → edit threshold → delete rule
 
-- [ ] T122 [P] [US5] Implement `GET /rules` in `apps/api/src/routes/rules.ts`
-- [ ] T123 [P] [US5] Implement `POST /rules` in `apps/api/src/routes/rules.ts` — validate with CreateRuleSchema, enforce plan limits on rule count
-- [ ] T124 [P] [US5] Implement `PATCH /rules/:id` in `apps/api/src/routes/rules.ts`
-- [ ] T125 [P] [US5] Implement `PATCH /rules/:id/toggle` in `apps/api/src/routes/rules.ts`
-- [ ] T126 [P] [US5] Implement `DELETE /rules/:id` in `apps/api/src/routes/rules.ts` — soft delete
-- [ ] T127 [US5] Register rules routes in `apps/api/src/index.ts` with auth + RBAC(admin, editor) middleware
-- [ ] T128 [P] [US5] Create rules list page at `apps/web/src/routes/(app)/rules/+page.svelte` — table with name, resource, metric, threshold, severity, enabled toggle, actions (edit/delete)
-- [ ] T129 [US5] Create rule form modal at `apps/web/src/lib/components/rules/RuleFormModal.svelte` — create/edit form: name, resource type, resource (optional), metric, operator, threshold, window, severity, notify frequency
+- [X] T122 [P] [US5] Implement `GET /rules` in `apps/api/src/routes/rules.ts`
+- [X] T123 [P] [US5] Implement `POST /rules` in `apps/api/src/routes/rules.ts` — validate with CreateRuleSchema, enforce plan limits on rule count
+- [X] T124 [P] [US5] Implement `PATCH /rules/:id` in `apps/api/src/routes/rules.ts`
+- [X] T125 [P] [US5] Implement `PATCH /rules/:id/toggle` in `apps/api/src/routes/rules.ts`
+- [X] T126 [P] [US5] Implement `DELETE /rules/:id` in `apps/api/src/routes/rules.ts` — soft delete
+- [X] T127 [US5] Register rules routes in `apps/api/src/index.ts` with auth + RBAC(admin, editor) middleware
+- [~] T128 [P] [US5] Create rules list page at `apps/web/src/routes/(app)/rules/+page.svelte` — UI exists with mock data, backend wiring deferred
+- [~] T129 [US5] Create rule form modal at `apps/web/src/lib/components/rules/RuleFormModal.svelte` — modal inline in rules page, backend wiring deferred
 
 **Checkpoint**: Rules management complete — users can define custom monitoring thresholds
 
@@ -286,9 +286,9 @@
 
 **Independent Test**: View anomaly detail → see contributor breakdown (endpoints, bots, countries, ASNs) with percentages and baseline comparison
 
-- [ ] T130 [US6] Enhance attribution analyzer in `apps/api/src/services/detection/attribution.ts` — add ASN breakdown, compute change-from-baseline per contributor, rank by contribution %
-- [ ] T131 [P] [US6] Create attribution bar chart component at `apps/web/src/lib/components/anomalies/AttributionChart.svelte` — horizontal bar chart showing top contributors with current vs baseline values
-- [ ] T132 [P] [US6] Create contributor detail cards at `apps/web/src/lib/components/anomalies/ContributorCards.svelte` — expandable cards per contributor type (endpoint, bot, geo, ASN) with sparklines
+- [X] T130 [US6] Enhance attribution analyzer in `apps/api/src/services/detection/attribution.ts` — add ASN breakdown, compute change-from-baseline per contributor, rank by contribution %
+- [~] T131 [P] [US6] Create attribution bar chart component at `apps/web/src/lib/components/anomalies/AttributionChart.svelte` — inline bar chart exists in anomaly detail page, backend wiring deferred
+- [X] T132 [P] [US6] Create contributor detail cards at `apps/web/src/lib/components/anomalies/ContributorCards.svelte` — expandable cards per contributor type with change-from-baseline indicator
 
 **Checkpoint**: Attribution analysis provides actionable detail on anomaly causes
 
@@ -300,15 +300,15 @@
 
 **Independent Test**: Admin invites member by email → member receives invite → accepts → appears as active member → admin changes role → admin removes member
 
-- [ ] T133 [P] [US7] Implement `GET /team/members` in `apps/api/src/routes/team.ts` — list active + pending members
-- [ ] T134 [P] [US7] Implement `POST /team/invites` in `apps/api/src/routes/team.ts` — validate email, check plan limits, create pending team_member, send invite email via Resend
-- [ ] T135 [P] [US7] Implement `PATCH /team/members/:id/role` in `apps/api/src/routes/team.ts` — admin only, cannot demote self
-- [ ] T136 [P] [US7] Implement `DELETE /team/members/:id` in `apps/api/src/routes/team.ts` — admin only, cannot remove self
-- [ ] T137 [P] [US7] Implement `POST /team/invites/:id/resend` in `apps/api/src/routes/team.ts` — resend invitation email
-- [ ] T138 [US7] Create invite acceptance flow in `apps/api/src/routes/auth.ts` — handle invite token from email, link user to team_member record, set status to active
-- [ ] T139 [US7] Register team routes in `apps/api/src/index.ts` with auth + RBAC(admin) middleware
-- [ ] T140 [P] [US7] Create team management page at `apps/web/src/routes/(app)/team/+page.svelte` — member list table (name, email, role, status, last active), invite button, role change dropdown, remove action
-- [ ] T141 [US7] Create invite member modal at `apps/web/src/lib/components/team/InviteMemberModal.svelte` — email input, role selector, send invite button
+- [X] T133 [P] [US7] Implement `GET /team/members` in `apps/api/src/routes/team.ts` — list active + pending members
+- [X] T134 [P] [US7] Implement `POST /team/invites` in `apps/api/src/routes/team.ts` — validate email, check plan limits, create pending team_member, send invite email via Resend
+- [X] T135 [P] [US7] Implement `PATCH /team/members/:id/role` in `apps/api/src/routes/team.ts` — admin only, cannot demote self
+- [X] T136 [P] [US7] Implement `DELETE /team/members/:id` in `apps/api/src/routes/team.ts` — admin only, cannot remove self
+- [X] T137 [P] [US7] Implement `POST /team/invites/:id/resend` in `apps/api/src/routes/team.ts` — resend invitation email
+- [X] T138 [US7] Create invite acceptance flow in `apps/api/src/routes/auth.ts` — POST /auth/accept-invite, links user to team_member, creates session
+- [X] T139 [US7] Register team routes in `apps/api/src/index.ts` with auth + RBAC(admin) middleware
+- [~] T140 [P] [US7] Create team management page at `apps/web/src/routes/(app)/team/+page.svelte` — UI exists with mock data, backend wiring deferred
+- [~] T141 [US7] Create invite member modal at `apps/web/src/lib/components/team/InviteMemberModal.svelte` — invite button exists inline in team page, backend wiring deferred
 
 **Checkpoint**: Team management complete — multi-user access with RBAC
 
@@ -320,22 +320,22 @@
 
 **Independent Test**: Configure Slack webhook → send test notification → receive message in Slack → configure custom webhook → test fires correctly
 
-- [ ] T142 [P] [US8] Implement `GET /integrations` in `apps/api/src/routes/integrations.ts` — list all integrations with status
-- [ ] T143 [P] [US8] Implement `POST /integrations/slack` in `apps/api/src/routes/integrations.ts` — validate webhook URL, encrypt, store
-- [ ] T144 [P] [US8] Implement `POST /integrations/discord` in `apps/api/src/routes/integrations.ts`
-- [ ] T145 [P] [US8] Implement `POST /integrations/pagerduty` in `apps/api/src/routes/integrations.ts`
-- [ ] T146 [P] [US8] Implement `POST /integrations/teams` in `apps/api/src/routes/integrations.ts`
-- [ ] T147 [P] [US8] Implement CRUD for `/integrations/webhooks` in `apps/api/src/routes/integrations.ts` — GET list, POST create, PATCH update, DELETE
-- [ ] T148 [US8] Implement `POST /integrations/:type/test` in `apps/api/src/routes/integrations.ts` — send test notification to the configured channel
-- [ ] T149 [US8] Create Slack notification sender in `apps/api/src/services/alerts/channels/slack.ts` — format Block Kit message with severity badge, metrics, attribution, dashboard link
-- [ ] T150 [US8] Create Discord notification sender in `apps/api/src/services/alerts/channels/discord.ts` — format embed with color-coded severity
-- [ ] T151 [P] [US8] Create PagerDuty sender in `apps/api/src/services/alerts/channels/pagerduty.ts` — Events API v2 incident creation
-- [ ] T152 [P] [US8] Create MS Teams sender in `apps/api/src/services/alerts/channels/teams.ts` — Adaptive Card format
-- [ ] T153 [P] [US8] Create custom webhook sender in `apps/api/src/services/alerts/channels/webhook.ts` — POST JSON payload to user-defined URL
-- [ ] T154 [US8] Update alert dispatcher in `apps/api/src/services/alerts/dispatcher.ts` — fan out to all enabled channels (email, slack, discord, pagerduty, teams, webhooks, in-app)
-- [ ] T155 [US8] Register integration routes in `apps/api/src/index.ts`
-- [ ] T156 [P] [US8] Create integrations page at `apps/web/src/routes/(app)/integrations/+page.svelte` — grid of integration cards (Slack, Discord, PagerDuty, Teams, Email, Custom Webhooks) with connected/disconnected status, configure/test buttons
-- [ ] T157 [US8] Create integration configure modal at `apps/web/src/lib/components/integrations/ConfigureModal.svelte` — dynamic form per integration type, webhook URL input, test button
+- [X] T142 [P] [US8] Implement `GET /integrations` in `apps/api/src/routes/integrations.ts`
+- [X] T143 [P] [US8] Implement `POST /integrations/slack` in `apps/api/src/routes/integrations.ts` — encrypt webhook URL, upsert
+- [X] T144 [P] [US8] Implement `POST /integrations/discord` in `apps/api/src/routes/integrations.ts`
+- [X] T145 [P] [US8] Implement `POST /integrations/pagerduty` in `apps/api/src/routes/integrations.ts`
+- [X] T146 [P] [US8] Implement `POST /integrations/teams` in `apps/api/src/routes/integrations.ts`
+- [X] T147 [P] [US8] Implement CRUD for `/integrations/webhooks` in `apps/api/src/routes/integrations.ts`
+- [X] T148 [US8] Implement `POST /integrations/:type/test` — decrypts config, calls channel test fn
+- [X] T149 [US8] Create Slack sender — Block Kit message with severity, metrics, context
+- [X] T150 [US8] Create Discord sender — embed with color-coded severity
+- [X] T151 [P] [US8] Create PagerDuty sender — Events API v2, severity map, dedup_key
+- [X] T152 [P] [US8] Create MS Teams sender — Adaptive Card format
+- [X] T153 [P] [US8] Create custom webhook sender — HMAC-signed JSON payload
+- [X] T154 [US8] Update dispatcher — fans out to all active integrations (email, slack, discord, pagerduty, teams, webhooks, in-app)
+- [X] T155 [US8] Register integration routes in `apps/api/src/index.ts`
+- [~] T156 [P] [US8] Create integrations page — UI exists with mock data, backend wiring deferred
+- [~] T157 [US8] Create integration configure modal — no separate modal component, backend wiring deferred
 
 **Checkpoint**: Notification integrations complete — alerts dispatched to external channels
 
@@ -347,9 +347,9 @@
 
 **Independent Test**: View inventory → see all zones, workers, R2 buckets, KV namespaces, D1 databases → trigger manual sync → see new resources appear → pause/resume monitoring on a resource
 
-- [ ] T158 [P] [US9] Implement `GET /resources/:id` in `apps/api/src/routes/resources.ts` — resource detail with metadata, monitoring status, last snapshot
-- [ ] T159 [US9] Create inventory page at `apps/web/src/routes/(app)/inventory/+page.svelte` — tabbed view by resource type (Zones, Workers, R2, KV, D1), table per tab with name, status, last synced, monitoring toggle, sync button
-- [ ] T160 [US9] Create resource detail drawer at `apps/web/src/lib/components/inventory/ResourceDetail.svelte` — metadata, associated rules, recent anomalies, monitoring toggle
+- [X] T158 [P] [US9] Implement `GET /resources/:id` in `apps/api/src/routes/resources.ts` — already implemented
+- [~] T159 [US9] Create inventory page at `apps/web/src/routes/(app)/inventory/+page.svelte` — UI exists with mock data, backend wiring deferred
+- [~] T160 [US9] Create resource detail drawer at `apps/web/src/lib/components/inventory/ResourceDetail.svelte` — backend wiring deferred
 
 **Checkpoint**: Infrastructure inventory provides resource-level visibility
 
@@ -361,13 +361,13 @@
 
 **Independent Test**: View billing → see current spend, projected monthly, daily average → set budget threshold → see budget bar → view cost drivers → view invoice history
 
-- [ ] T161 [P] [US10] Implement `GET /billing/overview` in `apps/api/src/routes/billing.ts` — current spend, projected monthly, daily average from billing_snapshots
-- [ ] T162 [P] [US10] Implement `GET /billing/breakdown` in `apps/api/src/routes/billing.ts` — cost by service
-- [ ] T163 [P] [US10] Implement `GET /billing/invoices` in `apps/api/src/routes/billing.ts` — invoice history list
-- [ ] T164 [P] [US10] Implement `GET /billing/budget` and `PATCH /billing/budget` in `apps/api/src/routes/billing.ts` — get/set budget threshold
-- [ ] T165 [P] [US10] Implement `GET /billing/top-drivers` in `apps/api/src/routes/billing.ts` — top cost drivers with amounts
-- [ ] T166 [US10] Register billing routes in `apps/api/src/index.ts`
-- [ ] T167 [P] [US10] Create billing overview page at `apps/web/src/routes/(app)/billing/+page.svelte` — spend cards, budget progress bar, cost breakdown chart, top drivers list, invoice table
+- [X] T161 [P] [US10] Implement `GET /billing/overview` — current spend, projected monthly, daily average
+- [X] T162 [P] [US10] Implement `GET /billing/breakdown` — cost by service with percentages
+- [X] T163 [P] [US10] Implement `GET /billing/invoices` — invoice history list
+- [X] T164 [P] [US10] Implement `GET /billing/budget` and `PATCH /billing/budget` — get/set budget threshold
+- [X] T165 [P] [US10] Implement `GET /billing/top-drivers` — top 5 cost drivers
+- [X] T166 [US10] Register billing routes in `apps/api/src/index.ts`
+- [~] T167 [P] [US10] Create billing overview page — UI exists with mock data, backend wiring deferred
 
 **Checkpoint**: Billing visibility provides cost awareness and budget protection
 
@@ -379,10 +379,10 @@
 
 **Independent Test**: Perform actions (create rule, invite member, etc.) → view audit log → see entries with user, action, timestamp → filter by action type → export CSV
 
-- [ ] T168 [P] [US11] Implement `GET /audit-logs` in `apps/api/src/routes/audit-logs.ts` — paginated, filterable by user/action/entity/date range
-- [ ] T169 [P] [US11] Implement `GET /audit-logs/export` in `apps/api/src/routes/audit-logs.ts` — generate CSV, stream response or store in R2 and return download URL
-- [ ] T170 [US11] Register audit-log routes in `apps/api/src/index.ts` with auth + RBAC(admin) middleware
-- [ ] T171 [US11] Create audit log page at `apps/web/src/routes/(app)/audit/+page.svelte` — filterable table (timestamp, user, action, entity, description), date range picker, export CSV button
+- [X] T168 [P] [US11] Implement `GET /audit-logs` — paginated, filterable by user/action/entity/date range
+- [X] T169 [P] [US11] Implement `GET /audit-logs/export` — CSV streaming response
+- [X] T170 [US11] Register audit-log routes in `apps/api/src/index.ts` with RBAC(admin)
+- [~] T171 [US11] Create audit log page — UI exists with mock data, backend wiring deferred
 
 **Checkpoint**: Audit log provides compliance trail
 
@@ -394,12 +394,12 @@
 
 **Independent Test**: Create token → see token value (shown once) → token appears in list (masked) → use token to call API → revoke token → API call fails
 
-- [ ] T172 [P] [US12] Implement `GET /developer/tokens` in `apps/api/src/routes/developer.ts` — list tokens with prefix, name, last used, created date
-- [ ] T173 [P] [US12] Implement `POST /developer/tokens` in `apps/api/src/routes/developer.ts` — generate token, store SHA-256 hash + prefix in D1, return full token (shown once only)
-- [ ] T174 [P] [US12] Implement `DELETE /developer/tokens/:id` in `apps/api/src/routes/developer.ts` — revoke token
-- [ ] T175 [US12] Create API token auth middleware in `apps/api/src/middleware/api-token-auth.ts` — check `Authorization: Bearer <token>` header, hash token, lookup in developer_tokens, attach session context
-- [ ] T176 [US12] Register developer routes in `apps/api/src/index.ts`; update auth middleware to support both session cookie and Bearer token
-- [ ] T177 [US12] Create developer settings page at `apps/web/src/routes/(app)/settings/developer/+page.svelte` — token list table, create token button, reveal-once modal, revoke action
+- [X] T172 [P] [US12] Implement `GET /developer/tokens` — list with prefix, name, last used, created date
+- [X] T173 [P] [US12] Implement `POST /developer/tokens` — generate `flk_` prefixed token, store SHA-256 hash, return once
+- [X] T174 [P] [US12] Implement `DELETE /developer/tokens/:id` — revoke token
+- [X] T175 [US12] Create API token auth middleware — Bearer token support, SHA-256 hash lookup, expiry check
+- [X] T176 [US12] Register developer routes in `apps/api/src/index.ts`
+- [~] T177 [US12] Create developer settings page — UI exists with mock data, backend wiring deferred
 
 **Checkpoint**: Developer API enables programmatic access
 
@@ -411,16 +411,16 @@
 
 **Independent Test**: Create mitigation rule (e.g., enable Under Attack Mode when requests > 100k/min) → simulate trigger → CF API action fires → mitigation logged → manual trigger works
 
-- [ ] T178 [P] [US13] Implement `GET /mitigations` in `apps/api/src/routes/mitigations.ts`
-- [ ] T179 [P] [US13] Implement `POST /mitigations` in `apps/api/src/routes/mitigations.ts` — validate trigger condition + action config
-- [ ] T180 [P] [US13] Implement `PATCH /mitigations/:id` and `PATCH /mitigations/:id/toggle` in `apps/api/src/routes/mitigations.ts`
-- [ ] T181 [P] [US13] Implement `DELETE /mitigations/:id` in `apps/api/src/routes/mitigations.ts`
-- [ ] T182 [US13] Implement `POST /mitigations/:id/trigger` in `apps/api/src/routes/mitigations.ts` — manually execute mitigation action
-- [ ] T183 [US13] Create mitigation executor in `apps/api/src/services/mitigation/executor.ts` — execute CF REST API actions: enable Under Attack Mode, apply rate-limit rule, block user-agent, pause worker
-- [ ] T184 [US13] Integrate mitigation trigger into anomaly detection orchestrator `apps/api/src/services/detection/index.ts` — when anomaly matches active mitigation rule, enqueue mitigation action
-- [ ] T185 [US13] Register mitigation routes in `apps/api/src/index.ts`
-- [ ] T186 [P] [US13] Create mitigations page at `apps/web/src/routes/(app)/mitigations/+page.svelte` — table with name, trigger, action, enabled toggle, last triggered, savings, actions
-- [ ] T187 [US13] Create mitigation form modal at `apps/web/src/lib/components/mitigations/MitigationFormModal.svelte` — trigger type, condition builder, action type selector, action config
+- [X] T178 [P] [US13] Implement `GET /mitigations` in `apps/api/src/routes/mitigations.ts`
+- [X] T179 [P] [US13] Implement `POST /mitigations` in `apps/api/src/routes/mitigations.ts` — validate trigger condition + action config
+- [X] T180 [P] [US13] Implement `PATCH /mitigations/:id` and `PATCH /mitigations/:id/toggle` in `apps/api/src/routes/mitigations.ts`
+- [X] T181 [P] [US13] Implement `DELETE /mitigations/:id` in `apps/api/src/routes/mitigations.ts`
+- [X] T182 [US13] Implement `POST /mitigations/:id/trigger` in `apps/api/src/routes/mitigations.ts` — manually execute mitigation action
+- [X] T183 [US13] Create mitigation executor in `apps/api/src/services/mitigation/executor.ts` — execute CF REST API actions: enable Under Attack Mode, apply rate-limit rule, block user-agent, pause worker
+- [X] T184 [US13] Integrate mitigation trigger into anomaly detection orchestrator `apps/api/src/services/detection/index.ts` — when anomaly matches active mitigation rule, enqueue mitigation action
+- [X] T185 [US13] Register mitigation routes in `apps/api/src/index.ts`
+- [~] T186 [P] [US13] Create mitigations page at `apps/web/src/routes/(app)/mitigations/+page.svelte` — table with name, trigger, action, enabled toggle, last triggered, savings, actions
+- [~] T187 [US13] Create mitigation form modal at `apps/web/src/lib/components/mitigations/MitigationFormModal.svelte` — trigger type, condition builder, action type selector, action config
 
 **Checkpoint**: Guardian Mode enables automated cost protection
 
@@ -430,11 +430,11 @@
 
 **Purpose**: OAuth login + email verification
 
-- [ ] T188 [P] Implement `GET /auth/oauth/:provider` in `apps/api/src/routes/auth.ts` — initiate PKCE OAuth flow for Google/GitHub, store code_verifier in KV, redirect to provider
-- [ ] T189 [P] Implement `GET /auth/oauth/:provider/callback` in `apps/api/src/routes/auth.ts` — exchange code for token, fetch user profile, match/create user, create session
-- [ ] T190 Create email verification flow in `apps/api/src/routes/auth.ts` — on register: send verification email via Resend with token (KV, 24h TTL); `GET /auth/verify-email?token=` to confirm
-- [ ] T191 [P] Add Google OAuth button to login/register pages in `apps/web/src/routes/(auth)/login/+page.svelte` and `register/+page.svelte`
-- [ ] T192 [P] Add GitHub OAuth button to login/register pages
+- [X] T188 [P] Implement `GET /auth/oauth/:provider` in `apps/api/src/routes/auth.ts` — initiate PKCE OAuth flow for Google/GitHub, store code_verifier in KV, redirect to provider
+- [X] T189 [P] Implement `GET /auth/oauth/:provider/callback` in `apps/api/src/routes/auth.ts` — exchange code for token, fetch user profile, match/create user, create session
+- [X] T190 Create email verification flow in `apps/api/src/routes/auth.ts` — on register: send verification email via Resend with token (KV, 24h TTL); `GET /auth/verify-email?token=` to confirm
+- [X] T191 [P] Add Google OAuth button to login/register pages in `apps/web/src/routes/(auth)/login/+page.svelte` and `register/+page.svelte`
+- [X] T192 [P] Add GitHub OAuth button to login/register pages
 
 **Checkpoint**: Extended auth with OAuth and email verification
 
@@ -444,14 +444,14 @@
 
 **Purpose**: User profile, notification preferences, account settings
 
-- [ ] T193 [P] Implement `GET /settings/profile` and `PATCH /settings/profile` in `apps/api/src/routes/settings.ts`
-- [ ] T194 [P] Implement `PATCH /settings/password` in `apps/api/src/routes/settings.ts` — verify current password, hash new password, update
-- [ ] T195 [P] Implement `GET /settings/notifications` and `PATCH /settings/notifications` in `apps/api/src/routes/settings.ts` — per-channel preferences
-- [ ] T196 [P] Implement `GET /settings/account` and `PATCH /settings/account` in `apps/api/src/routes/settings.ts` — account name, timezone, defaults
-- [ ] T197 Register settings routes in `apps/api/src/index.ts`
-- [ ] T198 [P] Create settings profile page at `apps/web/src/routes/(app)/settings/profile/+page.svelte` — name, email, avatar, change password form
-- [ ] T199 [P] Create notification preferences page at `apps/web/src/routes/(app)/settings/notifications/+page.svelte` — toggle per channel, default severity, digest preferences
-- [ ] T200 [P] Create account settings page at `apps/web/src/routes/(app)/settings/account/+page.svelte` — account name, timezone, danger zone (delete account)
+- [X] T193 [P] Implement `GET /settings/profile` and `PATCH /settings/profile` in `apps/api/src/routes/settings.ts`
+- [X] T194 [P] Implement `PATCH /settings/password` in `apps/api/src/routes/settings.ts` — verify current password, hash new password, update
+- [X] T195 [P] Implement `GET /settings/notifications` and `PATCH /settings/notifications` in `apps/api/src/routes/settings.ts` — per-channel preferences
+- [X] T196 [P] Implement `GET /settings/account` and `PATCH /settings/account` in `apps/api/src/routes/settings.ts` — account name, timezone, defaults
+- [X] T197 Register settings routes in `apps/api/src/index.ts`
+- [~] T198 [P] Create settings profile page at `apps/web/src/routes/(app)/settings/profile/+page.svelte` — name, email, avatar, change password form
+- [~] T199 [P] Create notification preferences page at `apps/web/src/routes/(app)/settings/notifications/+page.svelte` — toggle per channel, default severity, digest preferences
+- [~] T200 [P] Create account settings page at `apps/web/src/routes/(app)/settings/account/+page.svelte` — account name, timezone, danger zone (delete account)
 
 **Checkpoint**: Settings pages complete
 
@@ -461,11 +461,11 @@
 
 **Purpose**: WebSocket-based live updates via Durable Objects
 
-- [ ] T201 Create Durable Object class `AccountLiveFeed` in `apps/api/src/durable-objects/live-feed.ts` — manages WebSocket connections per account, broadcasts metric updates and anomaly alerts
-- [ ] T202 Implement `GET /ws` upgrade route in `apps/api/src/routes/ws.ts` — authenticate session, get DO stub by account_id, upgrade to WebSocket
-- [ ] T203 Update metrics poll worker to push new data to Durable Object after each poll cycle
-- [ ] T204 Create WebSocket store in `apps/web/src/lib/stores/websocket.ts` — Svelte 5 runes store that connects to `/ws`, parses messages, updates dashboard data reactively
-- [ ] T205 Update dashboard components to consume WebSocket store — live-updating cards and charts without polling
+- [X] T201 Create Durable Object class `AccountLiveFeed` in `apps/api/src/durable-objects/live-feed.ts` — manages WebSocket connections per account, broadcasts metric updates and anomaly alerts
+- [X] T202 Implement `GET /ws` upgrade route in `apps/api/src/routes/ws.ts` — authenticate session, get DO stub by account_id, upgrade to WebSocket
+- [X] T203 Update metrics poll worker to push new data to Durable Object after each poll cycle
+- [X] T204 Create WebSocket store in `apps/web/src/lib/stores/websocket.ts` — Svelte 5 runes store that connects to `/ws`, parses messages, updates dashboard data reactively
+- [~] T205 Update dashboard components to consume WebSocket store — live-updating cards and charts without polling
 
 **Checkpoint**: Dashboard updates in real-time
 
@@ -475,13 +475,13 @@
 
 **Purpose**: Scheduled workers for automated monitoring, baselines, digests, sync, and cleanup
 
-- [ ] T206 Implement metrics-poll cron in `apps/api/src/crons/metrics-poll.ts` — every 5min: iterate active accounts, decrypt tokens, query CF GraphQL, write to Analytics Engine, upsert zone_snapshots, enqueue anomaly-check messages
-- [ ] T207 [P] Implement baseline-recalc cron in `apps/api/src/crons/baseline-recalc.ts` — every 6h: query Analytics Engine for 28-day window, compute avg/stddev per (resource, metric, hour, day_of_week), upsert baselines table
-- [ ] T208 [P] Implement daily-digest cron in `apps/api/src/crons/daily-digest.ts` — 8 AM UTC: for each account with digest enabled, summarize last 24h anomalies + billing, render HTML, send via Resend
-- [ ] T209 [P] Implement resource-sync cron in `apps/api/src/crons/resource-sync.ts` — every 12h: call CF REST API per account, sync resources table
-- [ ] T210 [P] Implement housekeeping cron in `apps/api/src/crons/housekeeping.ts` — 3 AM UTC: delete old snapshots (per plan retention), purge soft-deleted records > 30d, archive old notifications
-- [ ] T211 Register cron handlers in `apps/api/src/index.ts` export `scheduled` handler; configure cron triggers in `apps/api/wrangler.jsonc`
-- [ ] T212 Create Queue consumer in `apps/api/src/queues/anomaly-check.ts` — consume anomaly-check messages from metrics poll, run detection orchestrator
+- [X] T206 Implement metrics-poll cron in `apps/api/src/crons/metrics-poll.ts` — every 5min: iterate active accounts, decrypt tokens, query CF GraphQL, write to Analytics Engine, upsert zone_snapshots, enqueue anomaly-check messages
+- [X] T207 [P] Implement baseline-recalc cron in `apps/api/src/crons/baseline-recalc.ts` — every 6h: query Analytics Engine for 28-day window, compute avg/stddev per (resource, metric, hour, day_of_week), upsert baselines table
+- [X] T208 [P] Implement daily-digest cron in `apps/api/src/crons/daily-digest.ts` — 8 AM UTC: for each account with digest enabled, summarize last 24h anomalies + billing, render HTML, send via Resend
+- [X] T209 [P] Implement resource-sync cron in `apps/api/src/crons/resource-sync.ts` — every 12h: call CF REST API per account, sync resources table
+- [X] T210 [P] Implement housekeeping cron in `apps/api/src/crons/housekeeping.ts` — 3 AM UTC: delete old snapshots (per plan retention), purge soft-deleted records > 30d, archive old notifications
+- [X] T211 Register cron handlers in `apps/api/src/index.ts` export `scheduled` handler; configure cron triggers in `apps/api/wrangler.jsonc`
+- [X] T212 Create Queue consumer in `apps/api/src/queues/anomaly-check.ts` — consume anomaly-check messages from metrics poll, run detection orchestrator
 
 **Checkpoint**: Automated background processing fully operational
 
@@ -491,15 +491,15 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T213 [P] Add loading skeletons to all dashboard and list pages in `apps/web/src/lib/components/ui/Skeleton.svelte`
-- [ ] T214 [P] Add empty states for all list pages (no anomalies, no rules, no integrations, etc.)
-- [ ] T215 [P] Add toast notification system in `apps/web/src/lib/components/ui/Toast.svelte` — success/error/info toasts for form submissions
-- [ ] T216 [P] Add responsive mobile navigation in `apps/web/src/lib/components/layout/MobileNav.svelte` — hamburger menu, slide-out sidebar
-- [ ] T217 Create error boundary pages in `apps/web/src/routes/+error.svelte` — 404, 500, generic error with retry
-- [ ] T218 [P] Add plan-limit enforcement across API routes — check account plan tier before allowing resource/rule/team creation; return 402 with upgrade prompt
-- [ ] T219 [P] Add pagination component at `apps/web/src/lib/components/ui/Pagination.svelte` — reusable for all list pages
-- [ ] T220 Security hardening pass — verify all CF tokens encrypted, all inputs validated, no XSS vectors in rendered content, CSRF protection on all mutations, rate limits on all endpoints
-- [ ] T221 Performance optimization — add KV caching for frequently read data (analytics overview, resource list), cache-control headers, SvelteKit preloading
+- [X] T213 [P] Add loading skeletons to all dashboard and list pages in `apps/web/src/lib/components/ui/Skeleton.svelte`
+- [X] T214 [P] Add empty states for all list pages (no anomalies, no rules, no integrations, etc.)
+- [X] T215 [P] Add toast notification system in `apps/web/src/lib/components/ui/Toast.svelte` — success/error/info toasts for form submissions
+- [X] T216 [P] Add responsive mobile navigation in `apps/web/src/lib/components/layout/MobileNav.svelte` — hamburger menu, slide-out sidebar
+- [X] T217 Create error boundary pages in `apps/web/src/routes/+error.svelte` — 404, 500, generic error with retry
+- [X] T218 [P] Add plan-limit enforcement across API routes — check account plan tier before allowing resource/rule/team creation; return 402 with upgrade prompt
+- [X] T219 [P] Add pagination component at `apps/web/src/lib/components/ui/Pagination.svelte` — reusable for all list pages
+- [X] T220 Security hardening pass — verify all CF tokens encrypted, all inputs validated, no XSS vectors in rendered content, CSRF protection on all mutations, rate limits on all endpoints
+- [X] T221 Performance optimization — add KV caching for frequently read data (analytics overview, resource list), cache-control headers, SvelteKit preloading
 
 ---
 

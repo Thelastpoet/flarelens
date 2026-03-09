@@ -12,7 +12,8 @@ let inboxOpen = $state(false);
 $effect(() => {
 	fetch('/api/notifications?read=false&per_page=10', { credentials: 'include' })
 		.then((r) => r.json())
-		.then((data: { data?: typeof notifications; total?: number }) => {
+		.then((raw) => {
+			const data = raw as { data?: typeof notifications; total?: number };
 			notifications = data.data ?? [];
 			notificationCount = data.total ?? notifications.length;
 		})

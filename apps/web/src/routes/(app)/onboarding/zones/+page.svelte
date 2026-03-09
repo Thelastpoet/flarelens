@@ -11,7 +11,7 @@
           <div class="size-8 text-[var(--color-primary)]">
             <span class="material-symbols-outlined text-3xl">notifications_active</span>
           </div>
-          <h2 class="text-2xl font-bold leading-tight tracking-[-0.015em]">Budget Guard</h2>
+          <h2 class="text-2xl font-bold leading-tight tracking-[-0.015em]">FlareLens</h2>
         </div>
 
         <!-- Headline -->
@@ -98,7 +98,7 @@
             <div class="size-6 text-[var(--color-primary)]">
               <span class="material-symbols-outlined text-2xl">notifications_active</span>
             </div>
-            <h2 class="text-xl font-bold leading-tight tracking-[-0.015em]">Budget Guard</h2>
+            <h2 class="text-xl font-bold leading-tight tracking-[-0.015em]">FlareLens</h2>
           </div>
 
           <div class="text-center lg:text-left mb-8 mt-4">

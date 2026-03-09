@@ -15,7 +15,7 @@
             </defs>
           </svg>
         </div>
-        <h2 class="text-xl font-bold leading-tight tracking-tight">Budget Guard</h2>
+        <h2 class="text-xl font-bold leading-tight tracking-tight">FlareLens</h2>
       </div>
     </header>
 

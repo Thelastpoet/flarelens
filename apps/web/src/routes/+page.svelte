@@ -11,7 +11,7 @@ let mobileNavOpen = $state(false);
 			<div class="size-6 text-primary">
 				<span class="material-symbols-outlined text-2xl">shield_lock</span>
 			</div>
-			<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Budget Guard</h2>
+			<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">FlareLens</h2>
 		</div>
 
 		<!-- Desktop nav -->
@@ -167,11 +167,11 @@ let mobileNavOpen = $state(false);
 		<div class="max-w-[1200px] mx-auto">
 			<div class="text-center mb-12">
 				<h2 class="text-slate-900 text-3xl font-bold tracking-[-0.015em] pb-3">Trusted by Developers Everywhere</h2>
-				<p class="text-slate-600">See what others are saying about Budget Guard.</p>
+				<p class="text-slate-600">See what others are saying about FlareLens.</p>
 			</div>
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 				{#each [
-					{ name: 'Alex D.',  role: 'Lead DevOps',         stars: 5,   quote: 'Budget Guard caught a rogue bot script before it cost us thousands. Absolute lifesaver. The ROI was immediate within the first week.' },
+					{ name: 'Alex D.',  role: 'Lead DevOps',         stars: 5,   quote: 'FlareLens caught a rogue bot script before it cost us thousands. Absolute lifesaver. The ROI was immediate within the first week.' },
 					{ name: 'Sarah K.', role: 'CTO',                 stars: 5,   quote: "Setup took less than 5 minutes. The automatic mitigation just works without hassle. I don't have to constantly check the Cloudflare dashboard anymore." },
 					{ name: 'Mike T.',  role: 'Full Stack Developer', stars: 4.5, quote: 'The usage analytics finally give us visibility into what is driving our Cloudflare bill. The reports are clean and actionable.' },
 				] as t}
@@ -304,7 +304,7 @@ let mobileNavOpen = $state(false);
 	<footer class="border-t border-slate-200 py-8 px-4 md:px-10 lg:px-40 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500">
 		<div class="flex items-center gap-2">
 			<span class="material-symbols-outlined text-primary text-xl">shield_lock</span>
-			<span class="font-bold text-slate-900">Budget Guard</span>
+			<span class="font-bold text-slate-900">FlareLens</span>
 			<span>© 2024. All rights reserved.</span>
 		</div>
 		<div class="flex gap-6">

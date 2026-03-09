@@ -8,11 +8,19 @@ import { AnalyticsService } from '../services/analytics.js';
 const analytics = new Hono<AppContext>();
 analytics.use('*', authMiddleware, reposMiddleware);
 
-// GET /analytics/overview
+// GET /analytics/overview — KV-cached for 60s
 analytics.get('/overview', rateLimit('reads'), async (c) => {
 	const { from, to } = c.req.query();
+	const session = c.get('session');
+	const cacheKey = `analytics_overview:${session.account_id}:${from ?? ''}:${to ?? ''}`;
+	const cached = await c.env.CACHE.get(cacheKey);
+	if (cached) {
+		return c.json(JSON.parse(cached));
+	}
 	const service = new AnalyticsService(c.get('repos'), c.env);
 	const data = await service.getOverview(from, to);
+	await c.env.CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 });
+	c.header('Cache-Control', 'private, max-age=60');
 	return c.json(data);
 });
 

@@ -19,7 +19,7 @@ const currentStep = $derived(
 	<header class="h-14 bg-white border-b border-gray-200 flex items-center px-8">
 		<div class="flex items-center gap-2">
 			<div class="w-7 h-7 rounded-lg bg-orange-500 flex items-center justify-center text-white text-xs font-bold">🛡️</div>
-			<span class="text-sm font-semibold text-slate-900">Budget Guard</span>
+			<span class="text-sm font-semibold text-slate-900">FlareLens</span>
 		</div>
 	</header>
 

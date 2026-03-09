@@ -1,8 +1,8 @@
 import { AppError } from '@flarelens/shared';
 import type { ErrorHandler } from 'hono';
-import type { Env } from '../env.js';
+import type { AppContext } from './auth.js';
 
-export const errorHandler: ErrorHandler<{ Bindings: Env }> = (err, c) => {
+export const errorHandler: ErrorHandler<AppContext> = (err, c) => {
 	if (err instanceof AppError) {
 		return c.json(
 			{

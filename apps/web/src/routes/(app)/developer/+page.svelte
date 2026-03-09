@@ -54,7 +54,7 @@ function copySnippet() {
   <div class="flex flex-wrap justify-between items-end gap-4 border-b border-primary/20 pb-6">
     <div class="flex min-w-72 flex-col gap-2">
       <h1 class="text-slate-900 dark:text-slate-100 text-3xl font-black leading-tight tracking-[-0.033em]">Developer &amp; API Settings</h1>
-      <p class="text-slate-600 dark:text-slate-400 text-base font-normal leading-normal">Manage personal access tokens, webhooks, and integrate Budget Guard with your infrastructure.</p>
+      <p class="text-slate-600 dark:text-slate-400 text-base font-normal leading-normal">Manage personal access tokens, webhooks, and integrate FlareLens with your infrastructure.</p>
     </div>
   </div>
 
@@ -63,7 +63,7 @@ function copySnippet() {
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight">Personal Access Tokens</h2>
-        <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">Tokens you have generated that can be used to access the Budget Guard API.</p>
+        <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">Tokens you have generated that can be used to access the FlareLens API.</p>
       </div>
       <button class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90 transition-colors text-sm font-semibold shadow-sm">
         <span class="material-symbols-outlined text-sm">add</span>

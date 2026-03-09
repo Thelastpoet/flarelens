@@ -66,7 +66,7 @@ export async function sendEmailAlert(
 
 		await resend.emails.send({
 			from: 'FlareLens Alerts <alerts@flarelens.com>',
-			to: [{ email: toEmail, name: toName }],
+			to: [toEmail],
 			subject,
 			html,
 		});

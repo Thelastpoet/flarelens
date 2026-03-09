@@ -63,7 +63,7 @@ function closeMenu() {
 					<div class="size-6 text-primary">
 						<span class="material-symbols-outlined !text-[24px]">shield</span>
 					</div>
-					<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Budget Guard</h2>
+					<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">FlareLens</h2>
 				</div>
 				<button onclick={closeMenu} class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
 					<span class="material-symbols-outlined !text-[22px]">close</span>
@@ -134,7 +134,7 @@ function closeMenu() {
 						<div class="size-6 text-primary shrink-0">
 							<span class="material-symbols-outlined !text-[24px]">shield</span>
 						</div>
-						<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] whitespace-nowrap">Budget Guard</h2>
+						<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] whitespace-nowrap">FlareLens</h2>
 					</div>
 
 					<!-- Search — desktop only -->

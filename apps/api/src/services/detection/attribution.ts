@@ -6,7 +6,7 @@ export interface AttributionContributor {
 	requests: number;
 	contributionPct: number;
 	baselineRequests?: number;
-	changeFromBaseline?: number;
+	changeFromBaseline?: number; // percentage change vs baseline period
 }
 
 export interface AttributionResult {
@@ -62,6 +62,31 @@ async function queryDimension(
 	return data?.viewer?.zones?.[0]?.httpRequestsAdaptiveGroups ?? [];
 }
 
+function buildContributors(
+	groups: GraphQLGroup[],
+	type: AttributionContributor['type'],
+	dimensionKey: string,
+	totalRequests: number,
+	baselineByValue?: Map<string, number>,
+): AttributionContributor[] {
+	return groups.slice(0, 5).map((group) => {
+		const value = group.dimensions[dimensionKey] ?? '(unknown)';
+		const requests = group.count;
+		const contributionPct = totalRequests > 0 ? (requests / totalRequests) * 100 : 0;
+		const baselineRequests = baselineByValue?.get(value);
+		const changeFromBaseline =
+			baselineRequests != null && baselineRequests > 0
+				? ((requests - baselineRequests) / baselineRequests) * 100
+				: undefined;
+
+		return { type, value, requests, contributionPct, baselineRequests, changeFromBaseline };
+	});
+}
+
+function groupsToMap(groups: GraphQLGroup[], dimensionKey: string): Map<string, number> {
+	return new Map(groups.map((g) => [g.dimensions[dimensionKey] ?? '(unknown)', g.count]));
+}
+
 export async function analyzeAttribution(
 	client: CloudflareClient,
 	zoneId: string,
@@ -69,48 +94,98 @@ export async function analyzeAttribution(
 	to: Date,
 	totalRequests: number,
 ): Promise<AttributionResult> {
-	const [endpointResult, userAgentResult, countryResult] = await Promise.allSettled([
+	// Baseline window: same duration 7 days prior
+	const durationMs = to.getTime() - from.getTime();
+	const baselineTo = new Date(from.getTime());
+	const baselineFrom = new Date(from.getTime() - durationMs - 7 * 24 * 60 * 60 * 1000);
+
+	const [
+		endpointResult,
+		userAgentResult,
+		countryResult,
+		asnResult,
+		baselineEndpointResult,
+		baselineUserAgentResult,
+		baselineCountryResult,
+		baselineAsnResult,
+	] = await Promise.allSettled([
 		queryDimension(client, zoneId, from, to, 'clientRequestPath'),
 		queryDimension(client, zoneId, from, to, 'userAgentBrowser'),
 		queryDimension(client, zoneId, from, to, 'clientCountryName'),
+		queryDimension(client, zoneId, from, to, 'clientASNDescription'),
+		queryDimension(client, zoneId, baselineFrom, baselineTo, 'clientRequestPath'),
+		queryDimension(client, zoneId, baselineFrom, baselineTo, 'userAgentBrowser'),
+		queryDimension(client, zoneId, baselineFrom, baselineTo, 'clientCountryName'),
+		queryDimension(client, zoneId, baselineFrom, baselineTo, 'clientASNDescription'),
 	]);
 
 	const contributors: AttributionContributor[] = [];
 
 	if (endpointResult.status === 'fulfilled') {
-		for (const group of endpointResult.value.slice(0, 5)) {
-			contributors.push({
-				type: 'endpoint',
-				value: group.dimensions['clientRequestPath'] ?? '(unknown)',
-				requests: group.count,
-				contributionPct: totalRequests > 0 ? (group.count / totalRequests) * 100 : 0,
-			});
-		}
+		const baselineMap =
+			baselineEndpointResult.status === 'fulfilled'
+				? groupsToMap(baselineEndpointResult.value, 'clientRequestPath')
+				: undefined;
+		contributors.push(
+			...buildContributors(
+				endpointResult.value,
+				'endpoint',
+				'clientRequestPath',
+				totalRequests,
+				baselineMap,
+			),
+		);
 	}
 
 	if (userAgentResult.status === 'fulfilled') {
-		for (const group of userAgentResult.value.slice(0, 5)) {
-			contributors.push({
-				type: 'user_agent',
-				value: group.dimensions['userAgentBrowser'] ?? '(unknown)',
-				requests: group.count,
-				contributionPct: totalRequests > 0 ? (group.count / totalRequests) * 100 : 0,
-			});
-		}
+		const baselineMap =
+			baselineUserAgentResult.status === 'fulfilled'
+				? groupsToMap(baselineUserAgentResult.value, 'userAgentBrowser')
+				: undefined;
+		contributors.push(
+			...buildContributors(
+				userAgentResult.value,
+				'user_agent',
+				'userAgentBrowser',
+				totalRequests,
+				baselineMap,
+			),
+		);
 	}
 
 	if (countryResult.status === 'fulfilled') {
-		for (const group of countryResult.value.slice(0, 5)) {
-			contributors.push({
-				type: 'country',
-				value: group.dimensions['clientCountryName'] ?? '(unknown)',
-				requests: group.count,
-				contributionPct: totalRequests > 0 ? (group.count / totalRequests) * 100 : 0,
-			});
-		}
+		const baselineMap =
+			baselineCountryResult.status === 'fulfilled'
+				? groupsToMap(baselineCountryResult.value, 'clientCountryName')
+				: undefined;
+		contributors.push(
+			...buildContributors(
+				countryResult.value,
+				'country',
+				'clientCountryName',
+				totalRequests,
+				baselineMap,
+			),
+		);
 	}
 
-	// Sort by contribution descending
+	if (asnResult.status === 'fulfilled') {
+		const baselineMap =
+			baselineAsnResult.status === 'fulfilled'
+				? groupsToMap(baselineAsnResult.value, 'clientASNDescription')
+				: undefined;
+		contributors.push(
+			...buildContributors(
+				asnResult.value,
+				'asn',
+				'clientASNDescription',
+				totalRequests,
+				baselineMap,
+			),
+		);
+	}
+
+	// Rank by contribution descending
 	contributors.sort((a, b) => b.contributionPct - a.contributionPct);
 
 	return {

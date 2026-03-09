@@ -160,4 +160,39 @@ export async function runDetection(
 		anomaly_id: anomalyId,
 		account_id: accountId,
 	});
+
+	// 9. Check active mitigations and auto-trigger if condition matches
+	try {
+		const activeMitigations = await repos.mitigations.findTriggerable();
+		for (const m of activeMitigations) {
+			const condition = JSON.parse(m.trigger_condition) as { metric: string; operator: string; threshold: number };
+			if (condition.metric !== metric) continue;
+			const triggered =
+				(condition.operator === 'gt' && currentValue > condition.threshold) ||
+				(condition.operator === 'gte' && currentValue >= condition.threshold) ||
+				(condition.operator === 'lt' && currentValue < condition.threshold) ||
+				(condition.operator === 'lte' && currentValue <= condition.threshold);
+
+			if (!triggered) continue;
+
+			try {
+				const { executeMitigation } = await import('../mitigation/executor.js');
+				const cfTokens = await repos.cfTokens.findActiveByAccount();
+				if (!cfTokens.length) continue;
+				const { decryptToken: dt } = await import('../../auth/crypto.js');
+				const plainToken = await dt(cfTokens[0].encrypted_token, env.TOKEN_ENCRYPTION_KEY);
+				const cfAccountId = cfTokens[0].cf_account_id ?? accountId;
+				const { CloudflareClient: CFC } = await import('../cloudflare/client.js');
+				const client = new CFC(plainToken, cfAccountId);
+				const actionConfig = JSON.parse(m.action_config) as Record<string, unknown>;
+				await executeMitigation(client, m.action_type as import('../mitigation/executor.js').ActionType, actionConfig);
+				await repos.mitigations.recordTrigger(m.id, 0);
+				console.log(`[Detection] Auto-triggered mitigation "${m.name}" for anomaly ${anomalyId}`);
+			} catch (err) {
+				console.error(`[Detection] Mitigation "${m.name}" execution failed:`, err);
+			}
+		}
+	} catch (err) {
+		console.error('[Detection] Mitigation check failed:', err);
+	}
 }

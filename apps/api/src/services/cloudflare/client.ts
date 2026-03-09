@@ -127,6 +127,47 @@ export class CloudflareClient {
 		return result ?? [];
 	}
 
+	async setZoneSecurityLevel(zoneId: string, level: string): Promise<void> {
+		await this.request(`/zones/${zoneId}/settings/security_level`, {
+			method: 'PATCH',
+			body: JSON.stringify({ value: level }),
+		});
+	}
+
+	async createRateLimitRule(zoneId: string, opts: { threshold: number; period: number }): Promise<string> {
+		const result = await this.request<{ id: string }>(`/zones/${zoneId}/rate_limits`, {
+			method: 'POST',
+			body: JSON.stringify({
+				match: { request: { url: { pattern: `*${zoneId}/*`, zone_name: '' } } },
+				threshold: opts.threshold,
+				period: opts.period,
+				action: { mode: 'simulate' },
+				enabled: true,
+				description: 'FlareLens auto rate limit',
+			}),
+		});
+		return result.id;
+	}
+
+	async blockUserAgent(zoneId: string, userAgent: string): Promise<void> {
+		await this.request(`/zones/${zoneId}/firewall/access_rules/rules`, {
+			method: 'POST',
+			body: JSON.stringify({
+				mode: 'block',
+				configuration: { target: 'user_agent', value: userAgent },
+				notes: `FlareLens auto-block UA: ${userAgent}`,
+			}),
+		});
+	}
+
+	async disableWorkerSubdomain(scriptName: string): Promise<void> {
+		// Disable the workers.dev subdomain route for this script
+		await this.request(`/accounts/${this.accountId}/workers/scripts/${scriptName}/subdomain`, {
+			method: 'POST',
+			body: JSON.stringify({ enabled: false }),
+		});
+	}
+
 	async graphql<T>(query: string, variables: Record<string, unknown>): Promise<T> {
 		const res = await fetch(CF_GRAPHQL_URL, {
 			method: 'POST',

@@ -16,7 +16,7 @@ let { items }: Props = $props();
 				<span class="text-brand-600 text-sm font-bold">🛡️</span>
 			</div>
 			<div>
-				<div class="text-sm font-semibold text-navy-900">Budget Guard</div>
+				<div class="text-sm font-semibold text-navy-900">FlareLens</div>
 				<div class="text-xs text-gray-500">{account.subtitle}</div>
 			</div>
 		</div>
