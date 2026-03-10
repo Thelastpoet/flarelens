@@ -56,7 +56,6 @@
         </div>
 
       </div>
-      <!-- Decorative blob -->
       <div class="absolute -bottom-32 -left-32 size-96 bg-[var(--color-primary)]/20 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
     </div>
 
@@ -65,10 +64,8 @@
       <div class="flex-1 flex flex-col justify-center px-4 py-12 sm:px-6 lg:px-20 xl:px-24">
         <div class="mx-auto w-full max-w-md">
 
-          <!-- Step progress -->
           <nav aria-label="Progress" class="mb-12">
             <ol class="flex items-center justify-center" role="list">
-              <!-- Step 1: completed -->
               <li class="relative pr-8 sm:pr-12">
                 <div aria-hidden="true" class="absolute inset-0 flex items-center">
                   <div class="h-0.5 w-full bg-[var(--color-primary)]"></div>
@@ -78,7 +75,6 @@
                 </div>
                 <span class="absolute -bottom-6 left-4 -translate-x-1/2 text-xs font-medium text-[var(--color-primary)] w-max">Create Account</span>
               </li>
-              <!-- Step 2: current -->
               <li class="relative pr-8 sm:pr-12">
                 <div aria-hidden="true" class="absolute inset-0 flex items-center">
                   <div class="h-0.5 w-full bg-slate-200"></div>
@@ -88,7 +84,6 @@
                 </div>
                 <span class="absolute -bottom-6 left-4 -translate-x-1/2 text-xs font-medium text-slate-900 w-max">Connect Cloudflare</span>
               </li>
-              <!-- Step 3: upcoming -->
               <li class="relative">
                 <div class="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-slate-300 bg-white">
                   <span class="text-slate-500 text-sm font-medium">3</span>
@@ -98,7 +93,6 @@
             </ol>
           </nav>
 
-          <!-- Mobile logo -->
           <div class="flex items-center gap-3 text-slate-900 mb-8 lg:hidden justify-center">
             <div class="size-6 text-[var(--color-primary)]">
               <span class="material-symbols-outlined text-2xl">shield_lock</span>
@@ -159,7 +153,6 @@
             </form>
           </div>
 
-          <!-- Info banner -->
           <div class="mt-8 flex items-start gap-3 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100">
             <span class="material-symbols-outlined text-blue-500 shrink-0">info</span>
             <p>Connecting your account securely syncs your current usage data. This process might take a few seconds.</p>

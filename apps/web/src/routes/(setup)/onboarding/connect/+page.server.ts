@@ -9,7 +9,6 @@ export const actions: Actions = {
 
 		if (!token) return fail(400, { error: 'API token is required' });
 
-		// Add token
 		const addRes = await fetch('/api/cf-tokens', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -24,7 +23,6 @@ export const actions: Actions = {
 
 		const { token: savedToken } = (await addRes.json()) as { token: { id: string } };
 
-		// Verify token
 		const verifyRes = await fetch(`/api/cf-tokens/${savedToken.id}/verify`, {
 			method: 'POST',
 			credentials: 'include',

@@ -1,20 +1,8 @@
 import { redirect } from '@sveltejs/kit';
+import { loadOnboardingZonesPage } from '$lib/server/onboarding.js';
 import type { Actions, PageServerLoad } from './$types';
 
-interface ResourceRecord {
-	id: string;
-	name: string;
-	type: 'zone' | 'worker' | 'r2_bucket' | 'kv_namespace' | 'd1_database';
-	monitoring_status: 'active' | 'paused';
-	cf_resource_id: string;
-}
-
-export const load: PageServerLoad = async ({ fetch }) => {
-	const res = await fetch('/api/resources', { credentials: 'include' });
-	const data = res.ok ? ((await res.json()) as { resources: ResourceRecord[] }) : { resources: [] };
-
-	return { resources: data.resources };
-};
+export const load: PageServerLoad = async ({ fetch }) => loadOnboardingZonesPage(fetch);
 
 export const actions: Actions = {
 	confirm: async ({ request, fetch }) => {
