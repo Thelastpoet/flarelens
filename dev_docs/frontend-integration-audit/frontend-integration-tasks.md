@@ -1,0 +1,88 @@
+# Tasks: Frontend Integration
+
+## Purpose
+
+This file tracks the frontend work required to replace mock data with live backend data while preserving the current UI exactly.
+
+## Working Rules
+
+- Do not redesign screens during data wiring.
+- Remove mock data only when the replacement contract is understood.
+- If the backend is missing a required UI contract, record the gap instead of inventing a frontend-only workaround.
+
+## Tasks
+
+### Phase 1: Shared Shell
+
+- [ ] F001 Replace mock account and user data in `apps/web/src/lib/components/layout/Sidebar.svelte`
+  Status: still open. The active shell is `AppShell.svelte`, but the older `Sidebar.svelte` component still imports mock data and should be cleaned or retired.
+- [x] F002 Confirm `(app)` layout data shape is sufficient for shared shell identity display
+  Outcome: passed. `(app)/+layout.ts` now provides authenticated user plus account data that can drive the active shell.
+- [x] F003 Audit shared notification UI (`NotificationBadge`, `NotificationInbox`, stores) against `/notifications`
+  Outcome: partial-but-usable. The active shell now reads unread notification count from the backend at layout level; older notification components still need a usage cleanup pass.
+- [x] F024 Replace hardcoded avatar/account shell values in `AppShell.svelte` or consolidate shell identity to one source
+  Outcome: passed. `AppShell.svelte` now uses live authenticated layout data for account name, plan label, and avatar initials.
+- [ ] F025 Review shell controls for accessibility semantics (`aria-expanded`, focus handling, dismiss behavior)
+  Status: in progress. Menu button semantics were improved in `AppShell.svelte`, but the full shell interaction review is not complete yet.
+
+### Phase 2: Already Loader-Backed Screens
+
+- [ ] F004 Remove remaining hardcoded summary/trend values from `dashboard/+page.svelte`
+- [ ] F005 Remove hardcoded recent-activity items from `dashboard/+page.svelte` or mark backend gap if no matching feed exists
+- [ ] F006 Confirm all dashboard widgets degrade cleanly with real empty-state data
+- [ ] F007 Remove analytics-page fallback demo visuals where real API data should drive the widget
+- [ ] F008 Confirm anomaly list and detail routes cover the current UI states without local-only assumptions
+- [ ] F026 Remove or replace analytics-page static fallback visuals where they misrepresent real empty-state data
+- [ ] F027 Review tabs, filters, toggles, and modal patterns on touched pages for keyboard/accessibility correctness
+
+### Phase 3: Management Screens With Existing Backend Support
+
+- [ ] F009 Wire inventory page to `/resources`
+- [ ] F010 Wire rules page to `/rules`
+- [ ] F011 Wire integrations page to `/integrations/*`
+- [ ] F012 Wire team page to `/team/*`
+- [ ] F013 Wire notifications page to `/notifications`
+- [ ] F014 Wire mitigations page to `/mitigations/*`
+- [ ] F015 Wire audit page to `/audit-logs`
+- [ ] F016 Wire developer page to `/developer/*`
+- [ ] F017 Wire billing page to `/billing/*` using estimate-based backend semantics
+
+### Phase 4: Settings and Profile
+
+- [ ] F018 Replace mock profile data in `settings/+page.svelte`
+- [x] F018 Replace mock profile data in `settings/+page.svelte`
+  Outcome: passed for identity display. The settings page now reads authenticated user name and email from layout data instead of `lib/data/mock.ts`.
+- [ ] F019 Map settings page sections to real backend routes (`/auth/me`, `/settings`, related account settings APIs)
+- [ ] F020 Record backend gaps for unsupported settings actions such as avatar/password/preferences if the API contract is missing
+
+### Phase 5: Onboarding and Auth Validation
+
+- [ ] F021 Confirm onboarding connect uses the exact live token payload/response shape
+- [ ] F022 Confirm onboarding zones uses the exact `/resources` response shape and zone-selection behavior
+- [ ] F023 Validate auth pages against the live backend contracts and identify any password-reset gaps
+
+### Phase 6: Frontend Quality Hardening
+
+- [ ] F028 Audit custom switch/button/tab controls and add missing accessibility state where needed
+- [ ] F029 Audit modal/backdrop patterns for close behavior and focus management
+- [ ] F030 Audit fake or local-only interactions on management pages and classify them as real wiring work or backend gaps
+- [ ] F031 Remove remaining demo-only sections that survive after data wiring
+- [ ] F032 Run final `pnpm --filter web check` after each completed page slice
+
+## Current Audit Findings
+
+- `Sidebar.svelte` still imports `account` and `currentUser` from `lib/data/mock.ts`
+- `settings/+page.svelte` still imports `currentUser` from `lib/data/mock.ts`
+- The active authenticated shell now uses real layout data for account identity and unread notification count
+- Dashboard and analytics pages have live loaders but still contain hardcoded trend badges, fallback visual content, or static activity sections
+- The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
+- Most management pages (`billing`, `inventory`, `integrations`, `rules`, `team`, `audit`, `developer`, `mitigations`, `notifications`) are still UI-only with no page loader or server actions
+- `onboarding/connect` already matches the current backend token contract (`{ label, token }`)
+- `onboarding/zones` already hits `/resources/sync` and `/resources`, but the UI still needs a full route-level audit during implementation
+
+## Exit Criteria
+
+- [ ] no production app page depends on `lib/data/mock.ts`
+- [ ] every current app screen is classified as backend-backed or explicitly blocked by a backend gap
+- [ ] all loader-backed screens preserve the current UI while using real API data
+- [ ] backend gaps needed by the existing UI are documented separately

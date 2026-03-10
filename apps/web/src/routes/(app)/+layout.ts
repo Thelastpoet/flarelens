@@ -10,5 +10,19 @@ export const load: LayoutLoad = async ({ fetch, url }) => {
 	}
 
 	const user = await res.json();
-	return { user };
+
+	let unreadNotifications = 0;
+	try {
+		const notificationsRes = await fetch('/api/notifications?read=false&per_page=1', {
+			credentials: 'include',
+		});
+		if (notificationsRes.ok) {
+			const notifications = (await notificationsRes.json()) as { total?: number };
+			unreadNotifications = notifications.total ?? 0;
+		}
+	} catch {
+		// Keep the shell usable even if notifications fail to load.
+	}
+
+	return { user, unreadNotifications };
 };

@@ -5,14 +5,19 @@ let { children }: { children: import('svelte').Snippet } = $props();
 
 let mobileOpen = $state(false);
 
-const sideNav = [
-	{ label: 'Overview', href: '/dashboard', icon: 'grid_view', badge: 0 },
-	{ label: 'Rules', href: '/rules', icon: 'rule', badge: 0 },
-	{ label: 'Alerts', href: '/notifications', icon: 'notifications', badge: 3 },
-	{ label: 'Billing', href: '/billing', icon: 'payments', badge: 0 },
-	{ label: 'Integrations', href: '/integrations', icon: 'integration_instructions', badge: 0 },
-	{ label: 'Settings', href: '/settings', icon: 'settings', badge: 0 },
-];
+type AuthenticatedLayoutUser = {
+	name: string;
+	email: string;
+	account?: {
+		name?: string | null;
+		plan?: string | null;
+	};
+};
+
+type AppLayoutData = {
+	user?: AuthenticatedLayoutUser | null;
+	unreadNotifications?: number;
+};
 
 const topNav = [
 	{ label: 'Dashboard', href: '/dashboard' },
@@ -42,6 +47,34 @@ function topActive(href: string) {
 function closeMenu() {
 	mobileOpen = false;
 }
+
+const layoutData = $derived(($page.data ?? {}) as AppLayoutData);
+const user = $derived(layoutData.user ?? null);
+const unreadNotifications = $derived(layoutData.unreadNotifications ?? 0);
+const sideNav = $derived([
+	{ label: 'Overview', href: '/dashboard', icon: 'grid_view', badge: 0 },
+	{ label: 'Rules', href: '/rules', icon: 'rule', badge: 0 },
+	{ label: 'Alerts', href: '/notifications', icon: 'notifications', badge: unreadNotifications },
+	{ label: 'Billing', href: '/billing', icon: 'payments', badge: 0 },
+	{ label: 'Integrations', href: '/integrations', icon: 'integration_instructions', badge: 0 },
+	{ label: 'Settings', href: '/settings', icon: 'settings', badge: 0 },
+]);
+
+function formatPlanLabel(plan: string | null | undefined): string {
+	if (!plan) return 'Plan Unavailable';
+	return `${plan.charAt(0).toUpperCase()}${plan.slice(1)} Plan`;
+}
+
+function initialsFor(name: string | null | undefined): string {
+	if (!name) return '?';
+	const parts = name
+		.split(/\s+/)
+		.map((part) => part.trim())
+		.filter(Boolean)
+		.slice(0, 2);
+	if (parts.length === 0) return '?';
+	return parts.map((part) => part[0]?.toUpperCase() ?? '').join('');
+}
 </script>
 
 <div class="bg-background-light font-display text-slate-900 min-h-screen antialiased">
@@ -50,13 +83,14 @@ function closeMenu() {
 	{#if mobileOpen}
 		<!-- Backdrop -->
 		<button
+			type="button"
 			class="fixed inset-0 z-40 bg-black/40 lg:hidden"
 			onclick={closeMenu}
 			aria-label="Close menu"
 		></button>
 
 		<!-- Drawer -->
-		<div class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl flex flex-col lg:hidden">
+		<div id="app-mobile-navigation" class="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-2xl flex flex-col lg:hidden">
 			<!-- Drawer header -->
 			<div class="flex items-center justify-between px-5 py-4 border-b border-slate-200">
 				<div class="flex items-center gap-3 text-slate-900">
@@ -65,7 +99,7 @@ function closeMenu() {
 					</div>
 					<h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">FlareLens</h2>
 				</div>
-				<button onclick={closeMenu} class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
+				<button type="button" onclick={closeMenu} class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors">
 					<span class="material-symbols-outlined !text-[22px]">close</span>
 				</button>
 			</div>
@@ -76,8 +110,8 @@ function closeMenu() {
 					<span class="material-symbols-outlined">cloud</span>
 				</div>
 				<div class="flex flex-col min-w-0">
-					<p class="text-slate-900 text-sm font-semibold leading-normal truncate">Cloudflare</p>
-					<p class="text-slate-500 text-xs font-medium leading-normal">Pro Plan</p>
+					<p class="text-slate-900 text-sm font-semibold leading-normal truncate">{user?.account?.name ?? 'Account'}</p>
+					<p class="text-slate-500 text-xs font-medium leading-normal">{formatPlanLabel(user?.account?.plan)}</p>
 				</div>
 			</div>
 
@@ -122,9 +156,12 @@ function closeMenu() {
 				<div class="flex items-center gap-3 sm:gap-8">
 					<!-- Hamburger — mobile only -->
 					<button
+						type="button"
 						onclick={() => mobileOpen = true}
 						class="lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors shrink-0"
 						aria-label="Open menu"
+						aria-expanded={mobileOpen}
+						aria-controls="app-mobile-navigation"
 					>
 						<span class="material-symbols-outlined !text-[24px]">menu</span>
 					</button>
@@ -167,7 +204,7 @@ function closeMenu() {
 					</nav>
 
 					<!-- Search icon — mobile only -->
-					<button class="md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors">
+					<button type="button" class="md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors" aria-label="Search resources">
 						<span class="material-symbols-outlined !text-[22px]">search</span>
 					</button>
 
@@ -178,8 +215,12 @@ function closeMenu() {
 					</a>
 
 					<!-- Avatar -->
-					<div class="w-9 h-9 rounded-full bg-slate-200 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-600 cursor-pointer shrink-0">
-						JD
+					<div
+						class="w-9 h-9 rounded-full bg-slate-200 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-600 cursor-pointer shrink-0"
+						title={user?.name ?? 'User'}
+						aria-label={user?.name ?? 'User'}
+					>
+						{initialsFor(user?.name)}
 					</div>
 				</div>
 			</header>
@@ -196,8 +237,8 @@ function closeMenu() {
 							<span class="material-symbols-outlined">cloud</span>
 						</div>
 						<div class="flex flex-col min-w-0">
-							<p class="text-slate-900 text-sm font-semibold leading-normal truncate">Cloudflare</p>
-							<p class="text-slate-500 text-xs font-medium leading-normal">Pro Plan</p>
+							<p class="text-slate-900 text-sm font-semibold leading-normal truncate">{user?.account?.name ?? 'Account'}</p>
+							<p class="text-slate-500 text-xs font-medium leading-normal">{formatPlanLabel(user?.account?.plan)}</p>
 						</div>
 					</div>
 

@@ -1,5 +1,23 @@
 <script lang="ts">
-import { currentUser } from '$lib/data/mock';
+import { page } from '$app/stores';
+
+type SettingsUser = {
+	name: string;
+	email: string;
+};
+
+const user = $derived(($page.data.user ?? null) as SettingsUser | null);
+
+function initialsFor(name: string | null | undefined): string {
+	if (!name) return '?';
+	const parts = name
+		.split(/\s+/)
+		.map((part) => part.trim())
+		.filter(Boolean)
+		.slice(0, 2);
+	if (parts.length === 0) return '?';
+	return parts.map((part) => part[0]?.toUpperCase() ?? '').join('');
+}
 </script>
 
 <div class="max-w-2xl">
@@ -10,18 +28,18 @@ import { currentUser } from '$lib/data/mock';
 		<h2 class="text-sm font-semibold text-slate-900 mb-5">Profile</h2>
 		<div class="flex items-center gap-4 mb-5">
 			<div class="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-xl font-semibold text-gray-600">
-				{currentUser.initials}
+				{initialsFor(user?.name)}
 			</div>
 			<button class="text-sm text-orange-500 hover:underline">Change avatar</button>
 		</div>
 		<div class="grid grid-cols-2 gap-4">
 			<div>
 				<label class="block text-sm text-gray-700 mb-1.5" for="settings-full-name">Full name</label>
-				<input type="text" id="settings-full-name" value={currentUser.name} class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
+				<input type="text" id="settings-full-name" value={user?.name ?? ''} class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
 			</div>
 			<div>
 				<label class="block text-sm text-gray-700 mb-1.5" for="settings-email">Email address</label>
-				<input type="email" id="settings-email" value={currentUser.email} class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
+				<input type="email" id="settings-email" value={user?.email ?? ''} class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
 			</div>
 		</div>
 		<div class="flex justify-end mt-4">
