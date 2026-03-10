@@ -4,31 +4,18 @@
 	import type { NotificationSeverity, NotificationType } from '@flarelens/shared';
 	import type { PageData } from './$types.js';
 
-	interface NotificationItem {
-		id: string;
-		type: NotificationType;
-		title: string;
-		body: string;
-		severity: NotificationSeverity;
-		link: string | null;
-		read: 0 | 1;
-		created_at: string;
-	}
-
 	let { data }: { data: PageData } = $props();
 
 	let busyAction = $state<'mark-all' | 'archive-all' | string | null>(null);
 
-	const notifications = $derived((data.notifications?.data ?? []) as NotificationItem[]);
+	const notifications = $derived(data.notifications.data);
 	const unreadCount = $derived(notifications.filter((notification) => notification.read === 0).length);
 	const criticalUnreadCount = $derived(
 		notifications.filter(
 			(notification) => notification.read === 0 && notification.severity === 'critical',
 		).length,
 	);
-	const hasMore = $derived(
-		(data.notifications?.page ?? 1) < (data.notifications?.total_pages ?? 1),
-	);
+	const hasMore = $derived(data.notifications.page < data.notifications.total_pages);
 
 	const severityAccent: Record<NotificationSeverity, string> = {
 		critical: 'bg-red-500',
@@ -169,7 +156,7 @@
 						class={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconStyles[notification.severity]}`}
 					>
 						<span class="material-symbols-outlined">
-							{iconByType[notification.type] ?? 'notifications'}
+							{iconByType[notification.type]}
 						</span>
 					</div>
 					<div class="flex min-w-0 flex-1 flex-col">

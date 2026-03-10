@@ -3,22 +3,6 @@
 	import { api, ApiRequestError } from '$lib/api.js';
 	import type { PageData } from './$types.js';
 
-	interface TokenRecord {
-		id: string;
-		name: string;
-		token_prefix: string;
-		last_used_at: string | null;
-		expires_at: string | null;
-		created_at: string;
-	}
-
-	interface WebhookRecord {
-		id: string;
-		name: string;
-		status: 'active' | 'inactive' | 'error';
-		last_used_at: string | null;
-	}
-
 	interface TokenModalState {
 		name: string;
 		expires_in_days: string;
@@ -47,8 +31,8 @@
 		secret: '',
 	});
 
-	const tokens = $derived((data.tokens ?? []) as TokenRecord[]);
-	const webhooks = $derived((data.webhooks ?? []) as WebhookRecord[]);
+	const tokens = $derived(data.tokens);
+	const webhooks = $derived(data.webhooks);
 	const snippetTabs = ['Current Status'] as const;
 	let activeSnippetTab = $state('Current Status');
 	let copied = $state(false);

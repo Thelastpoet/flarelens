@@ -5,14 +5,6 @@
 
 	type IntegrationType = 'slack' | 'discord' | 'teams' | 'pagerduty' | 'webhook';
 
-	interface IntegrationRecord {
-		id: string;
-		type: IntegrationType;
-		name: string;
-		status: 'active' | 'inactive' | 'error';
-		last_used_at: string | null;
-	}
-
 	interface CardMeta {
 		icon: string;
 		iconBg: string;
@@ -49,7 +41,7 @@
 		secret: '',
 	});
 
-	const liveIntegrations = $derived((data.integrations ?? []) as IntegrationRecord[]);
+	const liveIntegrations = $derived(data.integrations);
 
 	const cardMeta: Record<IntegrationType, CardMeta> = {
 		slack: {
@@ -89,11 +81,13 @@
 		},
 	};
 
-	function singleIntegration(type: Exclude<IntegrationType, 'webhook'>): IntegrationRecord | null {
-		return liveIntegrations.find((integration) => integration.type === type) ?? null;
+	function singleIntegration(
+		type: Exclude<IntegrationType, 'webhook'>,
+	): (typeof data.integrations)[number] | null {
+		return liveIntegrations.find((integration) => integration.type === type) || null;
 	}
 
-	function webhookIntegrations(): IntegrationRecord[] {
+	function webhookIntegrations(): (typeof data.integrations)[number][] {
 		return liveIntegrations.filter((integration) => integration.type === 'webhook');
 	}
 

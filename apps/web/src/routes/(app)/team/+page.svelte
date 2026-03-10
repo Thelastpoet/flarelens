@@ -6,17 +6,6 @@
 	type MemberStatus = 'active' | 'pending';
 	type MemberRole = 'admin' | 'editor' | 'viewer';
 
-	interface TeamMemberRow {
-		id: string;
-		user_id: string | null;
-		email: string;
-		role: MemberRole;
-		status: MemberStatus;
-		invited_at: string;
-		accepted_at: string | null;
-		last_active_at: string | null;
-	}
-
 	interface InviteFormState {
 		email: string;
 		role: 'editor' | 'viewer';
@@ -30,7 +19,7 @@
 	let formError = $state<string | null>(null);
 	let inviteForm = $state<InviteFormState>({ email: '', role: 'viewer' });
 
-	const members = $derived((data.members ?? []) as TeamMemberRow[]);
+	const members = $derived(data.members);
 
 	const roleStyles: Record<'Admin' | 'Editor' | 'Viewer', string> = {
 	Admin:
@@ -57,7 +46,7 @@
 	}
 
 	function initials(email: string): string {
-		const localPart = email.split('@')[0] ?? '';
+		const localPart = email.split('@')[0];
 		const parts = localPart.split(/[._-]+/).filter(Boolean);
 		if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 		return localPart.slice(0, 2).toUpperCase();
