@@ -64,8 +64,10 @@ This file tracks the frontend work required to replace mock data with live backe
 - [ ] F018 Replace mock profile data in `settings/+page.svelte`
 - [x] F018 Replace mock profile data in `settings/+page.svelte`
   Outcome: passed for identity display. The settings page now reads authenticated user name and email from layout data instead of `lib/data/mock.ts`.
-- [ ] F019 Map settings page sections to real backend routes (`/auth/me`, `/settings`, related account settings APIs)
-- [ ] F020 Record backend gaps for unsupported settings actions such as avatar/password/preferences if the API contract is missing
+- [x] F019 Map settings page sections to real backend routes (`/auth/me`, `/settings`, related account settings APIs)
+  Outcome: passed for the current settings surface. The page now loads real profile/account/notification state and supports live profile, password, and notification updates.
+- [x] F020 Record backend gaps for unsupported settings actions such as avatar/password/preferences if the API contract is missing
+  Outcome: passed. The UI now explicitly marks avatar upload and account deletion as unsupported backend actions instead of leaving fake controls in place.
 
 ### Phase 5: Onboarding and Auth Validation
 
