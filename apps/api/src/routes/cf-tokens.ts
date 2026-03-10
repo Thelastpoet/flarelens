@@ -1,4 +1,4 @@
-import { NotFoundError, ValidationError, newId } from '@flarelens/shared';
+import { CF_REQUIRED_CAPABILITIES, NotFoundError, ValidationError, newId } from '@flarelens/shared';
 import { AddCfTokenSchema, type AddCfTokenInput } from '@flarelens/shared/schemas/cf-tokens';
 import { Hono } from 'hono';
 import { decryptToken, encryptToken } from '../auth/crypto.js';
@@ -61,32 +61,132 @@ cfTokens.post('/:id/verify', requireRole('admin'), rateLimit('writes'), async (c
 	if (!tokenRow) throw new NotFoundError('CF token', id);
 
 	const plainToken = await decryptToken(tokenRow.encrypted_token, c.env.TOKEN_ENCRYPTION_KEY);
-	// Use empty string as cf_account_id initially for verification
-	const client = new CloudflareClient(plainToken, '');
+	const client = new CloudflareClient(plainToken, tokenRow.cf_account_id);
 
 	let verifyResult: import('../services/cloudflare/client.js').CfTokenVerifyResult;
 	try {
 		verifyResult = await client.verifyToken();
-	} catch (_err) {
-		await repos.cfTokens.updateStatus(id, 'invalid');
+	} catch (err) {
+		if (
+			err instanceof ValidationError ||
+			(err instanceof Error && err.name === 'ValidationError') ||
+			(typeof err === 'object' &&
+				err !== null &&
+				'code' in err &&
+				err.code === 'VALIDATION_ERROR')
+		) {
+			throw err;
+		}
+		const message =
+			err instanceof Error
+				? err.message
+				: 'Cloudflare token verification failed before capability checks could run';
+		await repos.cfTokens.updateStatus({
+			id,
+			status: 'invalid',
+			verification_error: message,
+		});
+		console.warn('[CfTokenVerify] Token verification request failed', {
+			token_id: id,
+			account_id: c.get('session').account_id,
+			error: message,
+		});
 		throw new ValidationError(
-			'Cloudflare token verification failed. Check the token is valid and has required permissions.',
+			'Cloudflare token verification failed. Check the token is valid and retry.',
 		);
 	}
 
 	if (verifyResult.status !== 'active') {
-		await repos.cfTokens.updateStatus(id, 'invalid');
+		const verificationDetails = client.buildVerificationDetails({
+			verifyResult,
+			account: {
+				id: tokenRow.cf_account_id,
+				name: null,
+				source: tokenRow.cf_account_id ? 'stored' : null,
+			},
+			probes: [],
+		});
+		await repos.cfTokens.updateStatus({
+			id,
+			status: 'invalid',
+			verification_error: `Token status is '${verifyResult.status}', expected 'active'`,
+			verification_details: verificationDetails,
+		});
 		throw new ValidationError(`Token status is '${verifyResult.status}', expected 'active'`);
 	}
 
-	const permissions =
-		verifyResult.policies?.flatMap((p) => p.permissionGroups?.map((g) => g.name) ?? []) ?? [];
+	let account: { id: string; name: string | null; source: import('@flarelens/shared').CfAccountSource };
+	let capabilityResult: {
+		capabilities: import('@flarelens/shared').CfCapability[];
+		probes: import('@flarelens/shared').CfCapabilityProbe[];
+	};
+	let verificationDetails: import('@flarelens/shared').CfTokenVerificationDetails;
+	try {
+		account = await client.resolveAccount(tokenRow.cf_account_id);
+		capabilityResult = await client.probeCapabilities(account.id);
+		verificationDetails = client.buildVerificationDetails({
+			verifyResult,
+			account,
+			probes: capabilityResult.probes,
+		});
+	} catch (err) {
+		const message =
+			err instanceof Error
+				? err.message
+				: 'Cloudflare token verification completed but capability validation failed';
+		const verificationDetails = client.buildVerificationDetails({
+			verifyResult,
+			account: {
+				id: tokenRow.cf_account_id,
+				name: null,
+				source: tokenRow.cf_account_id ? 'stored' : null,
+			},
+			probes: [],
+		});
+		await repos.cfTokens.updateStatus({
+			id,
+			status: 'invalid',
+			verification_error: message,
+			verification_details: verificationDetails,
+		});
+		console.warn('[CfTokenVerify] Capability validation failed', {
+			token_id: id,
+			account_id: c.get('session').account_id,
+			error: message,
+		});
+		throw new ValidationError(message);
+	}
 
-	// The CF account ID isn't returned from token verify — we need the user to provide it
-	// or we fetch from /user endpoint. Let's get it from /user/tokens/:id
-	const cfAccountId = tokenRow.cf_account_id ?? '';
+	const missingCapabilities = CF_REQUIRED_CAPABILITIES.filter(
+		(capability) => !capabilityResult.capabilities.includes(capability),
+	);
+	if (missingCapabilities.length > 0) {
+		const message = `Token is missing required verified capability: ${missingCapabilities.join(', ')}`;
+		await repos.cfTokens.updateStatus({
+			id,
+			status: 'invalid',
+			cf_account_id: account.id,
+			permissions: capabilityResult.capabilities,
+			capabilities: capabilityResult.capabilities,
+			verification_error: message,
+			verification_details: verificationDetails,
+		});
+		console.warn('[CfTokenVerify] Missing required capabilities', {
+			token_id: id,
+			account_id: c.get('session').account_id,
+			cf_account_id: account.id,
+			missing_capabilities: missingCapabilities,
+		});
+		throw new ValidationError(message, { missing_capabilities: missingCapabilities });
+	}
 
-	await repos.cfTokens.markVerified(id, cfAccountId, permissions);
+	await repos.cfTokens.markVerified({
+		id,
+		cf_account_id: account.id,
+		permissions: capabilityResult.capabilities,
+		capabilities: capabilityResult.capabilities,
+		verification_details: verificationDetails,
+	});
 	await repos.cfTokens.markUsed(id);
 
 	await logAudit(c, {
@@ -94,9 +194,19 @@ cfTokens.post('/:id/verify', requireRole('admin'), rateLimit('writes'), async (c
 		entity_type: 'token',
 		entity_id: id,
 		description: `Verified Cloudflare API token: ${tokenRow.label}`,
+		metadata: {
+			cf_account_id: account.id,
+			capabilities: capabilityResult.capabilities,
+		},
 	});
 
-	return c.json({ verified: true, permissions });
+	return c.json({
+		verified: true,
+		cf_account_id: account.id,
+		account_name: account.name,
+		capabilities: capabilityResult.capabilities,
+		permissions: capabilityResult.capabilities,
+	});
 });
 
 // DELETE /cf-tokens/:id — revoke token

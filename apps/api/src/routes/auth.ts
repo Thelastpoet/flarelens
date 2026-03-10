@@ -23,6 +23,12 @@ import { validate } from '../middleware/validate.js';
 
 const auth = new Hono<AppContext>();
 
+function getRequestHost(c: {
+	req: { header: (name: string) => string | undefined; url: string };
+}): string {
+	return c.req.header('x-forwarded-host') ?? c.req.header('host') ?? new URL(c.req.url).host;
+}
+
 // POST /auth/register
 auth.post('/register', rateLimitByIp('auth'), validate(RegisterSchema), async (c) => {
 	const input = c.get('validatedBody') as RegisterInput;
@@ -61,7 +67,7 @@ auth.post('/register', rateLimitByIp('auth'), validate(RegisterSchema), async (c
 		user_id: userId,
 		account_id: accountId,
 		role: 'admin',
-	});
+	}, getRequestHost(c));
 
 	// Send verification email (best-effort)
 	if (c.env.RESEND_API_KEY) {
@@ -123,7 +129,7 @@ auth.post('/login', rateLimitByIp('auth'), validate(LoginSchema), async (c) => {
 		user_id: user.id,
 		account_id: memberRow.account_id,
 		role: memberRow.role as Role,
-	});
+	}, getRequestHost(c));
 
 	c.header('Set-Cookie', cookieHeader);
 	return c.json({
@@ -270,7 +276,7 @@ auth.post('/accept-invite', async (c) => {
 		user_id: user.id,
 		account_id: accountId,
 		role: member.role as Role,
-	});
+	}, getRequestHost(c));
 
 	c.header('Set-Cookie', cookieHeader);
 	return c.json({
@@ -445,7 +451,7 @@ auth.get('/oauth/:provider/callback', async (c) => {
 		user_id: user.id,
 		account_id: memberRow.account_id,
 		role: memberRow.role as Role,
-	});
+	}, getRequestHost(c));
 
 	c.header('Set-Cookie', cookieHeader);
 	return c.redirect(`${c.env.WEB_URL}/dashboard`);

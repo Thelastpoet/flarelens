@@ -4,6 +4,19 @@ export type Plan = 'free' | 'pro' | 'enterprise';
 export type Role = 'admin' | 'editor' | 'viewer';
 export type TeamMemberStatus = 'pending' | 'active';
 export type CfTokenStatus = 'active' | 'revoked' | 'invalid';
+export const CF_CAPABILITIES = [
+	'zones:read',
+	'zones.analytics:read',
+	'workers:read',
+	'r2:read',
+	'kv:read',
+	'd1:read',
+] as const;
+export type CfCapability = (typeof CF_CAPABILITIES)[number];
+export const CF_REQUIRED_CAPABILITIES = [
+	'zones:read',
+	'zones.analytics:read',
+] as const satisfies readonly CfCapability[];
 export type ResourceType = 'zone' | 'worker' | 'r2_bucket' | 'kv_namespace' | 'd1_database';
 export type MonitoringStatus = 'active' | 'paused';
 export type RuleOperator = 'gt' | 'lt' | 'gte' | 'lte';
@@ -99,10 +112,33 @@ export interface CfToken {
 	encrypted_token: string;
 	cf_account_id: string | null;
 	permissions: string; // JSON: string[]
+	capabilities: string; // JSON: CfCapability[]
 	status: CfTokenStatus;
 	last_used_at: string | null;
 	verified_at: string | null;
+	verification_error: string | null;
+	verification_details: string; // JSON: CfTokenVerificationDetails
 	created_at: string;
+}
+
+export type CfAccountSource = 'stored' | 'accounts_list' | 'memberships';
+
+export interface CfCapabilityProbe {
+	capability: CfCapability;
+	ok: boolean;
+	detail: string | null;
+}
+
+export interface CfTokenVerificationDetails {
+	token_id: string | null;
+	token_status: string | null;
+	expires_on: string | null;
+	not_before: string | null;
+	account_id: string | null;
+	account_name: string | null;
+	account_source: CfAccountSource | null;
+	probes: CfCapabilityProbe[];
+	checked_at: string;
 }
 
 export interface Resource {

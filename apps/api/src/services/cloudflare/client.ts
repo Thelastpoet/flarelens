@@ -1,4 +1,11 @@
+import type {
+	CfAccountSource,
+	CfCapability,
+	CfCapabilityProbe,
+	CfTokenVerificationDetails,
+} from '@flarelens/shared';
 import { ExternalServiceError } from '@flarelens/shared';
+import { GqlQueries } from './graphql.js';
 
 const CF_REST_BASE = 'https://api.cloudflare.com/client/v4';
 const CF_GRAPHQL_URL = 'https://api.cloudflare.com/client/v4/graphql';
@@ -34,16 +41,38 @@ export interface CfD1Database {
 export interface CfTokenVerifyResult {
 	id: string;
 	status: string;
-	policies?: Array<{ permissionGroups: Array<{ name: string }> }>;
+	expires_on?: string | null;
+	not_before?: string | null;
+}
+
+export interface CfAccount {
+	id: string;
+	name: string;
+}
+
+export interface CfMembership {
+	account: CfAccount;
+	status: 'accepted' | 'pending' | 'rejected';
+}
+
+export interface CfResolvedAccount {
+	id: string;
+	name: string | null;
+	source: CfAccountSource;
+}
+
+export interface CfCapabilityProbeResult {
+	capabilities: CfCapability[];
+	probes: CfCapabilityProbe[];
 }
 
 export class CloudflareClient {
 	private token: string;
-	private accountId: string;
+	private accountId: string | null;
 
-	constructor(token: string, accountId: string) {
+	constructor(token: string, accountId?: string | null) {
 		this.token = token;
-		this.accountId = accountId;
+		this.accountId = accountId ?? null;
 	}
 
 	private get headers() {
@@ -94,36 +123,101 @@ export class CloudflareClient {
 		return this.request<CfTokenVerifyResult>('/user/tokens/verify');
 	}
 
-	async listZones(): Promise<CfZone[]> {
+	async listAccounts(): Promise<CfAccount[]> {
+		return this.request<CfAccount[]>('/accounts?per_page=50');
+	}
+
+	async listMemberships(): Promise<CfMembership[]> {
+		return this.request<CfMembership[]>('/memberships?status=accepted&per_page=50');
+	}
+
+	async resolveAccount(preferredAccountId?: string | null): Promise<CfResolvedAccount> {
+		if (preferredAccountId) {
+			return { id: preferredAccountId, name: null, source: 'stored' };
+		}
+
+		try {
+			const accounts = await this.listAccounts();
+			if (accounts.length === 1) {
+				return { id: accounts[0].id, name: accounts[0].name, source: 'accounts_list' };
+			}
+			if (accounts.length > 1) {
+				throw new ExternalServiceError(
+					'Cloudflare',
+					'Token can access multiple accounts; store an explicit Cloudflare account ID before verification',
+				);
+			}
+		} catch (error) {
+			if (!(error instanceof ExternalServiceError)) throw error;
+			const memberships = await this.listMemberships();
+			if (memberships.length === 1) {
+				return {
+					id: memberships[0].account.id,
+					name: memberships[0].account.name,
+					source: 'memberships',
+				};
+			}
+			if (memberships.length > 1) {
+				throw new ExternalServiceError(
+					'Cloudflare',
+					'Token can access multiple account memberships; store an explicit Cloudflare account ID before verification',
+				);
+			}
+			throw error;
+		}
+
+		throw new ExternalServiceError(
+			'Cloudflare',
+			'No accessible accounts were found for this token',
+		);
+	}
+
+	private requireAccountId(accountId?: string | null): string {
+		const resolved = accountId ?? this.accountId;
+		if (!resolved) {
+			throw new ExternalServiceError(
+				'Cloudflare',
+				'Account ID is required for this operation',
+			);
+		}
+		return resolved;
+	}
+
+	async listZones(accountId?: string | null): Promise<CfZone[]> {
+		const resolvedAccountId = this.requireAccountId(accountId);
 		const result = await this.request<CfZone[]>(
-			`/zones?account.id=${this.accountId}&per_page=50&status=active`,
+			`/zones?account.id=${resolvedAccountId}&per_page=50&status=active`,
 		);
 		return result ?? [];
 	}
 
-	async listWorkers(): Promise<CfWorkerScript[]> {
+	async listWorkers(accountId?: string | null): Promise<CfWorkerScript[]> {
+		const resolvedAccountId = this.requireAccountId(accountId);
 		const result = await this.request<CfWorkerScript[]>(
-			`/accounts/${this.accountId}/workers/scripts`,
+			`/accounts/${resolvedAccountId}/workers/scripts`,
 		);
 		return result ?? [];
 	}
 
-	async listR2Buckets(): Promise<CfR2Bucket[]> {
+	async listR2Buckets(accountId?: string | null): Promise<CfR2Bucket[]> {
+		const resolvedAccountId = this.requireAccountId(accountId);
 		const result = await this.request<{ buckets: CfR2Bucket[] }>(
-			`/accounts/${this.accountId}/r2/buckets`,
+			`/accounts/${resolvedAccountId}/r2/buckets`,
 		);
 		return result?.buckets ?? [];
 	}
 
-	async listKvNamespaces(): Promise<CfKvNamespace[]> {
+	async listKvNamespaces(accountId?: string | null): Promise<CfKvNamespace[]> {
+		const resolvedAccountId = this.requireAccountId(accountId);
 		const result = await this.request<CfKvNamespace[]>(
-			`/accounts/${this.accountId}/storage/kv/namespaces?per_page=100`,
+			`/accounts/${resolvedAccountId}/storage/kv/namespaces?per_page=100`,
 		);
 		return result ?? [];
 	}
 
-	async listD1Databases(): Promise<CfD1Database[]> {
-		const result = await this.request<CfD1Database[]>(`/accounts/${this.accountId}/d1/database`);
+	async listD1Databases(accountId?: string | null): Promise<CfD1Database[]> {
+		const resolvedAccountId = this.requireAccountId(accountId);
+		const result = await this.request<CfD1Database[]>(`/accounts/${resolvedAccountId}/d1/database`);
 		return result ?? [];
 	}
 
@@ -161,8 +255,9 @@ export class CloudflareClient {
 	}
 
 	async disableWorkerSubdomain(scriptName: string): Promise<void> {
+		const resolvedAccountId = this.requireAccountId();
 		// Disable the workers.dev subdomain route for this script
-		await this.request(`/accounts/${this.accountId}/workers/scripts/${scriptName}/subdomain`, {
+		await this.request(`/accounts/${resolvedAccountId}/workers/scripts/${scriptName}/subdomain`, {
 			method: 'POST',
 			body: JSON.stringify({ enabled: false }),
 		});
@@ -184,5 +279,84 @@ export class CloudflareClient {
 			throw new ExternalServiceError('Cloudflare', json.errors[0].message);
 		}
 		return json.data as T;
+	}
+
+	private async probeCapability(
+		capability: CfCapability,
+		run: () => Promise<void>,
+	): Promise<CfCapabilityProbe> {
+		try {
+			await run();
+			return { capability, ok: true, detail: null };
+		} catch (error) {
+			const detail =
+				error instanceof Error ? error.message : 'Capability probe failed unexpectedly';
+			return { capability, ok: false, detail };
+		}
+	}
+
+	async probeCapabilities(accountId: string): Promise<CfCapabilityProbeResult> {
+		this.accountId = accountId;
+
+		const zones = await this.listZones(accountId);
+		if (zones.length === 0) {
+			throw new ExternalServiceError(
+				'Cloudflare',
+				'No active zones are accessible for this account; zone monitoring cannot be enabled',
+			);
+		}
+
+		const firstZoneId = zones[0].id;
+		const analyticsProbe = await this.probeCapability('zones.analytics:read', async () => {
+			const now = new Date();
+			const from = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+			const to = now.toISOString();
+			const query = GqlQueries.zoneTraffic(firstZoneId, from, to, 1);
+			await this.graphql<unknown>(query.query, query.variables);
+		});
+
+		const probes = [
+			{ capability: 'zones:read' as const, ok: true, detail: null },
+			analyticsProbe,
+			await this.probeCapability('workers:read', async () => {
+				await this.listWorkers(accountId);
+			}),
+			await this.probeCapability('r2:read', async () => {
+				await this.listR2Buckets(accountId);
+			}),
+			await this.probeCapability('kv:read', async () => {
+				await this.listKvNamespaces(accountId);
+			}),
+			await this.probeCapability('d1:read', async () => {
+				await this.listD1Databases(accountId);
+			}),
+		];
+
+		return {
+			capabilities: probes.filter((probe) => probe.ok).map((probe) => probe.capability),
+			probes,
+		};
+	}
+
+	buildVerificationDetails(input: {
+		verifyResult: CfTokenVerifyResult;
+		account: {
+			id: string | null;
+			name: string | null;
+			source: CfAccountSource | null;
+		};
+		probes: CfCapabilityProbe[];
+	}): CfTokenVerificationDetails {
+		return {
+			token_id: input.verifyResult.id ?? null,
+			token_status: input.verifyResult.status ?? null,
+			expires_on: input.verifyResult.expires_on ?? null,
+			not_before: input.verifyResult.not_before ?? null,
+			account_id: input.account.id,
+			account_name: input.account.name,
+			account_source: input.account.source,
+			probes: input.probes,
+			checked_at: new Date().toISOString(),
+		};
 	}
 }
