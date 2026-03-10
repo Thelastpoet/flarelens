@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { api } from '$lib/api';
+	import { onMount } from 'svelte';
 	import type { PageData } from './$types.js';
 
 	interface ResourceRecord {
@@ -10,6 +13,7 @@
 	}
 
 	let { data }: { data: PageData } = $props();
+	let syncState = $state<'idle' | 'syncing' | 'error'>('idle');
 
 	const allResources = $derived((data.resources ?? []) as ResourceRecord[]);
 	const primaryResources = $derived(
@@ -33,6 +37,19 @@
 				return 'D1 Database';
 		}
 	}
+
+	onMount(async () => {
+		if (allResources.length > 0 || syncState !== 'idle') return;
+
+		syncState = 'syncing';
+		try {
+			await api.post('/resources/sync');
+			await invalidateAll();
+			syncState = 'idle';
+		} catch {
+			syncState = 'error';
+		}
+	});
 </script>
 
 <!-- Onboarding Step 3: Review resources — split left/right panel layout -->
@@ -150,7 +167,13 @@
               <div class="space-y-3">
                 {#if fallbackResources.length === 0}
                   <div class="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
-                    No resources were discovered yet. Finish setup anyway and use the inventory page to sync again after onboarding.
+                    {#if syncState === 'syncing'}
+                      We are syncing your Cloudflare resources now. This usually takes a few seconds.
+                    {:else if syncState === 'error'}
+                      Resource sync did not complete. You can finish setup and retry from inventory after onboarding.
+                    {:else}
+                      No resources were discovered yet. Finish setup anyway and use the inventory page to sync again after onboarding.
+                    {/if}
                   </div>
                 {:else}
                   {#each fallbackResources as resource}

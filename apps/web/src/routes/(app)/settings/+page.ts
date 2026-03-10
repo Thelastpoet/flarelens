@@ -1,4 +1,5 @@
 import { createApiClient } from '$lib/api.js';
+import type { PageLoad } from './$types.js';
 
 export interface SettingsProfile {
 	id: string;
@@ -28,7 +29,7 @@ export interface SettingsAccount {
 	};
 }
 
-export async function load({ fetch }) {
+export const load: PageLoad = async ({ fetch }) => {
 	const api = createApiClient(fetch, '/api');
 
 	const [profile, notifications, account] = await Promise.all([
@@ -42,4 +43,4 @@ export async function load({ fetch }) {
 		notifications,
 		account,
 	};
-}
+};

@@ -10,13 +10,6 @@ interface ResourceRecord {
 }
 
 export const load: PageServerLoad = async ({ fetch }) => {
-	// Trigger sync
-	const _syncRes = await fetch('/api/resources/sync', {
-		method: 'POST',
-		credentials: 'include',
-	});
-
-	// Load resources regardless of sync result
 	const res = await fetch('/api/resources', { credentials: 'include' });
 	const data = res.ok ? ((await res.json()) as { resources: ResourceRecord[] }) : { resources: [] };
 

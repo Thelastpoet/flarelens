@@ -28,6 +28,12 @@ interface BaselineItem {
 	status: 'normal' | 'warning' | 'high' | 'critical';
 }
 
+interface BaselineData {
+	comparisons: BaselineItem[];
+	from: string;
+	to: string;
+}
+
 interface TrafficData {
 	points: Array<{
 		datetime: string;
@@ -62,7 +68,8 @@ interface BotActivityData {
 
 const overview = $derived(data.overview as OverviewData | null);
 const traffic = $derived(data.traffic as TrafficData | null);
-const baseline = $derived((data.baseline ?? []) as BaselineItem[]);
+const baselineData = $derived(data.baseline as BaselineData | null);
+const baseline = $derived(baselineData?.comparisons ?? []);
 const endpointsData = $derived(data.endpoints as { endpoints: TopEndpointItem[] } | null);
 const botData = $derived(data.botActivity as BotActivityData | null);
 

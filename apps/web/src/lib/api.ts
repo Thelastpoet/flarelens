@@ -26,11 +26,11 @@ export function createApiClient(fetchFn: FetchFn, baseUrl = '') {
 		path: string,
 		options?: { body?: unknown; query?: Record<string, string | number | boolean | undefined> },
 	): Promise<T> {
-		// Build URL with query params
-		const url = new URL(
-			`${baseUrl}${path}`,
-			typeof window !== 'undefined' ? window.location.origin : 'http://localhost',
-		);
+		const requestPath = `${baseUrl}${path}`;
+		const url =
+			typeof window !== 'undefined'
+				? new URL(requestPath, window.location.origin)
+				: new URL(requestPath, 'https://internal.flarelens');
 		if (options?.query) {
 			for (const [key, value] of Object.entries(options.query)) {
 				if (value !== undefined) {
@@ -47,7 +47,12 @@ export function createApiClient(fetchFn: FetchFn, baseUrl = '') {
 			body = JSON.stringify(options.body);
 		}
 
-		const response = await fetchFn(url.toString(), {
+		const target =
+			typeof window !== 'undefined' || /^https?:\/\//.test(requestPath)
+				? url.toString()
+				: `${url.pathname}${url.search}`;
+
+		const response = await fetchFn(target, {
 			method,
 			headers,
 			body,
