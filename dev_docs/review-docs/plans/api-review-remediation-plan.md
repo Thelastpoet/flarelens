@@ -94,3 +94,13 @@ This document captures the highest-priority fixes identified during API/backend 
 - Shared types compile gate: `cd packages/shared && pnpm exec tsc --noEmit`
 - DB compile gate: `cd packages/db && pnpm exec tsc --noEmit`
 - API phase tests: `cd apps/api && pnpm exec vitest run --config vitest.config.ts`
+
+## Close-Out Verification
+
+Phase 10 verification results:
+
+- `pnpm check`: passed
+- `pnpm test`: passed
+- `pnpm lint`: failed on an existing Biome backlog across the API codebase (import ordering, formatting, and a smaller set of unused members / style diagnostics)
+
+This means the remediation work has compile and test coverage, but repository-wide lint cleanup remains separate follow-up work.

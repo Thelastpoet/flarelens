@@ -42,7 +42,7 @@ async function logVerificationFailure(
 cfTokens.get('/', rateLimit('reads'), async (c) => {
 	const repos = c.get('repos');
 	const tokens = await repos.cfTokens.list();
-	// Mask: show only last 4 chars of the token label, hide encrypted_token
+	// Repository output already blanks encrypted_token for list responses.
 	return c.json({ tokens });
 });
 

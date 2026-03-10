@@ -10,6 +10,7 @@ This folder groups the backend audit artifacts by purpose so the next contributo
 - `summaries/`
   - Cross-cutting review notes that span multiple checklist sections.
   - Use these for thematic concerns such as redundancy, platform overlap, and architectural drift.
+  - Includes the backend security close-out note for post-remediation residual risks.
 - `plans/`
   - Follow-up execution material derived from the review findings.
   - Use these when turning findings into remediation work.

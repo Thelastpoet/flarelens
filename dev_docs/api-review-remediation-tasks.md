@@ -239,10 +239,14 @@
 
 **Purpose**: Improvements that affect multiple remediation stories
 
-- [ ] T042 [P] Run `pnpm check`, `pnpm lint`, and relevant API test commands and record outcomes in `dev_docs/review-docs/plans/api-review-remediation-plan.md` or PR notes
-- [ ] T043 Review route coverage and decide where `apps/api/src/middleware/api-token-auth.ts` should be mounted or document why developer tokens remain unused
-- [ ] T044 [P] Clean up misleading comments and placeholder language across `apps/api/src/`
-- [ ] T045 Security review of token storage, audit coverage, and mitigation execution paths across `apps/api/src/` and `packages/db/src/`
+- [x] T042 [P] Run `pnpm check`, `pnpm lint`, and relevant API test commands and record outcomes in `dev_docs/review-docs/plans/api-review-remediation-plan.md` or PR notes
+  Phase 10 resolution: `pnpm check` and `pnpm test` passed; `pnpm lint` failed on an existing Biome backlog, and the result is recorded in the remediation plan.
+- [x] T043 Review route coverage and decide where `apps/api/src/middleware/api-token-auth.ts` should be mounted or document why developer tokens remain unused
+  Phase 10 resolution: the middleware was removed in Phase 8, and the product/architecture docs now document developer tokens as managed inventory rather than supported bearer API auth.
+- [x] T044 [P] Clean up misleading comments and placeholder language across `apps/api/src/`
+  Phase 10 resolution: remediation-era misleading comments were cleaned up, including Cloudflare token list masking behavior; broader style and formatting cleanup remains part of the separate lint backlog.
+- [x] T045 Security review of token storage, audit coverage, and mitigation execution paths across `apps/api/src/` and `packages/db/src/`
+  Phase 10 resolution: a backend security close-out note was added in `dev_docs/review-docs/summaries/backend-security-closeout.md` with confirmed improvements and residual risks.
 
 ---
 
