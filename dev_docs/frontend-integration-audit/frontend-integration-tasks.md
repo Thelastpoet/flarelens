@@ -44,7 +44,8 @@ This file tracks the frontend work required to replace mock data with live backe
 - [ ] F010 Wire rules page to `/rules`
 - [ ] F011 Wire integrations page to `/integrations/*`
 - [ ] F012 Wire team page to `/team/*`
-- [ ] F013 Wire notifications page to `/notifications`
+- [x] F013 Wire notifications page to `/notifications`
+  Outcome: passed for the current inbox surface. The notifications page now uses a real page loader, renders live notification records, and supports mark-all, archive-all, and per-item mark-read actions without mock content.
 - [ ] F014 Wire mitigations page to `/mitigations/*`
 - [ ] F015 Wire audit page to `/audit-logs`
 - [ ] F016 Wire developer page to `/developer/*`
@@ -77,6 +78,7 @@ This file tracks the frontend work required to replace mock data with live backe
 - `Sidebar.svelte` still imports `account` and `currentUser` from `lib/data/mock.ts`
 - `settings/+page.svelte` still imports `currentUser` from `lib/data/mock.ts`
 - The active authenticated shell now uses real layout data for account identity and unread notification count
+- The notifications page is now backend-backed, but page-level pagination is still a follow-up gap if the inbox grows beyond the first page
 - Dashboard and analytics pages have live loaders but still contain hardcoded trend badges, fallback visual content, or static activity sections
 - The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
 - Most management pages (`billing`, `inventory`, `integrations`, `rules`, `team`, `audit`, `developer`, `mitigations`, `notifications`) are still UI-only with no page loader or server actions
