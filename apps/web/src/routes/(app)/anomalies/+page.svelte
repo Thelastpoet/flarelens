@@ -3,30 +3,9 @@
 	import { api } from '$lib/api.js';
 	import type { PageData } from './$types.js';
 
-interface Attribution {
-	label?: string;
-	type?: string;
-	value?: number;
-	contributionPct?: number;
-}
-
-interface Anomaly {
-	id: string;
-	metric: string;
-	severity: string;
-	current_value: number;
-	baseline_value?: number | null;
-	deviation?: number | null;
-	status: string;
-	detected_at: string;
-	resource_id?: string | null;
-	detection_type?: string;
-	attribution?: string | Attribution[] | null;
-}
-
 	let { data }: { data: PageData } = $props();
 
-	const anomalies = $derived((data.anomalies ?? []) as Anomaly[]);
+	const anomalies = $derived(data.anomalies);
 
 	const severityBadge: Record<string, string> = {
 		critical: 'bg-red-100 text-red-700',
@@ -44,17 +23,7 @@ interface Anomaly {
 
 	let selected = $state<string | null>(null);
 	let dismissingId = $state<string | null>(null);
-	const filter = $derived((data.status ?? 'all') as 'active' | 'dismissed' | 'resolved' | 'all');
-
-function parseAttribution(raw: string | Attribution[] | null | undefined): Attribution[] {
-	if (!raw) return [];
-	if (Array.isArray(raw)) return raw;
-	try {
-		return JSON.parse(raw) as Attribution[];
-	} catch {
-		return [];
-	}
-}
+	const filter = $derived(data.status);
 
 function formatDetectedAt(iso: string): string {
 	const date = new Date(iso);
@@ -105,10 +74,10 @@ async function applyFilter(next: 'active' | 'dismissed' | 'all') {
 {:else}
 	<div class="space-y-3">
 		{#each anomalies as anomaly}
-			{@const attribution = parseAttribution(anomaly.attribution)}
+			{@const attribution = anomaly.attribution}
 			<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
 				<div class="flex">
-					<div class="w-1 {severityDot[anomaly.severity] ?? 'bg-gray-300'} shrink-0"></div>
+					<div class="w-1 {severityDot[anomaly.severity]} shrink-0"></div>
 					<button
 						type="button"
 						class="flex-1 px-5 py-4 text-left hover:bg-gray-50/50 w-full"
@@ -124,7 +93,7 @@ async function applyFilter(next: 'active' | 'dismissed' | 'all') {
 										{#if anomaly.detection_type}
 											<span class="text-xs text-gray-400">{anomaly.detection_type}</span>
 										{/if}
-										<span class="text-xs font-medium px-2 py-0.5 rounded-full {severityBadge[anomaly.severity] ?? 'bg-gray-100 text-gray-700'}">{anomaly.severity}</span>
+											<span class="text-xs font-medium px-2 py-0.5 rounded-full {severityBadge[anomaly.severity]}">{anomaly.severity}</span>
 										{#if anomaly.status === 'dismissed'}
 											<span class="text-xs text-gray-400 italic">dismissed</span>
 										{/if}
@@ -137,7 +106,7 @@ async function applyFilter(next: 'active' | 'dismissed' | 'all') {
 									</div>
 									{#if attribution.length > 0}
 										<div class="text-xs text-gray-400 mt-1">
-											Top contributors: {attribution.map((a) => `${a.label ?? a.type ?? ''} (${a.contributionPct ?? 0}%)`).join(' · ')}
+												Top contributors: {attribution.map((a) => `${a.value} (${a.contribution_pct}%)`).join(' · ')}
 										</div>
 									{/if}
 								</div>
@@ -168,11 +137,11 @@ async function applyFilter(next: 'active' | 'dismissed' | 'all') {
 						<div class="space-y-2">
 							{#each attribution as contrib}
 								<div class="flex items-center gap-3">
-									<span class="text-xs text-slate-700 w-44 shrink-0">{contrib.label ?? contrib.type ?? ''}</span>
-									<div class="flex-1 h-2 rounded-full bg-gray-100">
-										<div class="h-2 rounded-full bg-orange-400" style="width: {contrib.contributionPct ?? 0}%"></div>
-									</div>
-									<span class="text-xs font-semibold text-slate-900 w-8 text-right">{contrib.contributionPct ?? 0}%</span>
+										<span class="text-xs text-slate-700 w-44 shrink-0">{contrib.value}</span>
+										<div class="flex-1 h-2 rounded-full bg-gray-100">
+											<div class="h-2 rounded-full bg-orange-400" style="width: {contrib.contribution_pct}%"></div>
+										</div>
+										<span class="text-xs font-semibold text-slate-900 w-8 text-right">{contrib.contribution_pct}%</span>
 								</div>
 							{/each}
 						</div>

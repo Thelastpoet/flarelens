@@ -7,27 +7,6 @@
 	type RuleOperator = 'gt' | 'lt' | 'gte' | 'lte';
 	type ActionType = 'rate_limit' | 'under_attack_mode' | 'pause_worker';
 
-	interface MitigationRecord {
-		id: string;
-		name: string;
-		trigger_type: 'traffic_rate';
-		trigger_condition: string;
-		action_type: ActionType;
-		action_config: string;
-		resource_id: string | null;
-		enabled: 0 | 1;
-		last_triggered: string | null;
-		trigger_count: number;
-		estimated_savings: number;
-	}
-
-	interface ResourceRecord {
-		id: string;
-		name: string;
-		type: 'zone' | 'worker' | 'r2_bucket' | 'kv_namespace' | 'd1_database';
-		cf_resource_id: string;
-	}
-
 	interface TriggerCondition {
 		metric: MetricName;
 		operator: RuleOperator;
@@ -91,8 +70,8 @@
 		worker_name: '',
 	});
 
-	const mitigations = $derived((data.mitigations ?? []) as MitigationRecord[]);
-	const resources = $derived((data.resources ?? []) as ResourceRecord[]);
+	const mitigations = $derived(data.mitigations);
+	const resources = $derived(data.resources);
 	const activeCount = $derived(mitigations.filter((mitigation) => mitigation.enabled === 1).length);
 
 	const zones = $derived(resources.filter((resource) => resource.type === 'zone'));
@@ -141,7 +120,7 @@
 					: '<=';
 	}
 
-	function triggerLabel(mitigation: MitigationRecord): string {
+	function triggerLabel(mitigation: (typeof data.mitigations)[number]): string {
 		const trigger = parseTriggerCondition(mitigation.trigger_condition);
 		return `${metricLabels[trigger.metric]} ${operatorLabel(trigger.operator)} ${trigger.threshold}`;
 	}
@@ -151,7 +130,7 @@
 		return resources.find((resource) => resource.id === resourceId)?.name ?? null;
 	}
 
-	function actionLabel(mitigation: MitigationRecord): string {
+	function actionLabel(mitigation: (typeof data.mitigations)[number]): string {
 		const config = parseActionConfig(mitigation.action_config);
 		if (mitigation.action_type === 'rate_limit') {
 			const typed = config as RateLimitConfig;
@@ -165,7 +144,7 @@
 		return `Pause worker ${typed.worker_name}`;
 	}
 
-	function lastTriggeredLabel(mitigation: MitigationRecord): string {
+	function lastTriggeredLabel(mitigation: (typeof data.mitigations)[number]): string {
 		if (!mitigation.last_triggered) return 'Never';
 		const diff = Date.now() - new Date(mitigation.last_triggered).getTime();
 		const minutes = Math.floor(diff / 60000);
@@ -177,7 +156,9 @@
 		return `${days} day${days === 1 ? '' : 's'} ago`;
 	}
 
-	function statLabel(mitigation: MitigationRecord): { text: string; className: string } | null {
+	function statLabel(
+		mitigation: (typeof data.mitigations)[number],
+	): { text: string; className: string } | null {
 		if (mitigation.estimated_savings > 0) {
 			return {
 				text: `Saved est. $${mitigation.estimated_savings.toFixed(2)}`,
@@ -217,7 +198,7 @@
 		showModal = true;
 	}
 
-	function openEditModal(mitigation: MitigationRecord) {
+	function openEditModal(mitigation: (typeof data.mitigations)[number]) {
 		const trigger = parseTriggerCondition(mitigation.trigger_condition);
 		const actionConfig = parseActionConfig(mitigation.action_config);
 		editingId = mitigation.id;

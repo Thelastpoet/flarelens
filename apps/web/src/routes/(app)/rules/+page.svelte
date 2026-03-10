@@ -10,26 +10,6 @@
 	type Severity = 'warning' | 'high' | 'critical';
 	type NotifyFrequency = 'instant' | 'hourly' | 'daily';
 
-	interface RuleRecord {
-		id: string;
-		name: string;
-		resource_type: ResourceType;
-		resource_id: string | null;
-		metric: MetricName;
-		operator: RuleOperator;
-		threshold: number;
-		window: RuleWindow;
-		severity: Severity;
-		notify_frequency: NotifyFrequency;
-		enabled: 0 | 1;
-	}
-
-	interface ResourceRecord {
-		id: string;
-		name: string;
-		type: ResourceType;
-	}
-
 	interface RuleFormState {
 		name: string;
 		resource_type: ResourceType;
@@ -60,8 +40,8 @@
 		notify_frequency: 'instant',
 	});
 
-	const rules = $derived((data.rules ?? []) as RuleRecord[]);
-	const resources = $derived((data.resources ?? []) as ResourceRecord[]);
+	const rules = $derived(data.rules);
+	const resources = $derived(data.resources);
 	const matchingResources = $derived(
 		resources.filter((resource) => resource.type === form.resource_type),
 	);
@@ -93,7 +73,7 @@
 		warning: 'bg-blue-50 text-blue-700',
 	};
 
-	function conditionLabel(rule: RuleRecord): string {
+	function conditionLabel(rule: (typeof data.rules)[number]): string {
 		const operatorLabel =
 			rule.operator === 'gt'
 				? '>'
@@ -105,7 +85,7 @@
 		return `${operatorLabel} ${rule.threshold} / ${rule.window}`;
 	}
 
-	function resourceLabel(rule: RuleRecord): string {
+	function resourceLabel(rule: (typeof data.rules)[number]): string {
 		if (!rule.resource_id) return serviceMeta[rule.resource_type].label;
 		const resource = resources.find((entry) => entry.id === rule.resource_id);
 		return resource ? resource.name : serviceMeta[rule.resource_type].label;
@@ -136,7 +116,7 @@
 		await invalidateAll();
 	}
 
-	async function toggleRule(rule: RuleRecord) {
+	async function toggleRule(rule: (typeof data.rules)[number]) {
 		busyAction = rule.id;
 		try {
 			await api.patch(`/rules/${rule.id}/toggle`);
