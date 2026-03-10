@@ -34,10 +34,10 @@
         </div>
         <div class="flex flex-1 justify-end gap-8">
           <div class="flex items-center gap-4">
-            <span class="material-symbols-outlined text-slate-500 hover:text-slate-900 cursor-pointer">help</span>
-            <span class="material-symbols-outlined text-slate-500 hover:text-slate-900 cursor-pointer">notifications</span>
+            <span class="material-symbols-outlined text-slate-500" aria-hidden="true">help</span>
+            <span class="material-symbols-outlined text-slate-500" aria-hidden="true">notifications</span>
             <!-- Avatar placeholder (replaces external image URL) -->
-            <div class="size-10 rounded-full border border-slate-200 bg-slate-200 flex items-center justify-center cursor-pointer overflow-hidden">
+            <div class="size-10 rounded-full border border-slate-200 bg-slate-200 flex items-center justify-center overflow-hidden" aria-hidden="true">
               <span class="material-symbols-outlined text-slate-500">person</span>
             </div>
           </div>

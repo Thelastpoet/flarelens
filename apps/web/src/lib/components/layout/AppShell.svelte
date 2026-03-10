@@ -152,7 +152,7 @@ function initialsFor(name: string | null | undefined): string {
 
 			<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
 			<header class="flex items-center justify-between border-b border-slate-200 px-4 py-3.5 mb-6 bg-white rounded-xl shadow-sm">
-				<!-- Left: hamburger (mobile) + logo + search (desktop) -->
+				<!-- Left: hamburger (mobile) + logo -->
 				<div class="flex items-center gap-3 sm:gap-8">
 					<!-- Hamburger — mobile only -->
 					<button
@@ -173,22 +173,9 @@ function initialsFor(name: string | null | undefined): string {
 						</div>
 						<h2 class="text-lg font-bold leading-tight tracking-[-0.015em] whitespace-nowrap">FlareLens</h2>
 					</div>
-
-					<!-- Search — desktop only -->
-					<label class="hidden md:flex flex-col min-w-40 h-10 max-w-64">
-						<div class="flex w-full flex-1 items-stretch rounded-lg h-full">
-							<div class="text-slate-500 flex bg-slate-100 items-center justify-center pl-4 rounded-l-lg shrink-0">
-								<span class="material-symbols-outlined !text-[20px]">search</span>
-							</div>
-							<input
-								class="flex w-full min-w-0 flex-1 rounded-lg text-slate-900 focus:outline-none border-none bg-slate-100 h-full placeholder:text-slate-500 px-3 rounded-l-none text-sm font-normal leading-normal"
-								placeholder="Search resources..."
-							/>
-						</div>
-					</label>
 				</div>
 
-				<!-- Right: top nav + search icon (mobile) + upgrade + avatar -->
+				<!-- Right: top nav + upgrade + avatar -->
 				<div class="flex items-center gap-3 sm:gap-6">
 					<!-- Top nav — desktop only -->
 					<nav class="hidden lg:flex items-center gap-8">
@@ -203,11 +190,6 @@ function initialsFor(name: string | null | undefined): string {
 						{/each}
 					</nav>
 
-					<!-- Search icon — mobile only -->
-					<button type="button" class="md:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors" aria-label="Search resources">
-						<span class="material-symbols-outlined !text-[22px]">search</span>
-					</button>
-
 					<!-- Upgrade — hidden on smallest screens -->
 					<a href="/billing"
 						class="hidden sm:flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-9 px-4 bg-primary text-white text-sm font-semibold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors shrink-0">
@@ -216,7 +198,7 @@ function initialsFor(name: string | null | undefined): string {
 
 					<!-- Avatar -->
 					<div
-						class="w-9 h-9 rounded-full bg-slate-200 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-600 cursor-pointer shrink-0"
+						class="w-9 h-9 rounded-full bg-slate-200 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-600 shrink-0"
 						title={user?.name ?? 'User'}
 						aria-label={user?.name ?? 'User'}
 					>

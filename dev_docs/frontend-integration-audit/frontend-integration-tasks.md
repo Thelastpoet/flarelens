@@ -23,7 +23,7 @@ This file tracks the frontend work required to replace mock data with live backe
 - [x] F024 Replace hardcoded avatar/account shell values in `AppShell.svelte` or consolidate shell identity to one source
   Outcome: passed. `AppShell.svelte` now uses live authenticated layout data for account name, plan label, and avatar initials.
 - [ ] F025 Review shell controls for accessibility semantics (`aria-expanded`, focus handling, dismiss behavior)
-  Status: in progress. Menu button semantics were improved in `AppShell.svelte`, but the full shell interaction review is not complete yet.
+  Status: in progress. Menu button semantics were improved and the fake global-search shell control was removed, but full dismiss/focus behavior review is not complete yet.
 
 ### Phase 2: Already Loader-Backed Screens
 
@@ -103,6 +103,9 @@ This file tracks the frontend work required to replace mock data with live backe
 - Dashboard and analytics pages are now backend-backed with honest empty-state handling; remaining quality work is primarily accessibility and a few local-only success screens
 - The onboarding success page now uses real account/resource summary data and no longer ships the fake invite modal
 - Dialog semantics (`role="dialog"`, `aria-modal`, label associations) have been added to the major rule/team/developer/integration/mitigation modals, but full focus-management review is still open
+- The old `TopBar.svelte` shell variant was unused and has been retired instead of preserving detached fake notification/search behavior
+- The active shell no longer exposes a fake global search control, and inventory no longer shows dead pagination buttons for an unpaginated API
+- Decorative onboarding-success header icons and placeholder avatar no longer pretend to be interactive
 - The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
 - Most management pages are now backend-backed; the remaining unchecked work is concentrated in anomaly-state review plus cross-page accessibility and cleanup
 - `onboarding/connect` now matches the current backend token contract (`{ label, token }`)

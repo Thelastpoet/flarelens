@@ -308,10 +308,7 @@
     </table>
     <div class="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3">
       <span class="text-sm text-slate-500">Showing {filtered.length} of {resources.length} results</span>
-      <div class="flex gap-1">
-        <button type="button" class="px-2 py-1 border border-slate-200 rounded text-slate-400 cursor-not-allowed text-sm" disabled>Previous</button>
-        <button type="button" class="px-2 py-1 border border-slate-200 rounded text-slate-400 cursor-not-allowed text-sm" disabled>Next</button>
-      </div>
+      <span class="text-xs text-slate-400">Inventory pagination is not needed because the current backend returns the full synced resource list.</span>
     </div>
   </div>
 </div>
