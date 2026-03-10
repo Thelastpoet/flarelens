@@ -181,7 +181,8 @@
 - [x] T054 [US5] Fix `PATCH /settings/account`, notification mutation ownership, and not-found semantics in `apps/api/src/routes/settings.ts`, `apps/api/src/routes/notifications.ts`, and `packages/db/src/repositories/notifications.ts`
 - [x] T055 [US5] Standardize query validation for paginated/filter routes and reassess the custom `validate()` middleware in `apps/api/src/middleware/validate.ts` and affected routes under `apps/api/src/routes/`
   Phase 7 resolution: body validation remains on the existing JSON middleware, but paginated/filter query validation is now explicit on the affected routes; a broader framework-level validator replacement remains optional future cleanup rather than a blocker.
-- [ ] T056 [US5] Ensure budget state can be persisted independently of an active billing snapshot in `packages/db/src/repositories/billing-snapshots.ts`, `apps/api/src/routes/billing.ts`, and any supporting account/settings storage
+- [x] T056 [US5] Ensure budget state can be persisted independently of an active billing snapshot in `packages/db/src/repositories/billing-snapshots.ts`, `apps/api/src/routes/billing.ts`, and any supporting account/settings storage
+  Phase 5 resolution: budget state was moved to account settings and no longer depends on an active billing snapshot row.
 
 **Checkpoint**: Persistence rules, identity flows, and API behavior are explicit and retry-safe
 

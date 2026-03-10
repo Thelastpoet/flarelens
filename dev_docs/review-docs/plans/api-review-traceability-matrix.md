@@ -81,7 +81,7 @@ Use it to answer four questions quickly:
 - `S07-F01` Medium. `PATCH /settings/account` accepts `name` but does not update the account name column. Tasks: `T047`, `T054`. Status: `Resolved`
 - `S07-F02` Medium. Notification mutation routes do not enforce per-user ownership and do not report not-found cases. Tasks: `T047`, `T054`. Status: `Resolved`
 - `S07-F03` Medium. Query parameter validation is inconsistent and largely absent. Tasks: `T047`, `T055`. Status: `Resolved`
-- `S07-F04` Medium. The custom validation layer is narrower than the framework patterns the API already depends on. Tasks: `T055`. Status: `Mapped`
+- `S07-F04` Medium. The custom validation layer is narrower than the framework patterns the API already depends on. Tasks: `T055`. Status: `Resolved`
 
 ### Section 08: Redundancy and Dead Code
 
@@ -115,9 +115,9 @@ These findings come from `dev_docs/review-docs/summaries/api-redundancy-conflict
 - `SUM-F03` Mitigation behavior is implemented as if Cloudflare is simpler than it is. Tasks: `T021`, `T022`, `T023`, `T024`. Status: `Resolved`
 - `SUM-F04` Developer-token auth exists but is not mounted. Tasks: `T043`, `T057`. Status: `Resolved`
 - `SUM-F05` `SESSION_SECRET` is declared but unused. Tasks: `T058`, `T061`. Status: `Resolved`
-- `SUM-F06` Custom request validation is narrower than the framework surface. Tasks: `T055`. Status: `Mapped`
+- `SUM-F06` Custom request validation is narrower than the framework surface. Tasks: `T055`. Status: `Resolved`
 - `SUM-F07` API renderer dependencies appear unused. Tasks: `T061`. Status: `Resolved`
-- `SUM-F08` Route/schema handling is manual and not positioned for contract generation. Tasks: `T055`. Status: `Mapped`
+- `SUM-F08` Route/schema handling is manual and not positioned for contract generation. Tasks: `T055`. Status: `Resolved`
 
 ---
 
