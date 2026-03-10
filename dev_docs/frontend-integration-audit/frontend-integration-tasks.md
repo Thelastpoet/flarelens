@@ -50,7 +50,8 @@ This file tracks the frontend work required to replace mock data with live backe
   Outcome: passed for the current team-management surface. The page now loads real members, supports invite/resend/role-change/remove flows, and replaces the mock member/invite lists with backend-backed state.
 - [x] F013 Wire notifications page to `/notifications`
   Outcome: passed for the current inbox surface. The notifications page now uses a real page loader, renders live notification records, and supports mark-all, archive-all, and per-item mark-read actions without mock content.
-- [ ] F014 Wire mitigations page to `/mitigations/*`
+- [x] F014 Wire mitigations page to `/mitigations/*`
+  Outcome: passed for the current mitigation surface. The page now loads real mitigation rules, supports create/edit/toggle/delete/dry-run flows, and replaces the mock cards with backend-backed execution state.
 - [ ] F015 Wire audit page to `/audit-logs`
 - [ ] F016 Wire developer page to `/developer/*`
 - [ ] F017 Wire billing page to `/billing/*` using estimate-based backend semantics
@@ -87,6 +88,7 @@ This file tracks the frontend work required to replace mock data with live backe
 - The rules page is now backend-backed; rule editing is not yet surfaced because the current UI only has create, toggle, and delete affordances
 - The integrations page is now backend-backed; webhook header editing and non-default PagerDuty severity mapping are not yet surfaced in the current UI
 - The team page is now backend-backed; invite sender identity is not exposed by the current team API, so the recent-invites list uses neutral copy instead of fake inviter names
+- The mitigations page is now backend-backed; confirmed live execution is still intentionally not exposed in the current UI, which keeps manual actions in dry-run mode
 - Dashboard and analytics pages have live loaders but still contain hardcoded trend badges, fallback visual content, or static activity sections
 - The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
 - Most management pages (`billing`, `inventory`, `integrations`, `rules`, `team`, `audit`, `developer`, `mitigations`, `notifications`) are still UI-only with no page loader or server actions
