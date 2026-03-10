@@ -64,12 +64,12 @@ Checkpoint: first-run experience is operationally isolated and does not depend o
 
 ## Phase 5: Verification and Guardrails
 
-- [ ] FP021 Add a route smoke checklist document under `dev_docs/frontend-production-audit/` covering all authenticated routes under real account data.
-- [ ] FP022 Add frontend tests or scripted checks for crash-prone normalization points (dashboard/analytics numeric and array fields).
+- [x] FP021 Add a route smoke checklist document under `dev_docs/frontend-production-audit/` covering all authenticated routes under real account data.
+- [x] FP022 Add frontend tests or scripted checks for crash-prone normalization points (dashboard/analytics numeric and array fields).
 - [ ] FP023 Run and record verification:
   - `pnpm --filter web check`
   - deployed smoke on `/dashboard`, `/analytics`, `/settings`, `/inventory`, onboarding flow
-- [ ] FP024 Add a release gate note: no frontend deploy without passing route smoke checklist.
+- [x] FP024 Add a release gate note: no frontend deploy without passing route smoke checklist.
 
 ## Dependencies & Order
 

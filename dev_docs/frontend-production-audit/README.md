@@ -25,6 +25,8 @@ This audit is written for a multi-tenant SaaS environment. The standard is not "
   - concrete architecture/code anti-patterns observed in the current frontend
 - `frontend-production-remediation-tasks.md`
   - tracked execution tasks to move from current state to production-safe architecture
+- `frontend-route-smoke-checklist.md`
+  - release smoke checklist and route-level deploy gate for authenticated flows
 
 ## Core Conclusion
 
