@@ -51,7 +51,8 @@ interface DashboardBotItem {
 	isBot: boolean;
 }
 
-export interface DashboardPageData {
+type DashboardReadyData = {
+	state: 'ready';
 	overview: DashboardOverview;
 	traffic: {
 		points: DashboardTrafficPoint[];
@@ -73,6 +74,17 @@ export interface DashboardPageData {
 		items: DashboardBotItem[];
 		botTrafficPct: number;
 	};
+};
+
+export type DashboardPageData =
+	| DashboardReadyData
+	| {
+			state: 'unavailable';
+			message: string;
+	  };
+
+function isUpstreamRequestFailure(error: unknown): boolean {
+	return error instanceof Error && error.message.startsWith('Request to /api/');
 }
 
 function parseOverview(value: unknown): DashboardOverview {
@@ -91,7 +103,7 @@ function parseOverview(value: unknown): DashboardOverview {
 	};
 }
 
-function parseTraffic(value: unknown): DashboardPageData['traffic'] {
+function parseTraffic(value: unknown): DashboardReadyData['traffic'] {
 	const data = expectObject(value, 'dashboard.traffic');
 	const points = expectArray(data.points, 'dashboard.traffic.points').map((point, index) => {
 		const row = expectObject(point, `dashboard.traffic.points[${index}]`);
@@ -123,7 +135,7 @@ function parseTraffic(value: unknown): DashboardPageData['traffic'] {
 	};
 }
 
-function parseBaseline(value: unknown): DashboardPageData['baseline'] {
+function parseBaseline(value: unknown): DashboardReadyData['baseline'] {
 	const data = expectObject(value, 'dashboard.baseline');
 	const comparisons = expectArray(data.comparisons, 'dashboard.baseline.comparisons').map(
 		(item, index) => {
@@ -161,7 +173,7 @@ function parseBaseline(value: unknown): DashboardPageData['baseline'] {
 	};
 }
 
-function parseEndpoints(value: unknown): DashboardPageData['endpoints'] {
+function parseEndpoints(value: unknown): DashboardReadyData['endpoints'] {
 	const data = expectObject(value, 'dashboard.endpoints');
 	const rows = expectArray(data.endpoints, 'dashboard.endpoints.endpoints').map((item, index) => {
 		const row = expectObject(item, `dashboard.endpoints.endpoints[${index}]`);
@@ -180,7 +192,7 @@ function parseEndpoints(value: unknown): DashboardPageData['endpoints'] {
 	};
 }
 
-function parseBotActivity(value: unknown): DashboardPageData['botActivity'] {
+function parseBotActivity(value: unknown): DashboardReadyData['botActivity'] {
 	const data = expectObject(value, 'dashboard.botActivity');
 	const rows = expectArray(data.bots, 'dashboard.botActivity.bots').map((item, index) => {
 		const row = expectObject(item, `dashboard.botActivity.bots[${index}]`);
@@ -201,20 +213,31 @@ function parseBotActivity(value: unknown): DashboardPageData['botActivity'] {
 }
 
 export async function loadDashboardPage(fetchFn: typeof fetch): Promise<DashboardPageData> {
-	const [overview, traffic, baseline, endpoints, botActivity] = await Promise.all([
-		fetchJson(fetchFn, '/analytics/overview'),
-		fetchJson(fetchFn, '/analytics/traffic'),
-		fetchJson(fetchFn, '/analytics/baseline'),
-		fetchJson(fetchFn, '/analytics/top-endpoints'),
-		fetchJson(fetchFn, '/analytics/bot-activity'),
-	]);
+	try {
+		const [overview, traffic, baseline, endpoints, botActivity] = await Promise.all([
+			fetchJson(fetchFn, '/analytics/overview'),
+			fetchJson(fetchFn, '/analytics/traffic'),
+			fetchJson(fetchFn, '/analytics/baseline'),
+			fetchJson(fetchFn, '/analytics/top-endpoints'),
+			fetchJson(fetchFn, '/analytics/bot-activity'),
+		]);
 
-	return {
-		overview: parseOverview(overview),
-		traffic: parseTraffic(traffic),
-		baseline: parseBaseline(baseline),
-		endpoints: parseEndpoints(endpoints),
-		botActivity: parseBotActivity(botActivity),
-	};
+		return {
+			state: 'ready',
+			overview: parseOverview(overview),
+			traffic: parseTraffic(traffic),
+			baseline: parseBaseline(baseline),
+			endpoints: parseEndpoints(endpoints),
+			botActivity: parseBotActivity(botActivity),
+		};
+	} catch (error) {
+		if (isUpstreamRequestFailure(error)) {
+			return {
+				state: 'unavailable',
+				message: 'Live dashboard analytics are temporarily unavailable for this account.',
+			};
+		}
+
+		throw error;
+	}
 }
-

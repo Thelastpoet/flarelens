@@ -9,20 +9,23 @@
 	let activeTab = $state<'Traffic' | 'Performance' | 'Errors'>('Traffic');
 
 	const tabs = ['Traffic', 'Performance', 'Errors'] as const;
-	const trafficData = $derived(data.traffic);
-	const endpoints = $derived(data.endpoints.endpoints);
-	const countries = $derived(data.geo.countries);
-	const clients = $derived(data.clients.clients);
-	const performanceData = $derived(data.performance);
-	const errorsData = $derived(data.errors);
-	const trafficPoints = $derived(data.traffic.points);
-	const errors = $derived(data.errors.errors);
-	const totalRequests = $derived(data.traffic.totalRequests);
-	const totalCachedRequests = $derived(data.traffic.totalCachedRequests);
-const cacheHitRate = $derived(totalRequests > 0 ? (totalCachedRequests / totalRequests) * 100 : 0);
-const liveWindow = $derived(
-	`${new Date(trafficData.from).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(trafficData.to).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-);
+	const isUnavailable = $derived(data.state === 'unavailable');
+	const trafficData = $derived(data.state === 'ready' ? data.traffic : null);
+	const endpoints = $derived(data.state === 'ready' ? data.endpoints.endpoints : []);
+	const countries = $derived(data.state === 'ready' ? data.geo.countries : []);
+	const clients = $derived(data.state === 'ready' ? data.clients.clients : []);
+	const performanceData = $derived(data.state === 'ready' ? data.performance : null);
+	const errorsData = $derived(data.state === 'ready' ? data.errors : null);
+	const trafficPoints = $derived(data.state === 'ready' ? data.traffic.points : []);
+	const errors = $derived(data.state === 'ready' ? data.errors.errors : []);
+	const totalRequests = $derived(data.state === 'ready' ? data.traffic.totalRequests : 0);
+	const totalCachedRequests = $derived(data.state === 'ready' ? data.traffic.totalCachedRequests : 0);
+	const cacheHitRate = $derived(totalRequests > 0 ? (totalCachedRequests / totalRequests) * 100 : 0);
+	const liveWindow = $derived(
+		data.state === 'ready'
+			? `${new Date(data.traffic.from).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(data.traffic.to).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+			: '',
+	);
 
 function formatCompact(n: number): string {
 	return new Intl.NumberFormat('en-US', { notation: 'compact' }).format(n);
@@ -42,6 +45,15 @@ function formatErrorStatus(status: number): string {
 }
 </script>
 
+{#if isUnavailable}
+	<div class="max-w-[1200px] mx-auto">
+		<div class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+			<h1 class="text-2xl font-bold text-slate-900">Analytics temporarily unavailable</h1>
+			<p class="mt-3 text-sm text-slate-500">{data.message}</p>
+			<p class="mt-2 text-sm text-slate-400">Reconnect the Cloudflare account or try again after analytics data becomes available.</p>
+		</div>
+	</div>
+{:else if trafficData && performanceData && errorsData}
 <div class="max-w-[1200px] mx-auto flex flex-col gap-6">
 	<!-- Page header -->
 	<div class="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 pb-2">
@@ -223,3 +235,4 @@ function formatErrorStatus(status: number): string {
 		{/if}
 	</div>
 </div>
+{/if}

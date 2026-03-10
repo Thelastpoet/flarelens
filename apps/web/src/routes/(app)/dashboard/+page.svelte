@@ -5,13 +5,14 @@ import TopEndpoints from '$lib/components/dashboard/TopEndpoints.svelte';
 import type { PageData } from './$types.js';
 
 let { data }: { data: PageData } = $props();
-const overview = $derived(data.overview);
-const traffic = $derived(data.traffic);
-const baseline = $derived(data.baseline.comparisons);
-const endpoints = $derived(data.endpoints.endpoints);
-const bots = $derived(data.botActivity.items);
-const botTrafficPct = $derived(data.botActivity.botTrafficPct);
-const trafficPoints = $derived(data.traffic.points);
+const isUnavailable = $derived(data.state === 'unavailable');
+const overview = $derived(data.state === 'ready' ? data.overview : null);
+const traffic = $derived(data.state === 'ready' ? data.traffic : null);
+const baseline = $derived(data.state === 'ready' ? data.baseline.comparisons : []);
+const endpoints = $derived(data.state === 'ready' ? data.endpoints.endpoints : []);
+const bots = $derived(data.state === 'ready' ? data.botActivity.items : []);
+const botTrafficPct = $derived(data.state === 'ready' ? data.botActivity.botTrafficPct : 0);
+const trafficPoints = $derived(data.state === 'ready' ? data.traffic.points : []);
 
 function formatCompact(n: number): string {
 	return new Intl.NumberFormat('en-US', { notation: 'compact' }).format(n);
@@ -33,12 +34,23 @@ function formatPeriodLabel(from: string, to: string): string {
 	return `${fromDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${toDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 }
 
-const periodLabel = $derived(formatPeriodLabel(overview.periodFrom, overview.periodTo));
+const periodLabel = $derived(
+	data.state === 'ready' ? formatPeriodLabel(data.overview.periodFrom, data.overview.periodTo) : '',
+);
 
 const headlineStatus = $derived.by(() => {
-	if (overview.activeAnomalies > 0 || overview.threatsBlocked > 0) {
+	if (data.state !== 'ready') {
 		return {
-			label: `${overview.activeAnomalies} active anomaly${overview.activeAnomalies === 1 ? '' : 'ies'}`,
+			label: 'Dashboard unavailable',
+			dot: 'bg-slate-400',
+			text: 'text-slate-500',
+		};
+	}
+
+	const currentOverview = data.overview;
+	if (currentOverview.activeAnomalies > 0 || currentOverview.threatsBlocked > 0) {
+		return {
+			label: `${currentOverview.activeAnomalies} active anomaly${currentOverview.activeAnomalies === 1 ? '' : 'ies'}`,
 			dot: 'bg-amber-500',
 			text: 'text-amber-600',
 		};
@@ -82,36 +94,39 @@ function trendIcon(metric: string): string {
 }
 
 const estimatedBudgetPct = $derived(() => {
-	if (overview.estimatedCost <= 0) return 0;
-	return Math.min(100, Math.max(5, overview.estimatedCost * 10));
+	if (data.state !== 'ready' || data.overview.estimatedCost <= 0) return 0;
+	return Math.min(100, Math.max(5, data.overview.estimatedCost * 10));
 });
 
 const recentActivity = $derived.by(() => {
 	const items: Array<{ dot: string; title: string; sub: string; time: string }> = [];
+	if (data.state !== 'ready') {
+		return items;
+	}
 
-	if (overview.activeAnomalies > 0) {
+	if (data.overview.activeAnomalies > 0) {
 		items.push({
 			dot: 'bg-amber-500',
 			title: 'Active anomalies detected',
-			sub: `${overview.activeAnomalies} anomaly${overview.activeAnomalies === 1 ? '' : 'ies'} currently require review.`,
+			sub: `${data.overview.activeAnomalies} anomaly${data.overview.activeAnomalies === 1 ? '' : 'ies'} currently require review.`,
 			time: periodLabel,
 		});
 	}
 
-	if (overview.threatsBlocked > 0) {
+	if (data.overview.threatsBlocked > 0) {
 		items.push({
 			dot: 'bg-emerald-500',
 			title: 'Threat traffic blocked',
-			sub: `${formatCompact(overview.threatsBlocked)} requests were flagged or blocked in the current window.`,
+			sub: `${formatCompact(data.overview.threatsBlocked)} requests were flagged or blocked in the current window.`,
 			time: periodLabel,
 		});
 	}
 
-	if (overview.workerExecutions > 0) {
+	if (data.overview.workerExecutions > 0) {
 		items.push({
 			dot: 'bg-slate-300',
 			title: 'Worker activity observed',
-			sub: `${formatCompact(overview.workerExecutions)} worker executions recorded in the current analytics window.`,
+			sub: `${formatCompact(data.overview.workerExecutions)} worker executions recorded in the current analytics window.`,
 			time: periodLabel,
 		});
 	}
@@ -120,6 +135,13 @@ const recentActivity = $derived.by(() => {
 });
 </script>
 
+{#if isUnavailable}
+	<div class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+		<h1 class="text-2xl font-bold text-slate-900">Dashboard temporarily unavailable</h1>
+		<p class="mt-3 text-sm text-slate-500">{data.message}</p>
+		<p class="mt-2 text-sm text-slate-400">Reconnect the Cloudflare account or try again after analytics data becomes available.</p>
+	</div>
+{:else if overview && traffic}
 <!-- Header row -->
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
 	<div class="flex flex-col gap-1">
@@ -268,4 +290,5 @@ const recentActivity = $derived.by(() => {
 		</h3>
 		<TopEndpoints {endpoints} />
 	</div>
+{/if}
 {/if}

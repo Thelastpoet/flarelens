@@ -6,7 +6,8 @@ import {
 } from '$lib/server/assert.js';
 import { fetchJson } from '$lib/server/http.js';
 
-export interface AnalyticsPageData {
+type AnalyticsReadyData = {
+	state: 'ready';
 	traffic: {
 		points: Array<{
 			datetime: string;
@@ -66,9 +67,20 @@ export interface AnalyticsPageData {
 		from: string;
 		to: string;
 	};
+};
+
+export type AnalyticsPageData =
+	| AnalyticsReadyData
+	| {
+			state: 'unavailable';
+			message: string;
+	  };
+
+function isUpstreamRequestFailure(error: unknown): boolean {
+	return error instanceof Error && error.message.startsWith('Request to /api/');
 }
 
-function parseTraffic(value: unknown): AnalyticsPageData['traffic'] {
+function parseTraffic(value: unknown): AnalyticsReadyData['traffic'] {
 	const data = expectObject(value, 'analytics.traffic');
 	const points = expectArray(data.points, 'analytics.traffic.points').map((item, index) => {
 		const row = expectObject(item, `analytics.traffic.points[${index}]`);
@@ -99,7 +111,7 @@ function parseTraffic(value: unknown): AnalyticsPageData['traffic'] {
 	};
 }
 
-function parseGeo(value: unknown): AnalyticsPageData['geo'] {
+function parseGeo(value: unknown): AnalyticsReadyData['geo'] {
 	const data = expectObject(value, 'analytics.geo');
 	const rows = expectArray(data.countries, 'analytics.geo.countries').map((item, index) => {
 		const row = expectObject(item, `analytics.geo.countries[${index}]`);
@@ -117,7 +129,7 @@ function parseGeo(value: unknown): AnalyticsPageData['geo'] {
 	};
 }
 
-function parseClients(value: unknown): AnalyticsPageData['clients'] {
+function parseClients(value: unknown): AnalyticsReadyData['clients'] {
 	const data = expectObject(value, 'analytics.clients');
 	const clients = expectArray(data.clients, 'analytics.clients.clients').map((item, index) => {
 		const row = expectObject(item, `analytics.clients.clients[${index}]`);
@@ -138,7 +150,7 @@ function parseClients(value: unknown): AnalyticsPageData['clients'] {
 	};
 }
 
-function parseEndpoints(value: unknown): AnalyticsPageData['endpoints'] {
+function parseEndpoints(value: unknown): AnalyticsReadyData['endpoints'] {
 	const data = expectObject(value, 'analytics.endpoints');
 	const rows = expectArray(data.endpoints, 'analytics.endpoints.endpoints').map((item, index) => {
 		const row = expectObject(item, `analytics.endpoints.endpoints[${index}]`);
@@ -157,7 +169,7 @@ function parseEndpoints(value: unknown): AnalyticsPageData['endpoints'] {
 	};
 }
 
-function parsePerformance(value: unknown): AnalyticsPageData['performance'] {
+function parsePerformance(value: unknown): AnalyticsReadyData['performance'] {
 	const data = expectObject(value, 'analytics.performance');
 	return {
 		avgResponseMs: expectNumber(data.avgResponseMs, 'analytics.performance.avgResponseMs'),
@@ -177,7 +189,7 @@ function parsePerformance(value: unknown): AnalyticsPageData['performance'] {
 	};
 }
 
-function parseErrors(value: unknown): AnalyticsPageData['errors'] {
+function parseErrors(value: unknown): AnalyticsReadyData['errors'] {
 	const data = expectObject(value, 'analytics.errors');
 	const errors = expectArray(data.errors, 'analytics.errors.errors').map((item, index) => {
 		const row = expectObject(item, `analytics.errors.errors[${index}]`);
@@ -199,22 +211,33 @@ function parseErrors(value: unknown): AnalyticsPageData['errors'] {
 }
 
 export async function loadAnalyticsPage(fetchFn: typeof fetch): Promise<AnalyticsPageData> {
-	const [traffic, geo, clients, endpoints, performance, errors] = await Promise.all([
-		fetchJson(fetchFn, '/analytics/traffic'),
-		fetchJson(fetchFn, '/analytics/geo'),
-		fetchJson(fetchFn, '/analytics/clients'),
-		fetchJson(fetchFn, '/analytics/top-endpoints'),
-		fetchJson(fetchFn, '/analytics/performance'),
-		fetchJson(fetchFn, '/analytics/errors'),
-	]);
+	try {
+		const [traffic, geo, clients, endpoints, performance, errors] = await Promise.all([
+			fetchJson(fetchFn, '/analytics/traffic'),
+			fetchJson(fetchFn, '/analytics/geo'),
+			fetchJson(fetchFn, '/analytics/clients'),
+			fetchJson(fetchFn, '/analytics/top-endpoints'),
+			fetchJson(fetchFn, '/analytics/performance'),
+			fetchJson(fetchFn, '/analytics/errors'),
+		]);
 
-	return {
-		traffic: parseTraffic(traffic),
-		geo: parseGeo(geo),
-		clients: parseClients(clients),
-		endpoints: parseEndpoints(endpoints),
-		performance: parsePerformance(performance),
-		errors: parseErrors(errors),
-	};
+		return {
+			state: 'ready',
+			traffic: parseTraffic(traffic),
+			geo: parseGeo(geo),
+			clients: parseClients(clients),
+			endpoints: parseEndpoints(endpoints),
+			performance: parsePerformance(performance),
+			errors: parseErrors(errors),
+		};
+	} catch (error) {
+		if (isUpstreamRequestFailure(error)) {
+			return {
+				state: 'unavailable',
+				message: 'Live analytics are temporarily unavailable for this account.',
+			};
+		}
+
+		throw error;
+	}
 }
-
