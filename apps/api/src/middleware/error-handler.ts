@@ -20,7 +20,15 @@ export const errorHandler: ErrorHandler<AppContext> = (err, c) => {
 		stack: err.stack,
 		url: c.req.url,
 		method: c.req.method,
+		request_id: c.get('requestId'),
 	});
 
-	return c.json({ error: 'Internal server error', code: 'INTERNAL_ERROR' }, 500);
+	return c.json(
+		{
+			error: 'Internal server error',
+			code: 'INTERNAL_ERROR',
+			request_id: c.get('requestId'),
+		},
+		500,
+	);
 };

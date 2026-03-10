@@ -1,5 +1,6 @@
 import { CF_REQUIRED_CAPABILITIES, NotFoundError, ValidationError, newId } from '@flarelens/shared';
 import { AddCfTokenSchema, type AddCfTokenInput } from '@flarelens/shared/schemas/cf-tokens';
+import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { decryptToken, encryptToken } from '../auth/crypto.js';
 import { logAudit } from '../middleware/audit.js';
@@ -13,6 +14,29 @@ import { CloudflareClient } from '../services/cloudflare/client.js';
 
 const cfTokens = new Hono<AppContext>();
 cfTokens.use('*', authMiddleware, reposMiddleware);
+
+async function logVerificationFailure(
+	c: Context<AppContext>,
+	opts: {
+		tokenId: string;
+		label: string;
+		stage: string;
+		message: string;
+		metadata?: Record<string, unknown>;
+	},
+): Promise<void> {
+	await logAudit(c as never, {
+		action: 'update',
+		entity_type: 'token',
+		entity_id: opts.tokenId,
+		description: `Cloudflare token verification failed for "${opts.label}": ${opts.message}`,
+		metadata: {
+			stage: opts.stage,
+			outcome: 'failed',
+			...opts.metadata,
+		},
+	});
+}
 
 // GET /cf-tokens — list tokens (masked)
 cfTokens.get('/', rateLimit('reads'), async (c) => {
@@ -86,6 +110,12 @@ cfTokens.post('/:id/verify', requireRole('admin'), rateLimit('writes'), async (c
 			status: 'invalid',
 			verification_error: message,
 		});
+		await logVerificationFailure(c, {
+			tokenId: id,
+			label: tokenRow.label,
+			stage: 'verify_token',
+			message,
+		});
 		console.warn('[CfTokenVerify] Token verification request failed', {
 			token_id: id,
 			account_id: c.get('session').account_id,
@@ -111,6 +141,13 @@ cfTokens.post('/:id/verify', requireRole('admin'), rateLimit('writes'), async (c
 			status: 'invalid',
 			verification_error: `Token status is '${verifyResult.status}', expected 'active'`,
 			verification_details: verificationDetails,
+		});
+		await logVerificationFailure(c, {
+			tokenId: id,
+			label: tokenRow.label,
+			stage: 'token_status',
+			message: `Token status is '${verifyResult.status}', expected 'active'`,
+			metadata: { token_status: verifyResult.status },
 		});
 		throw new ValidationError(`Token status is '${verifyResult.status}', expected 'active'`);
 	}
@@ -149,6 +186,12 @@ cfTokens.post('/:id/verify', requireRole('admin'), rateLimit('writes'), async (c
 			verification_error: message,
 			verification_details: verificationDetails,
 		});
+		await logVerificationFailure(c, {
+			tokenId: id,
+			label: tokenRow.label,
+			stage: 'capability_probe',
+			message,
+		});
 		console.warn('[CfTokenVerify] Capability validation failed', {
 			token_id: id,
 			account_id: c.get('session').account_id,
@@ -170,6 +213,13 @@ cfTokens.post('/:id/verify', requireRole('admin'), rateLimit('writes'), async (c
 			capabilities: capabilityResult.capabilities,
 			verification_error: message,
 			verification_details: verificationDetails,
+		});
+		await logVerificationFailure(c, {
+			tokenId: id,
+			label: tokenRow.label,
+			stage: 'required_capabilities',
+			message,
+			metadata: { missing_capabilities: missingCapabilities, cf_account_id: account.id },
 		});
 		console.warn('[CfTokenVerify] Missing required capabilities', {
 			token_id: id,

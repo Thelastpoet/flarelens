@@ -1,4 +1,4 @@
-import type { CfToken, TeamMember, User } from '@flarelens/shared';
+import type { Account, CfToken, TeamMember, User } from '@flarelens/shared';
 import type { Env } from '../../src/env.js';
 
 type AuditLogRecord = {
@@ -79,6 +79,7 @@ class FakePreparedStatement {
 }
 
 export class FakeD1Database implements D1Database {
+	accounts = new Map<string, Account>();
 	users = new Map<string, User>();
 	usersByEmail = new Map<string, User>();
 	teamMembers = new Map<string, TeamMember>();
@@ -112,6 +113,10 @@ export class FakeD1Database implements D1Database {
 			return (this.users.get(String(params[0])) ?? null) as T | null;
 		}
 
+		if (sql === 'SELECT * FROM accounts WHERE id = ?') {
+			return (this.accounts.get(String(params[0])) ?? null) as T | null;
+		}
+
 		if (
 			sql ===
 			"SELECT account_id, role FROM team_members WHERE user_id = ? AND status = 'active' ORDER BY CASE role WHEN 'admin' THEN 0 WHEN 'editor' THEN 1 ELSE 2 END LIMIT 1"
@@ -132,6 +137,10 @@ export class FakeD1Database implements D1Database {
 			) as T | null;
 		}
 
+		if (sql === 'SELECT * FROM team_members WHERE id = ?') {
+			return (this.teamMembers.get(String(params[0])) ?? null) as T | null;
+		}
+
 		if (sql === 'SELECT * FROM cf_tokens WHERE id = ? AND account_id = ?') {
 			const token = this.cfTokens.get(String(params[0]));
 			if (!token || token.account_id !== params[1]) return null;
@@ -147,6 +156,88 @@ export class FakeD1Database implements D1Database {
 
 	async executeRun(query: string, params: unknown[]): Promise<D1Result> {
 		const sql = normalizeSql(query);
+
+		if (
+			sql ===
+			'INSERT INTO accounts (id, name, plan) VALUES (?, ?, ?)'
+		) {
+			const account: Account = {
+				id: String(params[0]),
+				name: String(params[1]),
+				plan: String(params[2]) as Account['plan'],
+				plan_period_end: null,
+				stripe_customer_id: null,
+				settings: '{}',
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			};
+			this.accounts.set(account.id, account);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
+			`INSERT INTO users (id, email, name, password_hash, oauth_provider, oauth_id) VALUES (?, ?, ?, ?, ?, ?)`
+		) {
+			const user: User = {
+				id: String(params[0]),
+				email: String(params[1]),
+				name: String(params[2]),
+				password_hash: (params[3] as string | null) ?? null,
+				oauth_provider: (params[4] as string | null) ?? null,
+				oauth_id: (params[5] as string | null) ?? null,
+				email_verified: 0,
+				avatar_url: null,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			};
+			this.insertUser(user);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
+			`INSERT INTO team_members (id, account_id, user_id, email, role, status, invited_by) VALUES (?, ?, ?, ?, ?, ?, ?)`
+		) {
+			const member: TeamMember = {
+				id: String(params[0]),
+				account_id: String(params[1]),
+				user_id: (params[2] as string | null) ?? null,
+				email: String(params[3]),
+				role: String(params[4]) as TeamMember['role'],
+				status: String(params[5]) as TeamMember['status'],
+				invited_by: (params[6] as string | null) ?? null,
+				invited_at: new Date().toISOString(),
+				accepted_at: params[2] ? new Date().toISOString() : null,
+				last_active_at: null,
+				created_at: new Date().toISOString(),
+			};
+			this.insertTeamMember(member);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
+			`INSERT INTO cf_tokens ( id, account_id, label, encrypted_token, cf_account_id, permissions, capabilities, verification_details, status ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		) {
+			const token: CfToken = {
+				id: String(params[0]),
+				account_id: String(params[1]),
+				label: String(params[2]),
+				encrypted_token: String(params[3]),
+				cf_account_id: (params[4] as string | null) ?? null,
+				permissions: String(params[5]),
+				capabilities: String(params[6]),
+				verification_details: String(params[7]),
+				status: String(params[8]) as CfToken['status'],
+				last_used_at: null,
+				verified_at: null,
+				verification_error: null,
+				created_at: new Date().toISOString(),
+			};
+			this.insertCfToken(token);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
 
 		if (
 			sql ===
@@ -234,6 +325,10 @@ export class FakeD1Database implements D1Database {
 	insertUser(user: User) {
 		this.users.set(user.id, user);
 		this.usersByEmail.set(user.email, user);
+	}
+
+	insertAccount(account: Account) {
+		this.accounts.set(account.id, account);
 	}
 
 	insertTeamMember(member: TeamMember) {

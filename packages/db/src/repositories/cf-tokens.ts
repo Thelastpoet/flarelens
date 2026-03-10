@@ -27,6 +27,23 @@ export class CfTokensRepository extends BaseRepository {
 		);
 	}
 
+	async findVerifiedByAccount(requiredCapabilities: readonly CfCapability[] = []): Promise<CfToken[]> {
+		const rows = await this.all<CfToken>(
+			`SELECT * FROM cf_tokens
+       WHERE account_id = ?
+         AND status = 'active'
+         AND cf_account_id IS NOT NULL
+         AND verified_at IS NOT NULL`,
+			this.account_id,
+		);
+		if (requiredCapabilities.length === 0) return rows;
+
+		return rows.filter((row) => {
+			const capabilities = JSON.parse(row.capabilities || '[]') as CfCapability[];
+			return requiredCapabilities.every((capability) => capabilities.includes(capability));
+		});
+	}
+
 	async create(data: {
 		id: string;
 		label: string;
@@ -38,9 +55,9 @@ export class CfTokensRepository extends BaseRepository {
 	}): Promise<CfToken> {
 		await this.run(
 			`INSERT INTO cf_tokens (
-         id, account_id, label, encrypted_token, cf_account_id, permissions, capabilities, verification_details
+         id, account_id, label, encrypted_token, cf_account_id, permissions, capabilities, verification_details, status
        )
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			data.id,
 			this.account_id,
 			data.label,
@@ -49,6 +66,7 @@ export class CfTokensRepository extends BaseRepository {
 			JSON.stringify(data.permissions ?? []),
 			JSON.stringify(data.capabilities ?? []),
 			JSON.stringify(data.verification_details ?? {}),
+			'pending',
 		);
 		const token = await this.findById(data.id);
 		if (!token) throw new Error('Failed to create CF token');

@@ -1,4 +1,4 @@
-import { NotFoundError, ValidationError, newId, PLAN_LIMITS } from '@flarelens/shared';
+import { CF_REQUIRED_CAPABILITIES, NotFoundError, ValidationError, newId, PLAN_LIMITS } from '@flarelens/shared';
 import { UpdateResourceSchema, type UpdateResourceInput } from '@flarelens/shared/schemas/resources';
 import { Hono } from 'hono';
 import { decryptToken } from '../auth/crypto.js';
@@ -92,17 +92,18 @@ resources.post('/sync', requireRole('admin', 'editor'), rateLimit('writes'), asy
 	const repos = c.get('repos');
 	const _session = c.get('session');
 
-	const activeTokens = await repos.cfTokens.findActiveByAccount();
-	if (activeTokens.length === 0) {
-		return c.json({ synced: 0, message: 'No active Cloudflare tokens found' });
+	const verifiedTokens = await repos.cfTokens.findVerifiedByAccount(CF_REQUIRED_CAPABILITIES);
+	if (verifiedTokens.length === 0) {
+		return c.json({
+			synced: 0,
+			message: 'No verified Cloudflare tokens with the required capabilities were found',
+		});
 	}
 
 	let totalSynced = 0;
 
-	for (const tokenRow of activeTokens) {
-		const cfAccountId = tokenRow.cf_account_id ?? '';
-		if (!cfAccountId) continue;
-
+	for (const tokenRow of verifiedTokens) {
+		const cfAccountId = tokenRow.cf_account_id as string;
 		const plainToken = await decryptToken(tokenRow.encrypted_token, c.env.TOKEN_ENCRYPTION_KEY);
 		const client = new CloudflareClient(plainToken, cfAccountId);
 

@@ -3,7 +3,7 @@
 export type Plan = 'free' | 'pro' | 'enterprise';
 export type Role = 'admin' | 'editor' | 'viewer';
 export type TeamMemberStatus = 'pending' | 'active';
-export type CfTokenStatus = 'active' | 'revoked' | 'invalid';
+export type CfTokenStatus = 'pending' | 'active' | 'revoked' | 'invalid';
 export const CF_CAPABILITIES = [
 	'zones:read',
 	'zones.analytics:read',

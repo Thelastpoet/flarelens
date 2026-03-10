@@ -71,18 +71,18 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Add contract/integration test for `POST /cf-tokens/:id/verify` success path in `apps/api/test/integration/test_cf_token_verify_success.ts`
-- [ ] T011 [P] [US1] Add contract/integration test for `POST /cf-tokens/:id/verify` failure modes in `apps/api/test/integration/test_cf_token_verify_failures.ts`
-- [ ] T012 [P] [US1] Add integration test for register/login cookie behavior in `apps/api/test/integration/test_auth_cookie_host_behavior.ts`
+- [x] T010 [P] [US1] Add contract/integration test for `POST /cf-tokens/:id/verify` success path in `apps/api/test/integration/test_cf_token_verify_success.ts`
+- [x] T011 [P] [US1] Add contract/integration test for `POST /cf-tokens/:id/verify` failure modes in `apps/api/test/integration/test_cf_token_verify_failures.ts`
+- [x] T012 [P] [US1] Add integration test for register/login cookie behavior in `apps/api/test/integration/test_auth_cookie_host_behavior.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T013 [US1] Implement Cloudflare account resolution and capability probes in `apps/api/src/services/cloudflare/client.ts`
-- [ ] T014 [US1] Refactor `apps/api/src/routes/cf-tokens.ts` to remove invalid `policies` assumptions and persist verified account/capability state
-- [ ] T015 [US1] Update `packages/db/src/repositories/cf-tokens.ts` to support reading/writing the new verification result fields
-- [ ] T016 [US1] Update `apps/api/src/routes/resources.ts` and `apps/api/src/services/analytics.ts` to rely on verified capability/account state instead of silent empty fallbacks
-- [ ] T017 [US1] Update `apps/api/src/routes/auth.ts` and `apps/api/src/auth/session.ts` so session cookies behave correctly in both localhost and deployed environments
-- [ ] T018 [US1] Add structured audit/error logging for verification failures in `apps/api/src/routes/cf-tokens.ts` and `apps/api/src/middleware/error-handler.ts` if needed
+- [x] T013 [US1] Implement Cloudflare account resolution and capability probes in `apps/api/src/services/cloudflare/client.ts`
+- [x] T014 [US1] Refactor `apps/api/src/routes/cf-tokens.ts` to remove invalid `policies` assumptions and persist verified account/capability state
+- [x] T015 [US1] Update `packages/db/src/repositories/cf-tokens.ts` to support reading/writing the new verification result fields
+- [x] T016 [US1] Update `apps/api/src/routes/resources.ts` and `apps/api/src/services/analytics.ts` to rely on verified capability/account state instead of silent empty fallbacks
+- [x] T017 [US1] Update `apps/api/src/routes/auth.ts` and `apps/api/src/auth/session.ts` so session cookies behave correctly in both localhost and deployed environments
+- [x] T018 [US1] Add structured audit/error logging for verification failures in `apps/api/src/routes/cf-tokens.ts` and `apps/api/src/middleware/error-handler.ts` if needed
 
 **Checkpoint**: Cloudflare onboarding is deterministic, debuggable, and safe to build upon
 

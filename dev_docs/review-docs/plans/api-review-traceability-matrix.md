@@ -93,7 +93,7 @@ Use it to answer four questions quickly:
 ### Section 10: Test and Verification Coverage
 
 - `S10-F01` High. Backend has no committed automated tests and no API-level test script. Tasks: `T001`, `T002`. Status: `Mapped`
-- `S10-F02` High. Critical production-sensitive flows have no visible verification harness. Tasks: `T009`, `T010`, `T011`, `T012`, `T019`, `T020`, `T026`, `T027`, `T032`, `T033`, `T042`, `T046`, `T047`, `T048`. Status: `Mapped`
+- `S10-F02` High. Critical production-sensitive flows have no visible verification harness. Tasks: `T009`, `T010`, `T011`, `T012`, `T019`, `T020`, `T026`, `T027`, `T032`, `T033`, `T042`, `T046`, `T047`, `T048`. Status: `In Progress`
 - `S10-F03` Medium. Test tooling is only partially present. Tasks: `T001`, `T002`. Status: `Mapped`
 - `S10-F04` Medium. Documented CI/testing workflow does not match current package scripts. Tasks: `T002`, `T039`, `T042`. Status: `Mapped`
 

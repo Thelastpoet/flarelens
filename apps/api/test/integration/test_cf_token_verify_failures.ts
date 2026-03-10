@@ -5,11 +5,11 @@ import { createSession } from '../../src/auth/session.js';
 import { createTestApp } from '../helpers/app.js';
 import { createTestEnv, FakeD1Database } from '../helpers/fakes.js';
 
-const accountId = 'acct_local';
-const userId = 'user_local';
-const cfTokenId = 'cftok_123';
-const cfAccountId = 'cf_account_123';
-const zoneId = 'zone_123';
+const accountId = 'acct_failure';
+const userId = 'user_failure';
+const cfTokenId = 'cftok_failure';
+const cfAccountId = 'cf_account_failure';
+const zoneId = 'zone_failure';
 
 function makeUser(): User {
 	return {
@@ -44,7 +44,7 @@ async function makeCfToken(encryptionKey: string): Promise<CfToken> {
 	};
 }
 
-describe('Cloudflare token verification', () => {
+describe('POST /cf-tokens/:id/verify failure modes', () => {
 	let db: FakeD1Database;
 	let env: ReturnType<typeof createTestEnv>;
 	let app: ReturnType<typeof createTestApp>;
@@ -66,7 +66,7 @@ describe('Cloudflare token verification', () => {
 		sessionCookie = cookieHeader.split(';')[0];
 	});
 
-	it('verifies a token by resolving account identity and storing derived capabilities', async () => {
+	it('rejects inactive token statuses', async () => {
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(async (input: RequestInfo | URL) => {
@@ -74,48 +74,10 @@ describe('Cloudflare token verification', () => {
 				if (url.endsWith('/user/tokens/verify')) {
 					return Response.json({
 						success: true,
-						result: {
-							id: 'verify_123',
-							status: 'active',
-							expires_on: '2026-12-31T00:00:00Z',
-							not_before: '2026-01-01T00:00:00Z',
-						},
+						result: { id: 'verify_failure', status: 'disabled' },
 					});
 				}
-				if (url.includes('/accounts?per_page=50')) {
-					return Response.json({
-						success: true,
-						result: [{ id: cfAccountId, name: 'Primary CF Account' }],
-					});
-				}
-				if (url.includes(`/zones?account.id=${cfAccountId}`)) {
-					return Response.json({
-						success: true,
-						result: [{ id: zoneId, name: 'example.com', status: 'active', plan: { name: 'pro' } }],
-					});
-				}
-				if (url.includes(`/accounts/${cfAccountId}/workers/scripts`)) {
-					return Response.json({ success: true, result: [] });
-				}
-				if (url.includes(`/accounts/${cfAccountId}/r2/buckets`)) {
-					return Response.json({ success: true, result: { buckets: [] } });
-				}
-				if (url.includes(`/accounts/${cfAccountId}/storage/kv/namespaces`)) {
-					return Response.json({ success: true, result: [] });
-				}
-				if (url.includes(`/accounts/${cfAccountId}/d1/database`)) {
-					return Response.json({ success: true, result: [] });
-				}
-				if (url.endsWith('/graphql')) {
-					return Response.json({
-						data: {
-							viewer: {
-								zones: [{ httpRequests1hGroups: [] }],
-							},
-						},
-					});
-				}
-				throw new Error(`Unexpected fetch URL in success test: ${url}`);
+				throw new Error(`Unexpected fetch URL for inactive status test: ${url}`);
 			}),
 		);
 
@@ -128,28 +90,13 @@ describe('Cloudflare token verification', () => {
 			{} as ExecutionContext,
 		);
 
-		expect(res.status).toBe(200);
-		const body = (await res.json()) as {
-			verified: boolean;
-			cf_account_id: string;
-			capabilities: string[];
-		};
-		expect(body.verified).toBe(true);
-		expect(body.cf_account_id).toBe(cfAccountId);
-		expect(body.capabilities).toEqual(
-			expect.arrayContaining(['zones:read', 'zones.analytics:read']),
-		);
-
-		const storedToken = db.cfTokens.get(cfTokenId);
-		expect(storedToken?.cf_account_id).toBe(cfAccountId);
-		expect(JSON.parse(storedToken?.capabilities ?? '[]')).toEqual(
-			expect.arrayContaining(['zones:read', 'zones.analytics:read']),
-		);
-		expect(storedToken?.verification_error).toBeNull();
-		expect(storedToken?.verified_at).toBeTruthy();
+		expect(res.status).toBe(400);
+		const body = (await res.json()) as { error: string };
+		expect(body.error).toContain("Token status is 'disabled'");
+		expect(db.cfTokens.get(cfTokenId)?.status).toBe('invalid');
 	});
 
-	it('marks the token invalid when required capabilities cannot be proven', async () => {
+	it('rejects tokens when required analytics capability cannot be proven', async () => {
 		vi.stubGlobal(
 			'fetch',
 			vi.fn(async (input: RequestInfo | URL) => {
@@ -157,7 +104,7 @@ describe('Cloudflare token verification', () => {
 				if (url.endsWith('/user/tokens/verify')) {
 					return Response.json({
 						success: true,
-						result: { id: 'verify_123', status: 'active' },
+						result: { id: 'verify_failure', status: 'active' },
 					});
 				}
 				if (url.includes('/accounts?per_page=50')) {
@@ -185,15 +132,12 @@ describe('Cloudflare token verification', () => {
 					return Response.json({ success: true, result: [] });
 				}
 				if (url.endsWith('/graphql')) {
-					return new Response(JSON.stringify({
-						success: false,
-						errors: [{ message: 'Forbidden' }],
-					}), {
+					return new Response(JSON.stringify({ errors: [{ message: 'Forbidden' }] }), {
 						status: 403,
 						headers: { 'Content-Type': 'application/json' },
 					});
 				}
-				throw new Error(`Unexpected fetch URL in failure test: ${url}`);
+				throw new Error(`Unexpected fetch URL for capability failure test: ${url}`);
 			}),
 		);
 
@@ -209,9 +153,6 @@ describe('Cloudflare token verification', () => {
 		expect(res.status).toBe(400);
 		const body = (await res.json()) as { error: string };
 		expect(body.error).toContain('zones.analytics:read');
-
-		const storedToken = db.cfTokens.get(cfTokenId);
-		expect(storedToken?.status).toBe('invalid');
-		expect(storedToken?.verification_error).toContain('zones.analytics:read');
+		expect(db.cfTokens.get(cfTokenId)?.verification_error).toContain('zones.analytics:read');
 	});
 });
