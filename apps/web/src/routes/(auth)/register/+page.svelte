@@ -158,6 +158,19 @@
                     />
                   </div>
                 </div>
+                <div>
+                  <label class="block text-sm font-medium leading-6 text-slate-900" for="confirm_password">Confirm password</label>
+                  <div class="mt-2">
+                    <input
+                      autocomplete="new-password"
+                      class="block w-full rounded-md border-0 py-2.5 text-slate-900 bg-white shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] sm:text-sm sm:leading-6"
+                      id="confirm_password"
+                      name="confirm_password"
+                      required
+                      type="password"
+                    />
+                  </div>
+                </div>
               </div>
               <div>
                 <button

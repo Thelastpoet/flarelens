@@ -28,7 +28,7 @@
           <p class="text-slate-600 text-center mt-2 text-sm">We'll send you an email with a link to reset your password.</p>
         </div>
 
-        <form class="flex flex-col gap-5" method="POST" action="?/forgotPassword">
+        <form class="flex flex-col gap-5" method="POST" action="?/forgot">
           <label class="flex flex-col gap-2">
             <span class="text-sm font-medium text-slate-700">Email Address</span>
             <input

@@ -71,9 +71,12 @@ This file tracks the frontend work required to replace mock data with live backe
 
 ### Phase 5: Onboarding and Auth Validation
 
-- [ ] F021 Confirm onboarding connect uses the exact live token payload/response shape
-- [ ] F022 Confirm onboarding zones uses the exact `/resources` response shape and zone-selection behavior
-- [ ] F023 Validate auth pages against the live backend contracts and identify any password-reset gaps
+- [x] F021 Confirm onboarding connect uses the exact live token payload/response shape
+  Outcome: passed. The connect form now submits the live `token`/`label` payload and no longer asks for an account ID the backend auto-discovers during verification.
+- [x] F022 Confirm onboarding zones uses the exact `/resources` response shape and zone-selection behavior
+  Outcome: passed for the current onboarding scope. The zones step now renders real synced resources and posts monitoring selection to the live `/resources/:id` update path.
+- [x] F023 Validate auth pages against the live backend contracts and identify any password-reset gaps
+  Outcome: passed for the current auth surface. Register now includes `confirm_password`, forgot-password uses the right action name, reset-password has a real page, and auth cookie forwarding now respects localhost/dev hosts.
 
 ### Phase 6: Frontend Quality Hardening
 

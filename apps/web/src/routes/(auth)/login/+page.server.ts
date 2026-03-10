@@ -1,8 +1,17 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
+function shouldUseSecureCookies(url: URL): boolean {
+	return (
+		url.protocol === 'https:' &&
+		url.hostname !== 'localhost' &&
+		url.hostname !== '127.0.0.1' &&
+		!url.hostname.endsWith('.local')
+	);
+}
+
 export const actions: Actions = {
-	login: async ({ request, fetch, cookies }) => {
+	login: async ({ request, fetch, cookies, url }) => {
 		const data = await request.formData();
 		const email = data.get('email')?.toString().trim();
 		const password = data.get('password')?.toString();
@@ -30,7 +39,7 @@ export const actions: Actions = {
 				path: '/',
 				httpOnly: true,
 				sameSite: 'lax',
-				secure: true,
+				secure: shouldUseSecureCookies(url),
 				maxAge: 60 * 60 * 24 * 7,
 			});
 

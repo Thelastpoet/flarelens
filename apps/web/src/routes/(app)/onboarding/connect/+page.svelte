@@ -118,15 +118,15 @@
               <div class="space-y-5">
                 <div>
                   <div class="flex items-center justify-between">
-                    <label class="block text-sm font-medium leading-6 text-slate-900" for="api_token">Cloudflare API Token</label>
+                    <label class="block text-sm font-medium leading-6 text-slate-900" for="token">Cloudflare API Token</label>
                     <a class="text-xs font-medium text-[var(--color-primary)] hover:text-[var(--color-primary)]/80" href="/docs/api-token">Where do I find my API token?</a>
                   </div>
                   <div class="mt-2">
                     <input
                       autocomplete="off"
                       class="block w-full rounded-md border-0 py-2.5 text-slate-900 bg-white shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] sm:text-sm sm:leading-6"
-                      id="api_token"
-                      name="api_token"
+                      id="token"
+                      name="token"
                       placeholder="e.g. abcdef1234567890"
                       required
                       type="password"
@@ -134,19 +134,18 @@
                   </div>
                 </div>
                 <div>
-                  <label class="block text-sm font-medium leading-6 text-slate-900" for="account_id">Account ID</label>
+                  <label class="block text-sm font-medium leading-6 text-slate-900" for="label">Connection Label</label>
                   <div class="mt-2">
                     <input
                       autocomplete="off"
                       class="block w-full rounded-md border-0 py-2.5 text-slate-900 bg-white shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-[var(--color-primary)] sm:text-sm sm:leading-6"
-                      id="account_id"
-                      name="account_id"
-                      placeholder="e.g. 023e105f4ecef8ad9ca31a8372d0c353"
-                      required
+                      id="label"
+                      name="label"
+                      placeholder="e.g. Production Account"
                       type="text"
                     />
                   </div>
-                  <p class="mt-2 text-xs text-slate-500" id="account-id-description">Found on the right side of your Cloudflare dashboard overview.</p>
+                  <p class="mt-2 text-xs text-slate-500" id="account-id-description">Cloudflare account discovery happens during verification. This label is just for your reference.</p>
                 </div>
               </div>
               <div class="pt-2">
