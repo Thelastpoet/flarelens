@@ -46,7 +46,8 @@ This file tracks the frontend work required to replace mock data with live backe
   Outcome: passed for the current rules surface. The page now loads real rules and resources, supports create/toggle/delete flows, and replaces the fake custom-rules banner with an honest backend-scope note.
 - [x] F011 Wire integrations page to `/integrations/*`
   Outcome: passed for the current integrations surface. The page now reflects live connection state, supports create/test/delete flows for supported integrations, and replaces fake connection badges with backend-backed status.
-- [ ] F012 Wire team page to `/team/*`
+- [x] F012 Wire team page to `/team/*`
+  Outcome: passed for the current team-management surface. The page now loads real members, supports invite/resend/role-change/remove flows, and replaces the mock member/invite lists with backend-backed state.
 - [x] F013 Wire notifications page to `/notifications`
   Outcome: passed for the current inbox surface. The notifications page now uses a real page loader, renders live notification records, and supports mark-all, archive-all, and per-item mark-read actions without mock content.
 - [ ] F014 Wire mitigations page to `/mitigations/*`
@@ -85,6 +86,7 @@ This file tracks the frontend work required to replace mock data with live backe
 - The inventory page is now backend-backed; pagination is still visual-only because the `/resources` API is not paginated
 - The rules page is now backend-backed; rule editing is not yet surfaced because the current UI only has create, toggle, and delete affordances
 - The integrations page is now backend-backed; webhook header editing and non-default PagerDuty severity mapping are not yet surfaced in the current UI
+- The team page is now backend-backed; invite sender identity is not exposed by the current team API, so the recent-invites list uses neutral copy instead of fake inviter names
 - Dashboard and analytics pages have live loaders but still contain hardcoded trend badges, fallback visual content, or static activity sections
 - The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
 - Most management pages (`billing`, `inventory`, `integrations`, `rules`, `team`, `audit`, `developer`, `mitigations`, `notifications`) are still UI-only with no page loader or server actions
