@@ -19,6 +19,15 @@ interface OverviewData {
 	periodTo: string;
 }
 
+interface BaselineItem {
+	metric: string;
+	currentValue: number;
+	baselineAvg: number;
+	baselineStddev: number;
+	deviationSigma: number;
+	status: 'normal' | 'warning' | 'high' | 'critical';
+}
+
 interface TrafficData {
 	points: Array<{
 		datetime: string;
@@ -53,6 +62,7 @@ interface BotActivityData {
 
 const overview = $derived(data.overview as OverviewData | null);
 const traffic = $derived(data.traffic as TrafficData | null);
+const baseline = $derived((data.baseline ?? []) as BaselineItem[]);
 const endpointsData = $derived(data.endpoints as { endpoints: TopEndpointItem[] } | null);
 const botData = $derived(data.botActivity as BotActivityData | null);
 
@@ -68,6 +78,113 @@ function formatCompact(n: number): string {
 function formatCost(n: number): string {
 	return `$${n.toFixed(2)}`;
 }
+
+function formatPeriodLabel(from: string | undefined, to: string | undefined): string {
+	if (!from || !to) return 'Live window unavailable';
+	const fromDate = new Date(from);
+	const toDate = new Date(to);
+	if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) return 'Live window unavailable';
+
+	const sameDay = fromDate.toDateString() === toDate.toDateString();
+	if (sameDay) {
+		return `${fromDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · ${fromDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${toDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+	}
+
+	return `${fromDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${toDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+}
+
+const periodLabel = $derived(formatPeriodLabel(overview?.periodFrom, overview?.periodTo));
+
+const headlineStatus = $derived.by(() => {
+	if (!overview) {
+		return {
+			label: 'Analytics Unavailable',
+			dot: 'bg-slate-400',
+			text: 'text-slate-500',
+		};
+	}
+	if ((overview.activeAnomalies ?? 0) > 0 || (overview.threatsBlocked ?? 0) > 0) {
+		return {
+			label: `${overview.activeAnomalies ?? 0} active anomaly${overview.activeAnomalies === 1 ? '' : 'ies'}`,
+			dot: 'bg-amber-500',
+			text: 'text-amber-600',
+		};
+	}
+	return {
+		label: 'No active anomalies',
+		dot: 'bg-emerald-500',
+		text: 'text-slate-500',
+	};
+});
+
+function deviationFor(metric: string): number | null {
+	const match = baseline.find((item) => item.metric === metric);
+	return match ? match.deviationSigma : null;
+}
+
+function trendTone(metric: string): 'positive' | 'caution' | 'neutral' {
+	const deviation = deviationFor(metric);
+	if (deviation == null) return 'neutral';
+	return deviation >= 2 ? 'caution' : 'positive';
+}
+
+function trendLabel(metric: string): string {
+	const deviation = deviationFor(metric);
+	if (deviation == null) return 'No baseline';
+	return `${deviation.toFixed(1)}σ`;
+}
+
+function trendClasses(metric: string): string {
+	const tone = trendTone(metric);
+	if (tone === 'caution') return 'text-amber-700 bg-amber-50';
+	if (tone === 'positive') return 'text-emerald-600 bg-emerald-50';
+	return 'text-slate-500 bg-slate-100';
+}
+
+function trendIcon(metric: string): string {
+	const tone = trendTone(metric);
+	if (tone === 'caution') return 'trending_up';
+	if (tone === 'positive') return 'check';
+	return 'remove';
+}
+
+const estimatedBudgetPct = $derived(() => {
+	if (!overview || overview.estimatedCost <= 0) return 0;
+	return Math.min(100, Math.max(5, overview.estimatedCost * 10));
+});
+
+const recentActivity = $derived.by(() => {
+	const items: Array<{ dot: string; title: string; sub: string; time: string }> = [];
+
+	if ((overview?.activeAnomalies ?? 0) > 0) {
+		items.push({
+			dot: 'bg-amber-500',
+			title: 'Active anomalies detected',
+			sub: `${overview?.activeAnomalies ?? 0} anomaly${overview?.activeAnomalies === 1 ? '' : 'ies'} currently require review.`,
+			time: periodLabel,
+		});
+	}
+
+	if ((overview?.threatsBlocked ?? 0) > 0) {
+		items.push({
+			dot: 'bg-emerald-500',
+			title: 'Threat traffic blocked',
+			sub: `${formatCompact(overview?.threatsBlocked ?? 0)} requests were flagged or blocked in the current window.`,
+			time: periodLabel,
+		});
+	}
+
+	if ((overview?.workerExecutions ?? 0) > 0) {
+		items.push({
+			dot: 'bg-slate-300',
+			title: 'Worker activity observed',
+			sub: `${formatCompact(overview?.workerExecutions ?? 0)} worker executions recorded in the current analytics window.`,
+			time: periodLabel,
+		});
+	}
+
+	return items.slice(0, 3);
+});
 </script>
 
 <!-- Header row -->
@@ -75,8 +192,8 @@ function formatCost(n: number): string {
 	<div class="flex flex-col gap-1">
 		<h1 class="text-slate-900 text-2xl sm:text-[28px] font-bold leading-tight">Dashboard Overview</h1>
 		<div class="flex items-center gap-2">
-			<div class="size-2 rounded-full bg-emerald-500"></div>
-			<p class="text-slate-500 text-sm font-medium leading-normal">All Systems Normal</p>
+			<div class="size-2 rounded-full {headlineStatus.dot}"></div>
+			<p class="{headlineStatus.text} text-sm font-medium leading-normal">{headlineStatus.label}</p>
 		</div>
 	</div>
 	<div class="flex items-center gap-3">
@@ -103,9 +220,9 @@ function formatCost(n: number): string {
 			<p class="text-slate-900 text-3xl font-bold leading-tight tracking-tight">
 				{formatCompact(overview?.totalRequests ?? 0)}
 			</p>
-			<div class="flex items-center text-emerald-600 text-sm font-semibold bg-emerald-50 px-2 py-0.5 rounded-md">
-				<span class="material-symbols-outlined !text-[16px]">trending_up</span>
-				<span>5%</span>
+			<div class="flex items-center text-sm font-semibold px-2 py-0.5 rounded-md {trendClasses('requests')}">
+				<span class="material-symbols-outlined !text-[16px]">{trendIcon('requests')}</span>
+				<span>{trendLabel('requests')}</span>
 			</div>
 		</div>
 	</div>
@@ -120,9 +237,9 @@ function formatCost(n: number): string {
 			<p class="text-slate-900 text-3xl font-bold leading-tight tracking-tight">
 				{formatCompact(overview?.workerExecutions ?? 0)}
 			</p>
-			<div class="flex items-center text-emerald-600 text-sm font-semibold bg-emerald-50 px-2 py-0.5 rounded-md">
-				<span class="material-symbols-outlined !text-[16px]">trending_up</span>
-				<span>12%</span>
+			<div class="flex items-center text-sm font-semibold px-2 py-0.5 rounded-md {trendClasses('requests')}">
+				<span class="material-symbols-outlined !text-[16px]">{trendIcon('requests')}</span>
+				<span>{trendLabel('requests')}</span>
 			</div>
 		</div>
 	</div>
@@ -137,15 +254,15 @@ function formatCost(n: number): string {
 			<p class="text-slate-900 text-3xl font-bold leading-tight tracking-tight">
 				{formatCost(overview?.estimatedCost ?? 0)}
 			</p>
-			<div class="flex items-center text-emerald-600 text-sm font-semibold bg-emerald-50 px-2 py-0.5 rounded-md">
-				<span class="material-symbols-outlined !text-[16px]">trending_down</span>
-				<span>2%</span>
+			<div class="flex items-center text-sm font-semibold px-2 py-0.5 rounded-md {trendClasses('bytes')}">
+				<span class="material-symbols-outlined !text-[16px]">{trendIcon('bytes')}</span>
+				<span>{trendLabel('bytes')}</span>
 			</div>
 		</div>
 		<div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
-			<div class="bg-primary h-1.5 rounded-full" style="width: 25%"></div>
+			<div class="bg-primary h-1.5 rounded-full" style="width: {estimatedBudgetPct}%"></div>
 		</div>
-		<p class="text-xs text-slate-500 mt-1">25% of $50 limit</p>
+		<p class="text-xs text-slate-500 mt-1">Estimate for {periodLabel}</p>
 	</div>
 </div>
 
@@ -189,22 +306,22 @@ function formatCost(n: number): string {
 				<h3 class="text-slate-900 text-base font-semibold leading-normal">Recent Activity</h3>
 				<a href="/notifications" class="text-xs font-medium text-primary hover:underline">View All</a>
 			</div>
-			<div class="flex flex-col gap-4">
-				{#each [
-					{ dot: 'bg-amber-500',  title: 'Rate limit triggered',      sub: 'API endpoint /v1/users experienced a surge.',  time: '10 mins ago' },
-					{ dot: 'bg-emerald-500', title: 'Cost optimization applied', sub: 'Automatically cached 45 static assets.',         time: '2 hours ago' },
-					{ dot: 'bg-slate-300',  title: 'Worker script deployed',     sub: 'Auth-middleware v2.1 successfully deployed.',   time: '5 hours ago' },
-				] as item}
-					<div class="flex gap-3">
-						<div class="mt-1.5 size-2 rounded-full {item.dot} shrink-0"></div>
-						<div class="flex flex-col gap-0.5">
-							<p class="text-sm font-medium text-slate-900">{item.title}</p>
-							<p class="text-xs text-slate-500">{item.sub}</p>
-							<p class="text-[10px] text-slate-400 mt-1">{item.time}</p>
+			{#if recentActivity.length > 0}
+				<div class="flex flex-col gap-4">
+					{#each recentActivity as item}
+						<div class="flex gap-3">
+							<div class="mt-1.5 size-2 rounded-full {item.dot} shrink-0"></div>
+							<div class="flex flex-col gap-0.5">
+								<p class="text-sm font-medium text-slate-900">{item.title}</p>
+								<p class="text-xs text-slate-500">{item.sub}</p>
+								<p class="text-[10px] text-slate-400 mt-1">{item.time}</p>
+							</div>
 						</div>
-					</div>
-				{/each}
-			</div>
+					{/each}
+				</div>
+			{:else}
+				<p class="text-xs text-slate-400">No recent live activity is available for this account yet.</p>
+			{/if}
 		</div>
 	</div>
 </div>

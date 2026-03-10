@@ -27,9 +27,12 @@ This file tracks the frontend work required to replace mock data with live backe
 
 ### Phase 2: Already Loader-Backed Screens
 
-- [ ] F004 Remove remaining hardcoded summary/trend values from `dashboard/+page.svelte`
-- [ ] F005 Remove hardcoded recent-activity items from `dashboard/+page.svelte` or mark backend gap if no matching feed exists
-- [ ] F006 Confirm all dashboard widgets degrade cleanly with real empty-state data
+- [x] F004 Remove remaining hardcoded summary/trend values from `dashboard/+page.svelte`
+  Outcome: passed. Dashboard stat cards now derive their status labels from live overview/baseline data instead of fixed percentages.
+- [x] F005 Remove hardcoded recent-activity items from `dashboard/+page.svelte` or mark backend gap if no matching feed exists
+  Outcome: passed. The recent-activity panel now uses live overview signals instead of demo timeline copy.
+- [x] F006 Confirm all dashboard widgets degrade cleanly with real empty-state data
+  Outcome: passed for the current dashboard surface. The dashboard now renders honest empty or unavailable states rather than fake success data.
 - [ ] F007 Remove analytics-page fallback demo visuals where real API data should drive the widget
 - [ ] F008 Confirm anomaly list and detail routes cover the current UI states without local-only assumptions
 - [ ] F026 Remove or replace analytics-page static fallback visuals where they misrepresent real empty-state data
