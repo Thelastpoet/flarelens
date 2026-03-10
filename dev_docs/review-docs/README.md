@@ -15,6 +15,14 @@ This folder groups the backend audit artifacts by purpose so the next contributo
   - Use these when turning findings into remediation work.
   - `api-review-traceability-matrix.md` is the finding-to-task coverage map.
 
+## Core References
+
+- Product scope: `../flarelens.md`
+- Current backend architecture: `../technical_architecture.md`
+- Remediation tasks: `../api-review-remediation-tasks.md`
+- Remediation plan: `plans/api-review-remediation-plan.md`
+- Traceability matrix: `plans/api-review-traceability-matrix.md`
+
 ## Recommended Reading Order
 
 1. `sections/section-01-*` through `sections/section-10-*`

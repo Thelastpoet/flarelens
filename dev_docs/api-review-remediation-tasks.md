@@ -25,6 +25,7 @@
 
 - This file is the execution source of truth for remediation work.
 - The finding-to-task coverage map lives in `dev_docs/review-docs/plans/api-review-traceability-matrix.md`.
+- Current backend scope is documented in `dev_docs/flarelens.md` and `dev_docs/technical_architecture.md`.
 - Every review finding must map to at least one task before implementation starts.
 - Do not mark a task complete until:
   - the linked finding rows are updated in the traceability matrix
@@ -221,10 +222,14 @@
 
 ### Implementation for User Story 7
 
-- [ ] T038 [US7] Update product assumptions and MVP boundaries in `dev_docs/flarelens.md`
-- [ ] T039 [P] [US7] Update technical architecture details in `dev_docs/technical_architecture.md` to reflect current backend reality and any remediation changes
-- [ ] T040 [P] [US7] Cross-link review artifacts in `dev_docs/review-docs/plans/api-review-remediation-plan.md`, `dev_docs/review-docs/plans/api-review-traceability-matrix.md`, and `dev_docs/api-review-remediation-tasks.md`
-- [ ] T041 [US7] Add explicit notes about estimated billing, capability verification, mitigation constraints, and currently supported detection scope in `dev_docs/flarelens.md`
+- [x] T038 [US7] Update product assumptions and MVP boundaries in `dev_docs/flarelens.md`
+  Phase 9 resolution: the product doc now reflects the Cloudflare-native implementation, zone-focused monitoring scope, and realistic MVP boundaries.
+- [x] T039 [P] [US7] Update technical architecture details in `dev_docs/technical_architecture.md` to reflect current backend reality and any remediation changes
+  Phase 9 resolution: the architecture doc was rewritten as a current-state backend reference instead of a target-state design document.
+- [x] T040 [P] [US7] Cross-link review artifacts in `dev_docs/review-docs/plans/api-review-remediation-plan.md`, `dev_docs/review-docs/plans/api-review-traceability-matrix.md`, and `dev_docs/api-review-remediation-tasks.md`
+  Phase 9 resolution: the review README, remediation plan, traceability matrix, and task source now cross-reference the product and architecture docs.
+- [x] T041 [US7] Add explicit notes about estimated billing, capability verification, mitigation constraints, and currently supported detection scope in `dev_docs/flarelens.md`
+  Phase 9 resolution: the product doc now states estimated billing semantics, verified-token requirements, mitigation safety limits, and supported detection scope explicitly.
 
 **Checkpoint**: Product and engineering docs are usable as implementation references
 

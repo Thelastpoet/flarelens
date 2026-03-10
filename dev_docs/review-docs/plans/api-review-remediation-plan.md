@@ -4,6 +4,14 @@
 
 This document captures the highest-priority fixes identified during API/backend review and the product-doc gap analysis. It is intended as a short execution plan for follow-up implementation work.
 
+## Related Documents
+
+- Task source of truth: `dev_docs/api-review-remediation-tasks.md`
+- Finding coverage map: `dev_docs/review-docs/plans/api-review-traceability-matrix.md`
+- Section findings: `dev_docs/review-docs/sections/`
+- Product scope: `dev_docs/flarelens.md`
+- Current backend architecture: `dev_docs/technical_architecture.md`
+
 ## P0: Onboarding, Auth, and Cloudflare Identity
 
 ### 1. Fix Cloudflare account discovery during token onboarding

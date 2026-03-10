@@ -4,6 +4,13 @@
 
 This document maps every backend review finding to one or more remediation task IDs from `dev_docs/api-review-remediation-tasks.md`.
 
+Related references:
+
+- remediation tasks: `dev_docs/api-review-remediation-tasks.md`
+- execution plan: `dev_docs/review-docs/plans/api-review-remediation-plan.md`
+- product scope: `dev_docs/flarelens.md`
+- technical architecture: `dev_docs/technical_architecture.md`
+
 Use it to answer four questions quickly:
 
 1. Has every reviewed issue been assigned implementation work?
@@ -85,10 +92,10 @@ Use it to answer four questions quickly:
 
 ### Section 09: Documentation Alignment
 
-- `S09-F01` High. `flarelens.md` no longer matches the actual backend architecture or current scope. Tasks: `T038`, `T041`. Status: `Mapped`
-- `S09-F02` High. `technical_architecture.md` describes target-state subsystems as if they are implemented. Tasks: `T039`, `T040`. Status: `Mapped`
-- `S09-F03` Medium. Documented API contract does not fully match mounted routes and behaviors. Tasks: `T039`, `T054`. Status: `Mapped`
-- `S09-F04` Medium. Migration and repository documentation overstates the current repo layout. Tasks: `T039`, `T040`. Status: `Mapped`
+- `S09-F01` High. `flarelens.md` no longer matches the actual backend architecture or current scope. Tasks: `T038`, `T041`. Status: `Resolved`
+- `S09-F02` High. `technical_architecture.md` describes target-state subsystems as if they are implemented. Tasks: `T039`, `T040`. Status: `Resolved`
+- `S09-F03` Medium. Documented API contract does not fully match mounted routes and behaviors. Tasks: `T039`, `T054`. Status: `Resolved`
+- `S09-F04` Medium. Migration and repository documentation overstates the current repo layout. Tasks: `T039`, `T040`. Status: `Resolved`
 
 ### Section 10: Test and Verification Coverage
 
