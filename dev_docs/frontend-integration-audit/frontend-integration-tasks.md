@@ -35,7 +35,8 @@ This file tracks the frontend work required to replace mock data with live backe
   Outcome: passed for the current dashboard surface. The dashboard now renders honest empty or unavailable states rather than fake success data.
 - [x] F007 Remove analytics-page fallback demo visuals where real API data should drive the widget
   Outcome: passed. The analytics page now uses real traffic, country, client, performance, and error data, and replaces demo-only charts/cards with honest empty states where data is unavailable.
-- [ ] F008 Confirm anomaly list and detail routes cover the current UI states without local-only assumptions
+- [x] F008 Confirm anomaly list and detail routes cover the current UI states without local-only assumptions
+  Outcome: passed for the current anomaly surface. Status filters now round-trip through the backend loader, dismiss actions no longer hard-reload the page, and the list/detail pages match the current anomaly API behavior.
 - [x] F026 Remove or replace analytics-page static fallback visuals where they misrepresent real empty-state data
   Outcome: passed. Static fake chart/country/client displays were removed in favor of backend-driven panels and explicit unavailable-state messaging.
 - [ ] F027 Review tabs, filters, toggles, and modal patterns on touched pages for keyboard/accessibility correctness
@@ -100,6 +101,7 @@ This file tracks the frontend work required to replace mock data with live backe
 - The audit page is now backend-backed; user-specific filtering is not surfaced because the current UI has no user directory input and the API only supports raw `user_id` filters
 - The developer page is now backend-backed; the UI explicitly documents that generated developer tokens are managed inventory and not an active public bearer-auth API surface
 - Dashboard and analytics pages are now backend-backed with honest empty-state handling; remaining quality work is primarily accessibility and a few local-only success screens
+- The onboarding success page now uses real account/resource summary data and no longer ships the fake invite modal
 - The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
 - Most management pages are now backend-backed; the remaining unchecked work is concentrated in anomaly-state review plus cross-page accessibility and cleanup
 - `onboarding/connect` now matches the current backend token contract (`{ label, token }`)

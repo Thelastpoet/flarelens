@@ -1,9 +1,22 @@
 <script lang="ts">
-let showInviteModal = $state(true);
+	import { page } from '$app/stores';
+	import type { PageData } from './$types.js';
 
-function closeInviteModal() {
-	showInviteModal = false;
-}
+	type SuccessLayoutUser = {
+		account?: {
+			name?: string | null;
+			plan?: string | null;
+		};
+	};
+
+	let { data }: { data: PageData } = $props();
+
+	const user = $derived(($page.data.user ?? null) as SuccessLayoutUser | null);
+
+	function formatPlanLabel(plan: string | null | undefined): string {
+		if (!plan) return 'Plan unavailable';
+		return `${plan.charAt(0).toUpperCase()}${plan.slice(1)} plan`;
+	}
 </script>
 
 <!-- Onboarding success celebration page -->
@@ -51,7 +64,7 @@ function closeInviteModal() {
             <div class="flex flex-col items-center gap-3 text-center">
               <h1 class="text-3xl font-bold leading-tight tracking-tight text-slate-900">You're all set! FlareLens is now active.</h1>
               <p class="text-base text-slate-600 max-w-md">
-                We've started analyzing your Cloudflare activity. Your first report will be ready shortly.
+                Your Cloudflare account is connected and FlareLens is ready to monitor the resources you selected during onboarding.
               </p>
             </div>
 
@@ -63,14 +76,28 @@ function closeInviteModal() {
                     <span class="material-symbols-outlined" style="font-size: 16px;">cloud</span>
                     Connected Account
                   </p>
-                  <p class="text-base font-semibold text-slate-900">Acme Corp Cloudflare</p>
+                  <p class="text-base font-semibold text-slate-900">{user?.account?.name ?? 'Cloudflare account connected'}</p>
                 </div>
                 <div class="flex flex-col gap-1 sm:border-l sm:border-slate-200 sm:pl-6">
                   <p class="text-sm font-medium text-slate-500 flex items-center gap-1.5">
                     <span class="material-symbols-outlined" style="font-size: 16px;">monitoring</span>
-                    Active Daily Threshold
+                    Active Monitoring Scope
                   </p>
-                  <p class="text-base font-semibold text-slate-900">10,000 requests</p>
+                  <p class="text-base font-semibold text-slate-900">{data.activeResourceCount} active of {data.resourceCount} synced resources</p>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <p class="text-sm font-medium text-slate-500 flex items-center gap-1.5">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">language</span>
+                    Zones Available
+                  </p>
+                  <p class="text-base font-semibold text-slate-900">{data.zoneCount} zones</p>
+                </div>
+                <div class="flex flex-col gap-1 sm:border-l sm:border-slate-200 sm:pl-6">
+                  <p class="text-sm font-medium text-slate-500 flex items-center gap-1.5">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">workspace_premium</span>
+                    Current Plan
+                  </p>
+                  <p class="text-base font-semibold text-slate-900">{formatPlanLabel(user?.account?.plan)}</p>
                 </div>
               </div>
             </div>
@@ -84,14 +111,18 @@ function closeInviteModal() {
                 <span class="material-symbols-outlined" style="font-size: 20px;">dashboard</span>
                 Go to Dashboard
               </a>
-              <button
-                onclick={() => (showInviteModal = true)}
+              <a
+                href="/team"
                 class="flex items-center justify-center gap-2 rounded-lg h-12 px-6 bg-transparent border border-slate-300 hover:bg-slate-50 text-slate-700 text-base font-medium leading-normal transition-colors min-w-[200px]"
               >
                 <span class="material-symbols-outlined" style="font-size: 20px;">group_add</span>
-                Invite Team Members
-              </button>
+                Manage Team Access
+              </a>
             </div>
+
+            <p class="text-sm text-slate-500 text-center">
+              Need to invite teammates or add integrations? You can do that from the Team and Integrations pages after onboarding.
+            </p>
 
           </div>
         </div>
@@ -99,67 +130,4 @@ function closeInviteModal() {
 
     </div>
   </div>
-
-  <!-- Invite Team Modal -->
-  {#if showInviteModal}
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-    <div class="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col">
-
-      <div class="px-6 py-6 sm:px-8 sm:py-8 border-b border-slate-200">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-xl font-bold text-slate-900">Invite your team</h2>
-          <button
-            onclick={closeInviteModal}
-            class="text-slate-400 hover:text-slate-500 focus:outline-none"
-          >
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <p class="text-sm text-slate-600">Get your team involved in monitoring infrastructure costs.</p>
-      </div>
-
-      <div class="px-6 py-6 sm:px-8 flex flex-col gap-6">
-        <div class="flex flex-col gap-2">
-          <label class="text-sm font-medium text-slate-700" for="emails">Email addresses</label>
-          <textarea
-            class="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:outline-none resize-none"
-            id="emails"
-            placeholder="team@example.com, developer@example.com"
-            rows="4"
-          ></textarea>
-          <p class="text-xs text-slate-500">Separate multiple emails with commas.</p>
-        </div>
-        <div class="flex flex-col gap-2">
-          <label class="text-sm font-medium text-slate-700" for="role">Role</label>
-          <div class="relative">
-            <select
-              class="w-full appearance-none rounded-lg border border-slate-300 bg-white px-4 py-3 pr-10 text-sm text-slate-900 focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:outline-none"
-              id="role"
-            >
-              <option value="member">Member</option>
-              <option value="admin">Admin</option>
-              <option value="viewer">Viewer</option>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-500">
-              <span class="material-symbols-outlined" style="font-size: 20px;">expand_more</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="px-6 py-4 sm:px-8 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center gap-4 justify-between">
-        <button
-          onclick={closeInviteModal}
-          class="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
-        >
-          Skip for now
-        </button>
-        <button class="flex items-center justify-center gap-2 rounded-lg h-10 px-6 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white text-sm font-semibold leading-normal transition-colors shadow-sm w-full sm:w-auto">
-          Invite
-        </button>
-      </div>
-
-    </div>
-  </div>
-  {/if}
 </div>
