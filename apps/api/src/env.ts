@@ -6,15 +6,9 @@ export interface Env {
 	SESSIONS: KVNamespace;
 	CACHE: KVNamespace;
 
-	// R2 Bucket
-	REPORTS: R2Bucket;
-
 	// Queues (producers)
 	ALERT_DISPATCH_QUEUE: Queue;
 	ANOMALY_CHECK_QUEUE: Queue;
-
-	// Analytics Engine
-	ANALYTICS: AnalyticsEngineDataset;
 
 	// Durable Objects
 	LIVE_FEED: DurableObjectNamespace;
@@ -25,8 +19,7 @@ export interface Env {
 	API_URL: string;
 
 	// Secrets (set via `wrangler secret put`)
-	TOKEN_ENCRYPTION_KEY: string; // AES-256-GCM key (base64) for encrypting CF tokens
-	SESSION_SECRET: string; // HMAC secret for session signing
+	TOKEN_ENCRYPTION_KEY: string; // AES-256-GCM key as a 64-character hex string
 	RESEND_API_KEY: string; // Resend email API key
 
 	// OAuth (optional)

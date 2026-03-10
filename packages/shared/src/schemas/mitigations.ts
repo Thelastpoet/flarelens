@@ -37,7 +37,7 @@ export const PauseWorkerMitigationConfigSchema = z.object({
 export const CreateMitigationSchema = z.discriminatedUnion('action_type', [
 	z.object({
 		name: z.string().min(1).max(100),
-		trigger_type: z.enum(['traffic_rate', 'error_spike', 'cost_threshold']),
+		trigger_type: z.literal('traffic_rate'),
 		trigger_condition: MitigationTriggerConditionSchema,
 		action_type: z.literal('rate_limit'),
 		action_config: RateLimitMitigationConfigSchema,
@@ -45,7 +45,7 @@ export const CreateMitigationSchema = z.discriminatedUnion('action_type', [
 	}),
 	z.object({
 		name: z.string().min(1).max(100),
-		trigger_type: z.enum(['traffic_rate', 'error_spike', 'cost_threshold']),
+		trigger_type: z.literal('traffic_rate'),
 		trigger_condition: MitigationTriggerConditionSchema,
 		action_type: z.literal('under_attack_mode'),
 		action_config: UnderAttackMitigationConfigSchema,
@@ -53,7 +53,7 @@ export const CreateMitigationSchema = z.discriminatedUnion('action_type', [
 	}),
 	z.object({
 		name: z.string().min(1).max(100),
-		trigger_type: z.enum(['traffic_rate', 'error_spike', 'cost_threshold']),
+		trigger_type: z.literal('traffic_rate'),
 		trigger_condition: MitigationTriggerConditionSchema,
 		action_type: z.literal('pause_worker'),
 		action_config: PauseWorkerMitigationConfigSchema,

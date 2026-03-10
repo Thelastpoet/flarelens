@@ -132,7 +132,7 @@ describe('metrics poll pipeline', () => {
 							viewer: {
 								zones: [
 									{
-										httpRequests1hGroups: [
+										httpRequests1mGroups: [
 											{
 												dimensions: { datetime: '2026-03-10T10:00:00.000Z' },
 												sum: {

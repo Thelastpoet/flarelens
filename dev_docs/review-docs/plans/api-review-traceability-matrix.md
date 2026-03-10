@@ -36,9 +36,9 @@ Use it to answer four questions quickly:
 
 ### Section 02: Secrets, Tokens, and Security
 
-- `S02-F01` High. Developer-token issuance is not role-gated while developer-token auth grants admin access. Tasks: `T057`. Status: `Mapped`
+- `S02-F01` High. Developer-token issuance is not role-gated while developer-token auth grants admin access. Tasks: `T057`. Status: `Resolved`
 - `S02-F02` Medium. Cloudflare token verification does not prove usable permissions or safe operational state. Tasks: `T004`, `T005`, `T006`, `T007`, `T010`, `T011`, `T013`, `T014`, `T015`, `T018`. Status: `Resolved`
-- `S02-F03` Medium. Encryption-key format documentation is inconsistent with the implementation. Tasks: `T058`. Status: `Mapped`
+- `S02-F03` Medium. Encryption-key format documentation is inconsistent with the implementation. Tasks: `T058`. Status: `Resolved`
 
 ### Section 03: Cloudflare Integration Correctness
 
@@ -46,7 +46,7 @@ Use it to answer four questions quickly:
 - `S03-F02` High. User-agent blocking is implemented against the wrong Cloudflare API. Tasks: `T019`, `T020`, `T021`, `T022`, `T024`. Status: `Resolved`
 - `S03-F03` High. Rate-limiting mitigation uses a deprecated API shape and does not perform a real mitigation. Tasks: `T019`, `T020`, `T021`, `T023`, `T024`. Status: `Resolved`
 - `S03-F04` Medium. “Verified permissions” are derived from assumptions not backed by the current token-verify response. Tasks: `T004`, `T006`, `T007`, `T013`, `T014`. Status: `Resolved`
-- `S03-F05` Medium. Metrics poll cadence and GraphQL bucket granularity do not match. Tasks: `T063`. Status: `Mapped`
+- `S03-F05` Medium. Metrics poll cadence and GraphQL bucket granularity do not match. Tasks: `T063`. Status: `Resolved`
 
 ### Section 04: Data Model and Persistence
 
@@ -67,7 +67,7 @@ Use it to answer four questions quickly:
 - `S06-F01` High. Billing API surface is not backed by any ingestion path. Tasks: `T026`, `T028`, `T030`, `T056`. Status: `Resolved`
 - `S06-F02` High. Estimated cost and billing-style language are mixed without a clear contract. Tasks: `T026`, `T027`, `T028`, `T029`, `T031`, `T041`. Status: `Resolved`
 - `S06-F03` Medium. Cost model is approximate but exposed as durable business logic. Tasks: `T027`, `T029`, `T041`. Status: `Resolved`
-- `S06-F04` Medium. Cost- and budget-oriented rule surfaces exist, but the detection pipeline does not feed them. Tasks: `T037`, `T062`. Status: `Mapped`
+- `S06-F04` Medium. Cost- and budget-oriented rule surfaces exist, but the detection pipeline does not feed them. Tasks: `T037`, `T062`. Status: `Resolved`
 
 ### Section 07: Validation, Error Handling, and API Consistency
 
@@ -78,10 +78,10 @@ Use it to answer four questions quickly:
 
 ### Section 08: Redundancy and Dead Code
 
-- `S08-F01` High. Custom API rate limiter reimplements a platform concern on top of KV. Tasks: `T059`. Status: `Mapped`
-- `S08-F02` Medium. Analytics Engine is provisioned but not actually used. Tasks: `T060`. Status: `Mapped`
-- `S08-F03` Medium. Developer-token auth middleware exists but is not mounted on live routes. Tasks: `T043`, `T057`. Status: `Mapped`
-- `S08-F04` Medium. Several configured bindings and packages appear unused. Tasks: `T058`, `T061`. Status: `Mapped`
+- `S08-F01` High. Custom API rate limiter reimplements a platform concern on top of KV. Tasks: `T059`. Status: `Resolved`
+- `S08-F02` Medium. Analytics Engine is provisioned but not actually used. Tasks: `T060`. Status: `Resolved`
+- `S08-F03` Medium. Developer-token auth middleware exists but is not mounted on live routes. Tasks: `T043`, `T057`. Status: `Resolved`
+- `S08-F04` Medium. Several configured bindings and packages appear unused. Tasks: `T058`, `T061`. Status: `Resolved`
 
 ### Section 09: Documentation Alignment
 
@@ -103,13 +103,13 @@ Use it to answer four questions quickly:
 
 These findings come from `dev_docs/review-docs/summaries/api-redundancy-conflict-review.md`. They overlap with the section findings above but remain useful as thematic checks during implementation.
 
-- `SUM-F01` KV-based rate limiting is a poor fit for strict limits. Tasks: `T059`. Status: `Mapped`
-- `SUM-F02` Analytics Engine is provisioned but unused. Tasks: `T060`. Status: `Mapped`
+- `SUM-F01` KV-based rate limiting is a poor fit for strict limits. Tasks: `T059`. Status: `Resolved`
+- `SUM-F02` Analytics Engine is provisioned but unused. Tasks: `T060`. Status: `Resolved`
 - `SUM-F03` Mitigation behavior is implemented as if Cloudflare is simpler than it is. Tasks: `T021`, `T022`, `T023`, `T024`. Status: `Resolved`
-- `SUM-F04` Developer-token auth exists but is not mounted. Tasks: `T043`, `T057`. Status: `Mapped`
-- `SUM-F05` `SESSION_SECRET` is declared but unused. Tasks: `T058`, `T061`. Status: `Mapped`
+- `SUM-F04` Developer-token auth exists but is not mounted. Tasks: `T043`, `T057`. Status: `Resolved`
+- `SUM-F05` `SESSION_SECRET` is declared but unused. Tasks: `T058`, `T061`. Status: `Resolved`
 - `SUM-F06` Custom request validation is narrower than the framework surface. Tasks: `T055`. Status: `Mapped`
-- `SUM-F07` API renderer dependencies appear unused. Tasks: `T061`. Status: `Mapped`
+- `SUM-F07` API renderer dependencies appear unused. Tasks: `T061`. Status: `Resolved`
 - `SUM-F08` Route/schema handling is manual and not positioned for contract generation. Tasks: `T055`. Status: `Mapped`
 
 ---

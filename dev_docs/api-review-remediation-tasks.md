@@ -194,13 +194,20 @@
 
 ### Implementation for User Story 6
 
-- [ ] T057 [US6] Align developer-token security model by role-gating issuance and deciding whether bearer API-token auth is supported in `apps/api/src/routes/developer.ts`, `apps/api/src/middleware/api-token-auth.ts`, and related shared auth contracts
-- [ ] T058 [US6] Correct secret/config contracts for `TOKEN_ENCRYPTION_KEY` and `SESSION_SECRET` in `apps/api/src/env.ts`, `apps/api/src/auth/crypto.ts`, and relevant developer docs
-- [ ] T059 [US6] Replace KV-backed rate limiting with an intentional strategy or explicitly document it as best-effort throttling in `apps/api/src/middleware/rate-limit.ts` and related operational docs
-- [ ] T060 [US6] Decide whether Analytics Engine remains in scope and either wire it into the metrics pipeline or remove the unused binding/config from `apps/api/wrangler.jsonc`, `apps/api/src/env.ts`, and telemetry code
-- [ ] T061 [US6] Remove or intentionally wire unused renderer/package/bindings such as `apps/api/src/renderer.tsx`, `vite-ssr-components`, and `REPORTS`
-- [ ] T062 [US6] Align supported metric/rule surfaces with implemented detection by disabling unsupported cost-oriented options or implementing backend support in `packages/shared/src/schemas/rules.ts`, `apps/api/src/routes/mitigations.ts`, and detection services
-- [ ] T063 [US6] Align metrics polling cadence with the selected GraphQL dataset granularity in `apps/api/src/crons/metrics-poll.ts` and `apps/api/src/services/cloudflare/graphql.ts`
+- [x] T057 [US6] Align developer-token security model by role-gating issuance and deciding whether bearer API-token auth is supported in `apps/api/src/routes/developer.ts`, `apps/api/src/middleware/api-token-auth.ts`, and related shared auth contracts
+  Phase 8 resolution: developer token management is now admin-only, and the unused bearer-token auth middleware was removed rather than kept as an unsupported auth mode.
+- [x] T058 [US6] Correct secret/config contracts for `TOKEN_ENCRYPTION_KEY` and `SESSION_SECRET` in `apps/api/src/env.ts`, `apps/api/src/auth/crypto.ts`, and relevant developer docs
+  Phase 8 resolution: the runtime contract now documents `TOKEN_ENCRYPTION_KEY` as a 64-character hex string and removes the unused `SESSION_SECRET` from committed backend bindings.
+- [x] T059 [US6] Replace KV-backed rate limiting with an intentional strategy or explicitly document it as best-effort throttling in `apps/api/src/middleware/rate-limit.ts` and related operational docs
+  Phase 8 resolution: the current limiter remains KV-backed, but the middleware and API README now explicitly describe it as best-effort throttling rather than strict distributed enforcement.
+- [x] T060 [US6] Decide whether Analytics Engine remains in scope and either wire it into the metrics pipeline or remove the unused binding/config from `apps/api/wrangler.jsonc`, `apps/api/src/env.ts`, and telemetry code
+  Phase 8 resolution: the unused Analytics Engine binding was removed from committed runtime config instead of leaving a dormant telemetry path.
+- [x] T061 [US6] Remove or intentionally wire unused renderer/package/bindings such as `apps/api/src/renderer.tsx`, `vite-ssr-components`, and `REPORTS`
+  Phase 8 resolution: the unused renderer, `vite-ssr-components`, and the dormant `REPORTS` binding were removed from the committed API worker surface.
+- [x] T062 [US6] Align supported metric/rule surfaces with implemented detection by disabling unsupported cost-oriented options or implementing backend support in `packages/shared/src/schemas/rules.ts`, `apps/api/src/routes/mitigations.ts`, and detection services
+  Phase 8 resolution: rules/mitigations now expose only implemented detection metrics and `traffic_rate` triggers instead of unsupported cost/error-oriented options.
+- [x] T063 [US6] Align metrics polling cadence with the selected GraphQL dataset granularity in `apps/api/src/crons/metrics-poll.ts` and `apps/api/src/services/cloudflare/graphql.ts`
+  Phase 8 resolution: the polling cron now uses a minute-granularity GraphQL query for recent zone traffic, keeping the five-minute schedule aligned with the selected dataset.
 
 **Checkpoint**: Dead code, misleading bindings, and security-drifting auth/config paths are removed or made explicit
 

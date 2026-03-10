@@ -10,6 +10,7 @@ export async function sendEmailAlert(
 ): Promise<void> {
 	try {
 		const resend = new Resend(env.RESEND_API_KEY);
+		const webUrl = env.WEB_URL || 'https://app.flarelens.com';
 
 		const subject = `[${anomaly.severity.toUpperCase()}] ${anomaly.metric} anomaly detected`;
 
@@ -49,7 +50,7 @@ export async function sendEmailAlert(
     </table>
 
     <p style="margin-top:20px">
-      <a href="${process.env['WEB_URL'] ?? 'https://app.flarelens.com'}/anomalies/${anomaly.id}"
+      <a href="${webUrl}/anomalies/${anomaly.id}"
          style="background:#2563eb;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">
         View Anomaly
       </a>

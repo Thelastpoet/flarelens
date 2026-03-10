@@ -5,6 +5,7 @@ import { logAudit } from '../middleware/audit.js';
 import type { AppContext } from '../middleware/auth.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
+import { requireRole } from '../middleware/rbac.js';
 import { reposMiddleware } from '../middleware/repos.js';
 import { validate } from '../middleware/validate.js';
 
@@ -29,6 +30,7 @@ function generateToken(): string {
 
 const developer = new Hono<AppContext>();
 developer.use('*', authMiddleware, reposMiddleware);
+developer.use('*', requireRole('admin'));
 
 // GET /developer/tokens
 developer.get('/tokens', rateLimit('reads'), async (c) => {

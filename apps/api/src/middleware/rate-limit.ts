@@ -15,14 +15,14 @@ export function rateLimit(group: RateLimitGroup): MiddlewareHandler<AppContext> 
 		const current = raw ? parseInt(raw, 10) : 0;
 
 		if (current >= limit) {
-			throw new RateLimitError(`Rate limit exceeded for ${group} operations`);
+			throw new RateLimitError(`Best-effort rate limit exceeded for ${group} operations`);
 		}
 
-		// Increment counter; set TTL only on first request in window
+		// KV-based throttling is eventually consistent, so this is intentionally best-effort.
 		if (current === 0) {
 			await kv.put(key, '1', { expirationTtl: window_seconds });
 		} else {
-			// Get remaining TTL and preserve it (best-effort — KV doesn't expose TTL on get)
+			// KV does not expose TTL on reads, so updates rewrite the same window length.
 			await kv.put(key, String(current + 1), { expirationTtl: window_seconds });
 		}
 
@@ -42,7 +42,7 @@ export function rateLimitByIp(group: RateLimitGroup): MiddlewareHandler {
 		const current = raw ? parseInt(raw, 10) : 0;
 
 		if (current >= limit) {
-			throw new RateLimitError(`Rate limit exceeded`);
+			throw new RateLimitError('Best-effort rate limit exceeded');
 		}
 
 		await kv.put(key, String(current + 1), { expirationTtl: window_seconds });

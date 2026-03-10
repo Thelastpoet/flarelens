@@ -54,14 +54,14 @@ async function pollAccount(accountId: string, DB: D1Database, env: Env): Promise
 	const zones = await resources.list('zone');
 
 	const toDate = new Date();
-	const fromDate = new Date(toDate.getTime() - 5 * 60 * 1000); // last 5 min
+	const fromDate = new Date(toDate.getTime() - 5 * 60 * 1000); // last 5 minutes
 	const to = toDate.toISOString();
 	const from = fromDate.toISOString();
 
 	for (const zone of zones) {
 		if (zone.monitoring_status !== 'active') continue;
 		try {
-			const query = GqlQueries.zoneTraffic(zone.cf_resource_id, from, to);
+			const query = GqlQueries.zoneTrafficRecent(zone.cf_resource_id, from, to, 5);
 			const data = await client.graphql(query.query, query.variables);
 			const parsed = query.parseResponse(data);
 

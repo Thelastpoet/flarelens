@@ -38,7 +38,7 @@ export type AlertChannel =
 export type AlertDeliveryStatus = 'sent' | 'failed' | 'skipped';
 export type IntegrationType = 'slack' | 'discord' | 'pagerduty' | 'teams' | 'webhook';
 export type IntegrationStatus = 'active' | 'inactive' | 'error';
-export type MitigationTriggerType = 'traffic_rate' | 'error_spike' | 'cost_threshold';
+export type MitigationTriggerType = 'traffic_rate';
 export type MitigationActionType = 'rate_limit' | 'under_attack_mode' | 'block_ua' | 'pause_worker';
 export type AuditAction = 'create' | 'update' | 'delete' | 'auth' | 'system';
 export type AuditEntityType =
@@ -53,10 +53,6 @@ export type AuditEntityType =
 export type BillingSnapshotStatus = 'active' | 'invoice';
 export type MetricName =
 	| 'requests'
-	| 'cost'
-	| 'errors'
-	| 'cpu_time'
-	| 'bandwidth'
 	| 'cached_requests'
 	| 'bytes'
 	| 'threats';

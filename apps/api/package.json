@@ -24,7 +24,6 @@
 		"@types/node": "^25.3.5",
 		"typescript": "^5.9.3",
 		"vite": "^6.3.5",
-		"vite-ssr-components": "^0.5.2",
 		"vitest": "^4.0.18",
 		"wrangler": "^4.17.0"
 	}

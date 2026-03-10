@@ -4,8 +4,10 @@ import { anomaliesRoutes } from '../../src/routes/anomalies.js';
 import { auditLogsRoutes } from '../../src/routes/audit-logs.js';
 import { billingRoutes } from '../../src/routes/billing.js';
 import { cfTokensRoutes } from '../../src/routes/cf-tokens.js';
+import { developerRoutes } from '../../src/routes/developer.js';
 import { mitigationsRoutes } from '../../src/routes/mitigations.js';
 import { notificationsRoutes } from '../../src/routes/notifications.js';
+import { rulesRoutes } from '../../src/routes/rules.js';
 import { settingsRoutes } from '../../src/routes/settings.js';
 import { teamRoutes } from '../../src/routes/team.js';
 
@@ -18,6 +20,8 @@ export function createTestApp() {
 	app.route('/billing', billingRoutes);
 	app.route('/mitigations', mitigationsRoutes);
 	app.route('/notifications', notificationsRoutes);
+	app.route('/developer', developerRoutes);
+	app.route('/rules', rulesRoutes);
 	app.route('/settings', settingsRoutes);
 	app.route('/team', teamRoutes);
 	return app;

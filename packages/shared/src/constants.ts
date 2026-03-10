@@ -139,10 +139,6 @@ export const RESOURCE_TYPES = [
 // Metric names
 export const METRIC_NAMES = [
 	'requests',
-	'cost',
-	'errors',
-	'cpu_time',
-	'bandwidth',
 	'cached_requests',
 	'bytes',
 	'threats',

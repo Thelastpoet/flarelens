@@ -1,4 +1,16 @@
-import type { Account, Anomaly, Baseline, CfToken, Mitigation, Notification, Resource, Rule, TeamMember, User } from '@flarelens/shared';
+import type {
+	Account,
+	Anomaly,
+	Baseline,
+	CfToken,
+	DeveloperToken,
+	Mitigation,
+	Notification,
+	Resource,
+	Rule,
+	TeamMember,
+	User,
+} from '@flarelens/shared';
 import type { Env } from '../../src/env.js';
 
 type AuditLogRecord = {
@@ -51,6 +63,7 @@ type BaselineRecord = Baseline;
 type RuleRecord = Rule;
 type AnomalyRecord = Anomaly;
 type NotificationRecord = Notification;
+type DeveloperTokenRecord = DeveloperToken;
 
 function normalizeSql(query: string): string {
 	return query.replace(/\s+/g, ' ').trim();
@@ -124,6 +137,7 @@ export class FakeD1Database implements D1Database {
 	rules = new Map<string, RuleRecord>();
 	anomalies = new Map<string, AnomalyRecord>();
 	notifications = new Map<string, NotificationRecord>();
+	developerTokens = new Map<string, DeveloperTokenRecord>();
 	mitigations = new Map<string, Mitigation>();
 	billingSnapshots = new Map<string, BillingSnapshotRecord>();
 	zoneSnapshots = new Map<string, ZoneSnapshotRecord>();
@@ -215,6 +229,12 @@ export class FakeD1Database implements D1Database {
 			const mitigation = this.mitigations.get(String(params[0]));
 			if (!mitigation || mitigation.account_id !== params[1]) return null;
 			return mitigation as T;
+		}
+
+		if (sql === 'SELECT * FROM developer_tokens WHERE id = ? AND account_id = ?') {
+			const token = this.developerTokens.get(String(params[0]));
+			if (!token || token.account_id !== params[1]) return null;
+			return token as T;
 		}
 
 		if (sql === 'SELECT * FROM cf_tokens WHERE id = ? AND account_id = ?') {
@@ -345,6 +365,12 @@ export class FakeD1Database implements D1Database {
 		if (sql === 'SELECT * FROM mitigations WHERE account_id = ? ORDER BY created_at DESC') {
 			return [...this.mitigations.values()]
 				.filter((mitigation) => mitigation.account_id === params[0])
+				.sort((a, b) => b.created_at.localeCompare(a.created_at)) as T[];
+		}
+
+		if (sql === 'SELECT * FROM developer_tokens WHERE account_id = ? ORDER BY created_at DESC') {
+			return [...this.developerTokens.values()]
+				.filter((token) => token.account_id === params[0])
 				.sort((a, b) => b.created_at.localeCompare(a.created_at)) as T[];
 		}
 
@@ -689,6 +715,25 @@ export class FakeD1Database implements D1Database {
 
 		if (
 			sql ===
+			'INSERT INTO developer_tokens (id, account_id, user_id, name, token_hash, token_prefix, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+		) {
+			const token: DeveloperTokenRecord = {
+				id: String(params[0]),
+				account_id: String(params[1]),
+				user_id: String(params[2]),
+				name: String(params[3]),
+				token_hash: String(params[4]),
+				token_prefix: String(params[5]),
+				last_used_at: null,
+				expires_at: (params[6] as string | null) ?? null,
+				created_at: new Date().toISOString(),
+			};
+			this.developerTokens.set(token.id, token);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
 			`INSERT INTO baselines (id, account_id, resource_id, metric, hour_of_day, day_of_week, avg_value, stddev_value, sample_count, last_calculated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now')) ON CONFLICT (resource_id, metric, hour_of_day, day_of_week) DO UPDATE SET avg_value = excluded.avg_value, stddev_value = excluded.stddev_value, sample_count = excluded.sample_count, last_calculated = datetime('now'), updated_at = datetime('now')`
 		) {
 			const existing = [...this.baselines.values()].find(
@@ -784,6 +829,15 @@ export class FakeD1Database implements D1Database {
 			if (token && token.account_id === params[1]) {
 				token.last_used_at = new Date().toISOString();
 				this.cfTokens.set(token.id, token);
+			}
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (sql === "UPDATE developer_tokens SET last_used_at = datetime('now') WHERE id = ?") {
+			const token = this.developerTokens.get(String(params[0]));
+			if (token) {
+				token.last_used_at = new Date().toISOString();
+				this.developerTokens.set(token.id, token);
 			}
 			return { success: true, meta: { duration: 0 } } as D1Result;
 		}
@@ -896,6 +950,14 @@ export class FakeD1Database implements D1Database {
 			return { success: true, meta: { duration: 0 } } as D1Result;
 		}
 
+		if (sql === 'DELETE FROM developer_tokens WHERE id = ? AND account_id = ?') {
+			const token = this.developerTokens.get(String(params[0]));
+			if (token && token.account_id === params[1]) {
+				this.developerTokens.delete(token.id);
+			}
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
 		if (
 			sql ===
 			'UPDATE notifications SET read = 1 WHERE id = ? AND account_id = ? AND (user_id = ? OR user_id IS NULL)'
@@ -983,6 +1045,10 @@ export class FakeD1Database implements D1Database {
 		this.notifications.set(notification.id, notification);
 	}
 
+	insertDeveloperToken(token: DeveloperTokenRecord) {
+		this.developerTokens.set(token.id, token);
+	}
+
 	insertMitigation(mitigation: Mitigation) {
 		this.mitigations.set(mitigation.id, mitigation);
 	}
@@ -1011,17 +1077,14 @@ export function createTestEnv(overrides: Partial<Env> = {}): Env {
 		DB: new FakeD1Database(),
 		SESSIONS: new FakeKVNamespace(),
 		CACHE: new FakeKVNamespace(),
-		REPORTS: {} as R2Bucket,
 		ALERT_DISPATCH_QUEUE: {} as Queue,
 		ANOMALY_CHECK_QUEUE: {} as Queue,
-		ANALYTICS: {} as AnalyticsEngineDataset,
 		LIVE_FEED: {} as DurableObjectNamespace,
 		ENVIRONMENT: 'test',
 		WEB_URL: 'http://localhost:5173',
 		API_URL: 'http://localhost:5174',
 		TOKEN_ENCRYPTION_KEY:
 			'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-		SESSION_SECRET: 'test-session-secret',
 		RESEND_API_KEY: '',
 		...overrides,
 	};
