@@ -52,7 +52,8 @@ This file tracks the frontend work required to replace mock data with live backe
   Outcome: passed for the current inbox surface. The notifications page now uses a real page loader, renders live notification records, and supports mark-all, archive-all, and per-item mark-read actions without mock content.
 - [x] F014 Wire mitigations page to `/mitigations/*`
   Outcome: passed for the current mitigation surface. The page now loads real mitigation rules, supports create/edit/toggle/delete/dry-run flows, and replaces the mock cards with backend-backed execution state.
-- [ ] F015 Wire audit page to `/audit-logs`
+- [x] F015 Wire audit page to `/audit-logs`
+  Outcome: passed for the current audit surface. The page now loads real audit logs, supports action/date filtering plus CSV export, and replaces the fake log history with backend-backed data.
 - [ ] F016 Wire developer page to `/developer/*`
 - [x] F017 Wire billing page to `/billing/*` using estimate-based backend semantics
   Outcome: passed for the current billing surface. The page now uses real billing endpoints, makes estimate-backed data explicit, supports budget-limit updates, and removes fake invoice-grade breakdown content.
@@ -91,6 +92,7 @@ This file tracks the frontend work required to replace mock data with live backe
 - The team page is now backend-backed; invite sender identity is not exposed by the current team API, so the recent-invites list uses neutral copy instead of fake inviter names
 - The mitigations page is now backend-backed; confirmed live execution is still intentionally not exposed in the current UI, which keeps manual actions in dry-run mode
 - The billing page is now backend-backed; period selection and invoice downloads are not surfaced because the current backend only exposes current summary/budget plus stored invoice snapshots
+- The audit page is now backend-backed; user-specific filtering is not surfaced because the current UI has no user directory input and the API only supports raw `user_id` filters
 - Dashboard and analytics pages have live loaders but still contain hardcoded trend badges, fallback visual content, or static activity sections
 - The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
 - Most management pages (`billing`, `inventory`, `integrations`, `rules`, `team`, `audit`, `developer`, `mitigations`, `notifications`) are still UI-only with no page loader or server actions
