@@ -1,48 +1,98 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { validate } from '../middleware/validate.js';
+import { logAudit } from '../middleware/audit.js';
 import type { AppContext } from '../middleware/auth.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 import { requireRole } from '../middleware/rbac.js';
 import { reposMiddleware } from '../middleware/repos.js';
+import type { Repos } from '../middleware/repos.js';
+import {
+	getBudgetLimitFromSettings,
+	summarizeBillingFromSnapshot,
+	summarizeBillingFromZoneSnapshots,
+} from '../services/billing.js';
 
 const billing = new Hono<AppContext>();
 billing.use('*', authMiddleware, reposMiddleware);
 
+function currentMonthRange(now = new Date()): { from: string; to: string } {
+	const from = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));
+	return { from: from.toISOString(), to: now.toISOString() };
+}
+
+async function resolveBillingSummary(repos: Repos) {
+	const [snapshot, account] = await Promise.all([
+		repos.billingSnapshots.getCurrent(),
+		repos.accounts.findById(),
+	]);
+	const accountSettings = account?.settings
+		? (JSON.parse(account.settings) as Record<string, unknown>)
+		: {};
+	const budgetLimit = getBudgetLimitFromSettings(accountSettings);
+
+	if (snapshot) {
+		return {
+			summary: summarizeBillingFromSnapshot(snapshot),
+			budgetLimit,
+		};
+	}
+
+	const range = currentMonthRange();
+	const estimatedRows = await repos.billingSnapshots.listCurrentPeriodEstimatedSnapshots(
+		range.from,
+		range.to,
+	);
+	return {
+		summary: summarizeBillingFromZoneSnapshots(
+			estimatedRows.map((row, index) => ({
+				id: `estimated-${index}`,
+				account_id: '',
+				resource_id: '',
+				timestamp: row.timestamp,
+				requests: 0,
+				cached_requests: 0,
+				bytes: 0,
+				threats: 0,
+				page_views: 0,
+				unique_visitors: 0,
+				estimated_cost: row.estimated_cost,
+				top_endpoints: '[]',
+				top_countries: '[]',
+				top_user_agents: '[]',
+				created_at: row.timestamp,
+			})),
+			new Date(range.to),
+		),
+		budgetLimit,
+	};
+}
+
 // GET /billing/overview
 billing.get('/overview', rateLimit('reads'), async (c) => {
 	const repos = c.get('repos');
-	const snapshot = await repos.billingSnapshots.getCurrent();
-	if (!snapshot) return c.json({ current_spend: 0, projected_monthly: 0, daily_average: 0, budget_limit: null });
-
-	const breakdown = JSON.parse(snapshot.breakdown) as Record<string, number>;
-	const periodStart = new Date(snapshot.period_start);
-	const now = new Date();
-	const daysElapsed = Math.max(1, Math.floor((now.getTime() - periodStart.getTime()) / 86400000));
-	const dailyAverage = snapshot.total_cost / daysElapsed;
-	const daysInMonth = 30;
-	const projected = dailyAverage * daysInMonth;
+	const { summary, budgetLimit } = await resolveBillingSummary(repos);
 
 	return c.json({
-		current_spend: snapshot.total_cost,
-		projected_monthly: Math.round(projected * 100) / 100,
-		daily_average: Math.round(dailyAverage * 100) / 100,
-		budget_limit: snapshot.budget_limit,
-		period_start: snapshot.period_start,
-		period_end: snapshot.period_end,
-		breakdown,
+		source: summary.source,
+		is_estimated: summary.is_estimated,
+		current_estimated_spend: summary.current_estimated_spend,
+		projected_monthly_estimated: summary.projected_monthly_estimated,
+		daily_estimated_average: summary.daily_estimated_average,
+		budget_limit: budgetLimit,
+		period_start: summary.period_start,
+		period_end: summary.period_end,
+		breakdown: summary.breakdown,
 	});
 });
 
 // GET /billing/breakdown
 billing.get('/breakdown', rateLimit('reads'), async (c) => {
 	const repos = c.get('repos');
-	const snapshot = await repos.billingSnapshots.getCurrent();
-	if (!snapshot) return c.json({ breakdown: {} });
-
-	const breakdown = JSON.parse(snapshot.breakdown) as Record<string, number>;
-	const total = snapshot.total_cost;
+	const { summary } = await resolveBillingSummary(repos);
+	const breakdown = summary.breakdown;
+	const total = summary.current_estimated_spend;
 
 	const services = Object.entries(breakdown).map(([service, cost]) => ({
 		service,
@@ -51,7 +101,7 @@ billing.get('/breakdown', rateLimit('reads'), async (c) => {
 	}));
 	services.sort((a, b) => b.cost - a.cost);
 
-	return c.json({ total, services });
+	return c.json({ source: summary.source, is_estimated: summary.is_estimated, total, services });
 });
 
 // GET /billing/invoices
@@ -64,12 +114,16 @@ billing.get('/invoices', rateLimit('reads'), async (c) => {
 // GET /billing/budget
 billing.get('/budget', rateLimit('reads'), async (c) => {
 	const repos = c.get('repos');
-	const limit = await repos.billingSnapshots.getBudget();
-	const snapshot = await repos.billingSnapshots.getCurrent();
+	const { summary, budgetLimit } = await resolveBillingSummary(repos);
 	return c.json({
-		budget_limit: limit,
-		current_spend: snapshot?.total_cost ?? 0,
-		pct_used: limit && limit > 0 ? Math.round(((snapshot?.total_cost ?? 0) / limit) * 1000) / 10 : null,
+		budget_limit: budgetLimit,
+		current_estimated_spend: summary.current_estimated_spend,
+		is_estimated: summary.is_estimated,
+		source: summary.source,
+		pct_used:
+			budgetLimit && budgetLimit > 0
+				? Math.round((summary.current_estimated_spend / budgetLimit) * 1000) / 10
+				: null,
 	});
 });
 
@@ -83,6 +137,12 @@ billing.patch(
 		const { limit } = c.get('validatedBody') as { limit: number | null };
 		const repos = c.get('repos');
 		await repos.billingSnapshots.setBudget(limit);
+		await logAudit(c, {
+			action: 'update',
+			entity_type: 'settings',
+			description: `Updated budget limit to ${limit ?? 'none'}`,
+			metadata: { budget_limit: limit, source: 'account_settings' },
+		});
 		return c.json({ success: true, budget_limit: limit });
 	},
 );
@@ -90,16 +150,14 @@ billing.patch(
 // GET /billing/top-drivers
 billing.get('/top-drivers', rateLimit('reads'), async (c) => {
 	const repos = c.get('repos');
-	const snapshot = await repos.billingSnapshots.getCurrent();
-	if (!snapshot) return c.json({ drivers: [] });
-
-	const breakdown = JSON.parse(snapshot.breakdown) as Record<string, number>;
+	const { summary } = await resolveBillingSummary(repos);
+	const breakdown = summary.breakdown;
 	const drivers = Object.entries(breakdown)
 		.map(([service, cost]) => ({ service, cost }))
 		.sort((a, b) => b.cost - a.cost)
 		.slice(0, 5);
 
-	return c.json({ drivers });
+	return c.json({ source: summary.source, is_estimated: summary.is_estimated, drivers });
 });
 
 export { billing as billingRoutes };

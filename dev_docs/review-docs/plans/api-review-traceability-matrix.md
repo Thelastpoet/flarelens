@@ -53,7 +53,7 @@ Use it to answer four questions quickly:
 - `S04-F01` High. Resource identity is keyed too broadly and can collide across Cloudflare product types. Tasks: `T048`, `T051`. Status: `Mapped`
 - `S04-F02` High. Zone snapshot “upsert” is not idempotent because there is no natural-key conflict target. Tasks: `T048`, `T052`. Status: `Mapped`
 - `S04-F03` Medium. Snapshot retention logic is inconsistent about whether age is based on event time or insert time. Tasks: `T048`, `T052`. Status: `Mapped`
-- `S04-F04` Medium. Budget persistence is tied to the existence of an active billing snapshot. Tasks: `T026`, `T028`, `T030`, `T031`, `T056`. Status: `Mapped`
+- `S04-F04` Medium. Budget persistence is tied to the existence of an active billing snapshot. Tasks: `T026`, `T028`, `T030`, `T031`, `T056`. Status: `Resolved`
 
 ### Section 05: Detection, Queues, and Cron Jobs
 
@@ -64,9 +64,9 @@ Use it to answer four questions quickly:
 
 ### Section 06: Billing and Cost Semantics
 
-- `S06-F01` High. Billing API surface is not backed by any ingestion path. Tasks: `T026`, `T028`, `T030`, `T056`. Status: `Mapped`
-- `S06-F02` High. Estimated cost and billing-style language are mixed without a clear contract. Tasks: `T026`, `T027`, `T028`, `T029`, `T031`, `T041`. Status: `Mapped`
-- `S06-F03` Medium. Cost model is approximate but exposed as durable business logic. Tasks: `T027`, `T029`, `T041`. Status: `Mapped`
+- `S06-F01` High. Billing API surface is not backed by any ingestion path. Tasks: `T026`, `T028`, `T030`, `T056`. Status: `Resolved`
+- `S06-F02` High. Estimated cost and billing-style language are mixed without a clear contract. Tasks: `T026`, `T027`, `T028`, `T029`, `T031`, `T041`. Status: `Resolved`
+- `S06-F03` Medium. Cost model is approximate but exposed as durable business logic. Tasks: `T027`, `T029`, `T041`. Status: `Resolved`
 - `S06-F04` Medium. Cost- and budget-oriented rule surfaces exist, but the detection pipeline does not feed them. Tasks: `T037`, `T062`. Status: `Mapped`
 
 ### Section 07: Validation, Error Handling, and API Consistency

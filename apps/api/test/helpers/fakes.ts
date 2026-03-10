@@ -16,6 +16,36 @@ type AuditLogRecord = {
 };
 
 type CfTokenRecord = CfToken;
+type BillingSnapshotRecord = {
+	id: string;
+	account_id: string;
+	period_start: string;
+	period_end: string;
+	total_cost: number;
+	breakdown: string;
+	budget_limit: number | null;
+	status: 'active' | 'invoice';
+	stripe_invoice_id: string | null;
+	created_at: string;
+	updated_at: string;
+};
+type ZoneSnapshotRecord = {
+	id: string;
+	account_id: string;
+	resource_id: string;
+	timestamp: string;
+	requests: number;
+	cached_requests: number;
+	bytes: number;
+	threats: number;
+	page_views: number;
+	unique_visitors: number;
+	estimated_cost: number;
+	top_endpoints: string;
+	top_countries: string;
+	top_user_agents: string;
+	created_at: string;
+};
 
 function normalizeSql(query: string): string {
 	return query.replace(/\s+/g, ' ').trim();
@@ -85,6 +115,8 @@ export class FakeD1Database implements D1Database {
 	teamMembers = new Map<string, TeamMember>();
 	cfTokens = new Map<string, CfTokenRecord>();
 	mitigations = new Map<string, Mitigation>();
+	billingSnapshots = new Map<string, BillingSnapshotRecord>();
+	zoneSnapshots = new Map<string, ZoneSnapshotRecord>();
 	auditLogs: AuditLogRecord[] = [];
 
 	prepare(query: string): D1PreparedStatement {
@@ -116,6 +148,11 @@ export class FakeD1Database implements D1Database {
 
 		if (sql === 'SELECT * FROM accounts WHERE id = ?') {
 			return (this.accounts.get(String(params[0])) ?? null) as T | null;
+		}
+
+		if (sql === 'SELECT settings FROM accounts WHERE id = ?') {
+			const account = this.accounts.get(String(params[0]));
+			return account ? ({ settings: account.settings } as T) : null;
 		}
 
 		if (
@@ -154,6 +191,17 @@ export class FakeD1Database implements D1Database {
 			return token as T;
 		}
 
+		if (
+			sql ===
+			"SELECT * FROM billing_snapshots WHERE account_id = ? AND status = 'active' ORDER BY period_start DESC LIMIT 1"
+		) {
+			return (
+				[...this.billingSnapshots.values()]
+					.filter((snapshot) => snapshot.account_id === params[0] && snapshot.status === 'active')
+					.sort((a, b) => b.period_start.localeCompare(a.period_start))[0] ?? null
+			) as T | null;
+		}
+
 		throw new Error(`Unsupported first() query in FakeD1Database: ${sql}`);
 	}
 
@@ -189,6 +237,34 @@ export class FakeD1Database implements D1Database {
 			return [...this.mitigations.values()].filter(
 				(mitigation) => mitigation.account_id === params[0] && mitigation.enabled === 1,
 			) as T[];
+		}
+
+		if (
+			sql ===
+			"SELECT * FROM billing_snapshots WHERE account_id = ? AND status = 'invoice' ORDER BY period_start DESC LIMIT ?"
+		) {
+			return [...this.billingSnapshots.values()]
+				.filter((snapshot) => snapshot.account_id === params[0] && snapshot.status === 'invoice')
+				.sort((a, b) => b.period_start.localeCompare(a.period_start))
+				.slice(0, Number(params[1])) as T[];
+		}
+
+		if (
+			sql ===
+			'SELECT estimated_cost, timestamp FROM zone_snapshots WHERE account_id = ? AND timestamp >= ? AND timestamp <= ? ORDER BY timestamp ASC'
+		) {
+			return [...this.zoneSnapshots.values()]
+				.filter(
+					(snapshot) =>
+						snapshot.account_id === params[0] &&
+						snapshot.timestamp >= params[1] &&
+						snapshot.timestamp <= params[2],
+				)
+				.sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+				.map((snapshot) => ({
+					estimated_cost: snapshot.estimated_cost,
+					timestamp: snapshot.timestamp,
+				})) as T[];
 		}
 
 		return [];
@@ -301,6 +377,27 @@ export class FakeD1Database implements D1Database {
 				updated_at: new Date().toISOString(),
 			};
 			this.insertMitigation(mitigation);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
+			`INSERT INTO billing_snapshots (id, account_id, period_start, period_end, total_cost, breakdown, budget_limit) VALUES (?, ?, ?, ?, ?, ?, ?)`
+		) {
+			const snapshot: BillingSnapshotRecord = {
+				id: String(params[0]),
+				account_id: String(params[1]),
+				period_start: String(params[2]),
+				period_end: String(params[3]),
+				total_cost: Number(params[4]),
+				breakdown: String(params[5]),
+				budget_limit: (params[6] as number | null) ?? null,
+				status: 'active',
+				stripe_invoice_id: null,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			};
+			this.insertBillingSnapshot(snapshot);
 			return { success: true, meta: { duration: 0 } } as D1Result;
 		}
 
@@ -444,6 +541,14 @@ export class FakeD1Database implements D1Database {
 
 	insertMitigation(mitigation: Mitigation) {
 		this.mitigations.set(mitigation.id, mitigation);
+	}
+
+	insertBillingSnapshot(snapshot: BillingSnapshotRecord) {
+		this.billingSnapshots.set(snapshot.id, snapshot);
+	}
+
+	insertZoneSnapshot(snapshot: ZoneSnapshotRecord) {
+		this.zoneSnapshots.set(snapshot.id, snapshot);
 	}
 }
 

@@ -119,15 +119,16 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T026 [P] [US3] Add integration tests for `/billing/overview`, `/billing/budget`, and empty-state behavior in `apps/api/test/integration/test_billing_endpoints.ts`
-- [ ] T027 [P] [US3] Add unit tests for billing projection/estimation calculations in `apps/api/test/unit/test_billing_estimations.ts`
+- [x] T026 [P] [US3] Add integration tests for `/billing/overview`, `/billing/budget`, and empty-state behavior in `apps/api/test/integration/test_billing_endpoints.ts`
+- [x] T027 [P] [US3] Add unit tests for billing projection/estimation calculations in `apps/api/test/unit/test_billing_estimations.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T028 [US3] Decide whether to implement billing snapshot ingestion or explicitly downgrade billing endpoints to estimated-only in `apps/api/src/routes/billing.ts`
-- [ ] T029 [US3] If estimation remains, rename/annotate response fields and comments in `apps/api/src/routes/billing.ts` and `apps/api/src/services/analytics.ts` to reflect estimation status
-- [ ] T030 [US3] Add repository/service support for snapshot population if ingestion is implemented in `packages/db/src/repositories/billing-snapshots.ts` and a new or existing cron/service file under `apps/api/src/crons/` or `apps/api/src/services/`
-- [ ] T031 [US3] Add budget/audit logging for budget changes in `apps/api/src/routes/billing.ts`
+- [x] T028 [US3] Decide whether to implement billing snapshot ingestion or explicitly downgrade billing endpoints to estimated-only in `apps/api/src/routes/billing.ts`
+- [x] T029 [US3] If estimation remains, rename/annotate response fields and comments in `apps/api/src/routes/billing.ts` and `apps/api/src/services/analytics.ts` to reflect estimation status
+- [x] T030 [US3] Add repository/service support for snapshot population if ingestion is implemented in `packages/db/src/repositories/billing-snapshots.ts` and a new or existing cron/service file under `apps/api/src/crons/` or `apps/api/src/services/`
+  Phase 5 resolution: no ingestion path was implemented; the API contract was explicitly downgraded to estimated-only semantics, so no additional snapshot-population service is required for this phase.
+- [x] T031 [US3] Add budget/audit logging for budget changes in `apps/api/src/routes/billing.ts`
 
 **Checkpoint**: Billing and budget APIs no longer overpromise fidelity
 

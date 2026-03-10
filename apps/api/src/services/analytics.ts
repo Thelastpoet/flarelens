@@ -60,12 +60,13 @@ export interface TrafficData {
 }
 
 export interface CostBreakdown {
-	workers: number;
-	cdn: number;
-	r2: number;
-	kv: number;
-	d1: number;
-	total: number;
+	workers_estimated: number;
+	cdn_estimated: number;
+	r2_estimated: number;
+	kv_estimated: number;
+	d1_estimated: number;
+	total_estimated: number;
+	is_estimated: true;
 	from: string;
 	to: string;
 }
@@ -252,7 +253,7 @@ export class AnalyticsService {
 				// graceful degradation
 			}
 
-			// Estimated cost (CDN bandwidth only for overview)
+			// Estimated cost only. This is operational estimation, not Cloudflare billing.
 			const cdnCost = (totalBytes / 1_073_741_824) * 0.0075;
 			const workerCost =
 				(workerExecutions / 1_000_000) * CF_COST_PER_UNIT.worker_requests_per_million;
@@ -361,12 +362,13 @@ export class AnalyticsService {
 	async getCost(from?: string, to?: string): Promise<CostBreakdown> {
 		const range = parseDateRange(from, to);
 		const empty: CostBreakdown = {
-			workers: 0,
-			cdn: 0,
-			r2: 0,
-			kv: 0,
-			d1: 0,
-			total: 0,
+			workers_estimated: 0,
+			cdn_estimated: 0,
+			r2_estimated: 0,
+			kv_estimated: 0,
+			d1_estimated: 0,
+			total_estimated: 0,
+			is_estimated: true,
 			from: range.from,
 			to: range.to,
 		};
@@ -467,7 +469,17 @@ export class AnalyticsService {
 
 			const total = workers + cdn + r2 + kv + d1;
 
-			return { workers, cdn, r2, kv, d1, total, from: range.from, to: range.to };
+			return {
+				workers_estimated: workers,
+				cdn_estimated: cdn,
+				r2_estimated: r2,
+				kv_estimated: kv,
+				d1_estimated: d1,
+				total_estimated: total,
+				is_estimated: true,
+				from: range.from,
+				to: range.to,
+			};
 		} catch {
 			return empty;
 		}

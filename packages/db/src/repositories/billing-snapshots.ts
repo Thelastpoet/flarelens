@@ -73,14 +73,43 @@ export class BillingSnapshotsRepository extends BaseRepository {
 	}
 
 	async getBudget(): Promise<number | null> {
-		const snapshot = await this.getCurrent();
-		return snapshot?.budget_limit ?? null;
+		const account = await this.first<{ settings: string | null }>(
+			'SELECT settings FROM accounts WHERE id = ?',
+			this.account_id,
+		);
+		if (!account?.settings) return null;
+		const settings = JSON.parse(account.settings) as Record<string, unknown>;
+		return typeof settings['budget_limit'] === 'number' ? (settings['budget_limit'] as number) : null;
 	}
 
 	async setBudget(limit: number | null): Promise<void> {
-		const snapshot = await this.getCurrent();
-		if (snapshot) {
-			await this.update(snapshot.id, { budget_limit: limit });
-		}
+		const account = await this.first<{ settings: string | null }>(
+			'SELECT settings FROM accounts WHERE id = ?',
+			this.account_id,
+		);
+		const settings = account?.settings
+			? (JSON.parse(account.settings) as Record<string, unknown>)
+			: {};
+		const nextSettings = {
+			...settings,
+			budget_limit: limit,
+		};
+		await this.run(
+			"UPDATE accounts SET settings = ?, updated_at = datetime('now') WHERE id = ?",
+			JSON.stringify(nextSettings),
+			this.account_id,
+		);
+	}
+
+	async listCurrentPeriodEstimatedSnapshots(from: string, to: string): Promise<Array<{ estimated_cost: number; timestamp: string }>> {
+		return this.all<{ estimated_cost: number; timestamp: string }>(
+			`SELECT estimated_cost, timestamp
+       FROM zone_snapshots
+       WHERE account_id = ? AND timestamp >= ? AND timestamp <= ?
+       ORDER BY timestamp ASC`,
+			this.account_id,
+			from,
+			to,
+		);
 	}
 }
