@@ -2,48 +2,16 @@
 import { goto } from '$app/navigation';
 import type { PageData } from './$types.js';
 
-interface Attribution {
-	label?: string;
-	type?: string;
-	value?: number;
-	contributionPct?: number;
-}
-
-interface Anomaly {
-	id: string;
-	metric: string;
-	severity: string;
-	current_value: number;
-	baseline_value?: number | null;
-	deviation?: number | null;
-	status: string;
-	detected_at: string;
-	resource_id?: string | null;
-	detection_type?: string;
-	attribution?: string | Attribution[] | null;
-	dismissed_by?: string | null;
-}
-
 let { data }: { data: PageData } = $props();
 
-const anomaly = $derived(data.anomaly as Anomaly | null);
+const anomaly = $derived(data.anomaly);
 
-const severityBadge: Record<string, string> = {
+const severityBadge: Record<'critical' | 'high' | 'warning' | 'info', string> = {
 	critical: 'bg-red-100 text-red-700 border border-red-200',
 	high: 'bg-orange-100 text-orange-700 border border-orange-200',
 	warning: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
 	info: 'bg-blue-100 text-blue-700 border border-blue-200',
 };
-
-function parseAttribution(raw: string | Attribution[] | null | undefined): Attribution[] {
-	if (!raw) return [];
-	if (Array.isArray(raw)) return raw;
-	try {
-		return JSON.parse(raw) as Attribution[];
-	} catch {
-		return [];
-	}
-}
 
 function formatDate(iso: string): string {
 	return new Date(iso).toLocaleString('en-US', {
@@ -88,15 +56,13 @@ async function dismiss() {
 		<a href="/anomalies" class="mt-4 inline-block text-sm text-orange-600 hover:underline">Return to anomalies list</a>
 	</div>
 {:else}
-	{@const attribution = parseAttribution(anomaly.attribution)}
-
 	<!-- Info card -->
 	<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-4">
 		<div class="flex items-start justify-between gap-4 mb-6">
 			<div>
 				<div class="flex items-center gap-2 mb-1">
 					<h2 class="text-lg font-semibold text-slate-900">{anomaly.metric}</h2>
-					<span class="text-sm font-medium px-2.5 py-0.5 rounded-full {severityBadge[anomaly.severity] ?? 'bg-gray-100 text-gray-700'}">{anomaly.severity}</span>
+					<span class="text-sm font-medium px-2.5 py-0.5 rounded-full {severityBadge[anomaly.severity]}">{anomaly.severity}</span>
 				</div>
 				{#if anomaly.resource_id}
 					<p class="text-sm text-gray-500">Resource: <span class="font-medium text-slate-700">{anomaly.resource_id}</span></p>
@@ -131,20 +97,18 @@ async function dismiss() {
 	</div>
 
 	<!-- Attribution breakdown -->
-	{#if attribution.length > 0}
+	{#if anomaly.attribution.length > 0}
 		<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-4">
 			<h3 class="text-sm font-semibold text-slate-900 mb-4">Spike Contributors</h3>
 			<div class="space-y-3">
-				{#each attribution as contrib}
+				{#each anomaly.attribution as contrib}
 					<div class="flex items-center gap-3">
-						<span class="text-sm text-slate-700 w-48 shrink-0 truncate">{contrib.label ?? contrib.type ?? 'Unknown'}</span>
+						<span class="text-sm text-slate-700 w-48 shrink-0 truncate">{contrib.value}</span>
 						<div class="flex-1 h-3 rounded-full bg-gray-100">
-							<div class="h-3 rounded-full bg-orange-400 transition-all" style="width: {contrib.contributionPct ?? 0}%"></div>
+							<div class="h-3 rounded-full bg-orange-400 transition-all" style="width: {contrib.contribution_pct}%"></div>
 						</div>
-						<span class="text-sm font-semibold text-slate-900 w-12 text-right">{contrib.contributionPct ?? 0}%</span>
-						{#if contrib.value != null}
-							<span class="text-xs text-gray-400 w-20 text-right">{contrib.value}</span>
-						{/if}
+						<span class="text-sm font-semibold text-slate-900 w-12 text-right">{contrib.contribution_pct}%</span>
+						<span class="text-xs text-gray-400 w-20 text-right">{contrib.current_value}</span>
 					</div>
 				{/each}
 			</div>

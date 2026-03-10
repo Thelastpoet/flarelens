@@ -1,17 +1,12 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { api, ApiRequestError } from '$lib/api.js';
+	import type { MitigationsPageData } from '$lib/server/mitigations.js';
 	import type { PageData } from './$types.js';
 
 	type MetricName = 'requests' | 'cached_requests' | 'bytes' | 'threats';
 	type RuleOperator = 'gt' | 'lt' | 'gte' | 'lte';
 	type ActionType = 'rate_limit' | 'under_attack_mode' | 'pause_worker';
-
-	interface TriggerCondition {
-		metric: MetricName;
-		operator: RuleOperator;
-		threshold: number;
-	}
 
 	interface RateLimitConfig {
 		zone_id: string;
@@ -102,14 +97,6 @@
 		},
 	};
 
-	function parseTriggerCondition(raw: string): TriggerCondition {
-		return JSON.parse(raw) as TriggerCondition;
-	}
-
-	function parseActionConfig(raw: string): RateLimitConfig | UnderAttackConfig | PauseWorkerConfig {
-		return JSON.parse(raw) as RateLimitConfig | UnderAttackConfig | PauseWorkerConfig;
-	}
-
 	function operatorLabel(operator: RuleOperator): string {
 		return operator === 'gt'
 			? '>'
@@ -121,7 +108,7 @@
 	}
 
 	function triggerLabel(mitigation: (typeof data.mitigations)[number]): string {
-		const trigger = parseTriggerCondition(mitigation.trigger_condition);
+		const trigger = mitigation.trigger;
 		return `${metricLabels[trigger.metric]} ${operatorLabel(trigger.operator)} ${trigger.threshold}`;
 	}
 
@@ -131,17 +118,13 @@
 	}
 
 	function actionLabel(mitigation: (typeof data.mitigations)[number]): string {
-		const config = parseActionConfig(mitigation.action_config);
 		if (mitigation.action_type === 'rate_limit') {
-			const typed = config as RateLimitConfig;
-			return `Apply ${typed.threshold} req/${typed.period}s limit`;
+			return `Apply ${mitigation.action.threshold} req/${mitigation.action.period}s limit`;
 		}
 		if (mitigation.action_type === 'under_attack_mode') {
-			const typed = config as UnderAttackConfig;
-			return `Set security level to ${typed.security_level ?? 'under_attack'}`;
+			return `Set security level to ${mitigation.action.security_level}`;
 		}
-		const typed = config as PauseWorkerConfig;
-		return `Pause worker ${typed.worker_name}`;
+		return `Pause worker ${mitigation.action.worker_name}`;
 	}
 
 	function lastTriggeredLabel(mitigation: (typeof data.mitigations)[number]): string {
@@ -199,41 +182,39 @@
 	}
 
 	function openEditModal(mitigation: (typeof data.mitigations)[number]) {
-		const trigger = parseTriggerCondition(mitigation.trigger_condition);
-		const actionConfig = parseActionConfig(mitigation.action_config);
 		editingId = mitigation.id;
 		formError = null;
 		form = {
 			id: mitigation.id,
 			name: mitigation.name,
 			resource_id: mitigation.resource_id ?? '',
-			metric: trigger.metric,
-			operator: trigger.operator,
-			threshold: String(trigger.threshold),
+			metric: mitigation.trigger.metric as MetricName,
+			operator: mitigation.trigger.operator,
+			threshold: String(mitigation.trigger.threshold),
 			action_type: mitigation.action_type,
 			rate_limit_threshold:
 				mitigation.action_type === 'rate_limit'
-					? String((actionConfig as RateLimitConfig).threshold)
+					? String(mitigation.action.threshold)
 					: '100',
 			rate_limit_period:
 				mitigation.action_type === 'rate_limit'
-					? String((actionConfig as RateLimitConfig).period)
+					? String(mitigation.action.period)
 					: '60',
 			url_pattern:
 				mitigation.action_type === 'rate_limit'
-					? ((actionConfig as RateLimitConfig).url_pattern ?? '')
+					? (mitigation.action.url_pattern ?? '')
 					: '',
 			action_mode:
 				mitigation.action_type === 'rate_limit'
-					? ((actionConfig as RateLimitConfig).action_mode ?? 'challenge')
+					? mitigation.action.action_mode
 					: 'challenge',
 			security_level:
 				mitigation.action_type === 'under_attack_mode'
-					? ((actionConfig as UnderAttackConfig).security_level ?? 'under_attack')
+					? mitigation.action.security_level
 					: 'under_attack',
 			worker_name:
 				mitigation.action_type === 'pause_worker'
-					? (actionConfig as PauseWorkerConfig).worker_name
+					? mitigation.action.worker_name
 					: '',
 		};
 		showModal = true;
@@ -241,7 +222,10 @@
 
 	function zoneIdForForm(): string {
 		const resource = resources.find((item) => item.id === form.resource_id);
-		return resource?.cf_resource_id ?? '';
+		if (!resource) {
+			throw new Error(`Mitigation form references unknown resource ${form.resource_id}`);
+		}
+		return resource.cf_resource_id;
 	}
 
 	function buildCreatePayload() {
