@@ -15,6 +15,13 @@ import {
 } from '@flarelens/db';
 import { newId } from '@flarelens/shared';
 
+const DETECTION_METRICS = [
+	{ metric: 'requests', value: (bucket: { requests: number }) => bucket.requests },
+	{ metric: 'bytes', value: (bucket: { bytes: number }) => bucket.bytes },
+	{ metric: 'cached_requests', value: (bucket: { cachedRequests: number }) => bucket.cachedRequests },
+	{ metric: 'threats', value: (bucket: { threats: number }) => bucket.threats },
+] as const;
+
 export async function runMetricsPoll(env: Env): Promise<void> {
 	const DB = (env as unknown as { DB: D1Database }).DB;
 
@@ -69,26 +76,27 @@ async function pollAccount(accountId: string, DB: D1Database, env: Env): Promise
 				requests: latest.requests,
 				cached_requests: latest.cachedRequests,
 				bytes: latest.bytes,
-				threats: 0,
-				page_views: 0,
+				threats: latest.threats,
+				page_views: latest.pageViews,
 				unique_visitors: 0,
 				estimated_cost: (latest.bytes / 1_073_741_824) * 0.0075,
 				top_endpoints: [],
-				top_countries: [],
+				top_countries: parsed.countryMap.slice(0, 10),
 				top_user_agents: [],
 			});
 
-			// Enqueue anomaly check
-			await env.ANOMALY_CHECK_QUEUE.send({
-				account_id: accountId,
-				resource_id: zone.id,
-				resource_type: 'zone',
-				zone_id: zone.cf_resource_id,
-				metric: 'requests',
-				current_value: latest.requests,
-				from: from,
-				to: to,
-			});
+			for (const { metric, value } of DETECTION_METRICS) {
+				await env.ANOMALY_CHECK_QUEUE.send({
+					account_id: accountId,
+					resource_id: zone.id,
+					resource_type: 'zone',
+					zone_id: zone.cf_resource_id,
+					metric,
+					current_value: value(latest),
+					from,
+					to,
+				});
+			}
 
 			// Push to live feed DO
 			try {

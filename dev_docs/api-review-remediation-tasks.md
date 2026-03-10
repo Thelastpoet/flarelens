@@ -142,15 +142,16 @@
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T032 [P] [US4] Add unit tests for baseline recalculation and detector behavior in `apps/api/test/unit/test_baseline_recalc.ts` and `apps/api/test/unit/test_detection_pipeline.ts`
-- [ ] T033 [P] [US4] Add integration test for metrics polling to anomaly-check message flow in `apps/api/test/integration/test_metrics_poll_pipeline.ts`
+- [x] T032 [P] [US4] Add unit tests for baseline recalculation and detector behavior in `apps/api/test/unit/test_baseline_recalc.ts` and `apps/api/test/unit/test_detection_pipeline.ts`
+- [x] T033 [P] [US4] Add integration test for metrics polling to anomaly-check message flow in `apps/api/test/integration/test_metrics_poll_pipeline.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T034 [US4] Expand metrics polling in `apps/api/src/crons/metrics-poll.ts` to persist contributor fields when available and to avoid writing placeholder zero-value fields where misleading
-- [ ] T035 [US4] Reassess and update baseline coverage in `apps/api/src/crons/baseline-recalc.ts` and `apps/api/src/services/detection/index.ts`
-- [ ] T036 [US4] Align analytics responses with actual stored/queryable data in `apps/api/src/services/analytics.ts`
-- [ ] T037 [US4] If multi-service monitoring remains in scope, add the first concrete backend implementation slice for additional service metrics in `apps/api/src/services/cloudflare/graphql.ts`, `apps/api/src/services/analytics.ts`, and supporting repositories
+- [x] T034 [US4] Expand metrics polling in `apps/api/src/crons/metrics-poll.ts` to persist contributor fields when available and to avoid writing placeholder zero-value fields where misleading
+- [x] T035 [US4] Reassess and update baseline coverage in `apps/api/src/crons/baseline-recalc.ts` and `apps/api/src/services/detection/index.ts`
+- [x] T036 [US4] Align analytics responses with actual stored/queryable data in `apps/api/src/services/analytics.ts`
+- [x] T037 [US4] If multi-service monitoring remains in scope, add the first concrete backend implementation slice for additional service metrics in `apps/api/src/services/cloudflare/graphql.ts`, `apps/api/src/services/analytics.ts`, and supporting repositories
+  Phase 6 resolution: the backend scope was intentionally expanded within zone telemetry (`requests`, `bytes`, `cached_requests`, `threats`) rather than adding new product-family ingestion. Broader multi-service support remains a future scope/doc decision under `T041` and rule-surface cleanup under `T062`.
 
 **Checkpoint**: Detection behavior, stored data, and API responses tell the same story
 

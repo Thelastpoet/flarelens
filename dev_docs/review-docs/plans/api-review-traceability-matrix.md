@@ -59,8 +59,8 @@ Use it to answer four questions quickly:
 
 - `S05-F01` High. Alert deduplication is keyed too broadly and can suppress distinct incidents. Tasks: `T048`, `T053`. Status: `Mapped`
 - `S05-F02` High. Queue processing is not idempotent enough to prevent duplicate anomalies or duplicate alert fan-out. Tasks: `T048`, `T053`. Status: `Mapped`
-- `S05-F03` Medium. Polling cron stores placeholder values as if they were measured analytics. Tasks: `T033`, `T034`, `T036`. Status: `Mapped`
-- `S05-F04` Medium. End-to-end detection pipeline currently covers only request-count anomalies. Tasks: `T032`, `T033`, `T035`, `T037`, `T062`. Status: `Mapped`
+- `S05-F03` Medium. Polling cron stores placeholder values as if they were measured analytics. Tasks: `T033`, `T034`, `T036`. Status: `Resolved`
+- `S05-F04` Medium. End-to-end detection pipeline currently covers only request-count anomalies. Tasks: `T032`, `T033`, `T035`, `T037`, `T062`. Status: `Resolved`
 
 ### Section 06: Billing and Cost Semantics
 

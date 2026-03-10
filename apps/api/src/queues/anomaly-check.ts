@@ -30,6 +30,29 @@ interface AnomalyCheckMessage {
 	to: string;
 }
 
+function getMetricValue(
+	metric: string,
+	snapshot: {
+		requests: number;
+		bytes: number;
+		cached_requests: number;
+		threats: number;
+	},
+): number {
+	switch (metric) {
+		case 'requests':
+			return snapshot.requests;
+		case 'bytes':
+			return snapshot.bytes;
+		case 'cached_requests':
+			return snapshot.cached_requests;
+		case 'threats':
+			return snapshot.threats;
+		default:
+			return snapshot.requests;
+	}
+}
+
 function buildRepos(db: D1Database, accountId: string): Repos {
 	return {
 		users: new UsersRepository(db, accountId),
@@ -64,7 +87,9 @@ export async function handleAnomalyCheck(batch: MessageBatch, env: Env): Promise
 				new Date(Date.now() - 30 * 60 * 1000).toISOString(), // last 30 min
 				msg.to,
 			);
-			const recentValues = recentSnapshots.map((s) => s.requests).slice(-5);
+			const recentValues = recentSnapshots
+				.map((snapshot) => getMetricValue(msg.metric, snapshot))
+				.slice(-5);
 
 			await runDetection(
 				{

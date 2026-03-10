@@ -1,4 +1,4 @@
-import type { Account, CfToken, Mitigation, TeamMember, User } from '@flarelens/shared';
+import type { Account, Anomaly, Baseline, CfToken, Mitigation, Resource, Rule, TeamMember, User } from '@flarelens/shared';
 import type { Env } from '../../src/env.js';
 
 type AuditLogRecord = {
@@ -46,6 +46,10 @@ type ZoneSnapshotRecord = {
 	top_user_agents: string;
 	created_at: string;
 };
+type ResourceRecord = Resource;
+type BaselineRecord = Baseline;
+type RuleRecord = Rule;
+type AnomalyRecord = Anomaly;
 
 function normalizeSql(query: string): string {
 	return query.replace(/\s+/g, ' ').trim();
@@ -114,6 +118,10 @@ export class FakeD1Database implements D1Database {
 	usersByEmail = new Map<string, User>();
 	teamMembers = new Map<string, TeamMember>();
 	cfTokens = new Map<string, CfTokenRecord>();
+	resources = new Map<string, ResourceRecord>();
+	baselines = new Map<string, BaselineRecord>();
+	rules = new Map<string, RuleRecord>();
+	anomalies = new Map<string, AnomalyRecord>();
 	mitigations = new Map<string, Mitigation>();
 	billingSnapshots = new Map<string, BillingSnapshotRecord>();
 	zoneSnapshots = new Map<string, ZoneSnapshotRecord>();
@@ -202,6 +210,41 @@ export class FakeD1Database implements D1Database {
 			) as T | null;
 		}
 
+		if (sql === 'SELECT * FROM resources WHERE id = ? AND account_id = ?') {
+			const resource = this.resources.get(String(params[0]));
+			if (!resource || resource.account_id !== params[1]) return null;
+			return resource as T;
+		}
+
+		if (
+			sql ===
+			'SELECT * FROM baselines WHERE account_id = ? AND resource_id = ? AND metric = ? AND hour_of_day = ? AND day_of_week = ?'
+		) {
+			return (
+				[...this.baselines.values()].find(
+					(baseline) =>
+						baseline.account_id === params[0] &&
+						baseline.resource_id === params[1] &&
+						baseline.metric === params[2] &&
+						baseline.hour_of_day === params[3] &&
+						baseline.day_of_week === params[4],
+				) ?? null
+			) as T | null;
+		}
+
+		if (sql === 'SELECT * FROM anomalies WHERE id = ? AND account_id = ?') {
+			const anomaly = this.anomalies.get(String(params[0]));
+			if (!anomaly || anomaly.account_id !== params[1]) return null;
+			return anomaly as T;
+		}
+
+		if (sql === "SELECT COUNT(*) as total FROM anomalies WHERE account_id = ? AND status = 'active'") {
+			const total = [...this.anomalies.values()].filter(
+				(anomaly) => anomaly.account_id === params[0] && anomaly.status === 'active',
+			).length;
+			return { total } as T;
+		}
+
 		throw new Error(`Unsupported first() query in FakeD1Database: ${sql}`);
 	}
 
@@ -265,6 +308,54 @@ export class FakeD1Database implements D1Database {
 					estimated_cost: snapshot.estimated_cost,
 					timestamp: snapshot.timestamp,
 				})) as T[];
+		}
+
+		if (sql === 'SELECT * FROM resources WHERE account_id = ? AND type = ? ORDER BY name ASC') {
+			return [...this.resources.values()]
+				.filter((resource) => resource.account_id === params[0] && resource.type === params[1])
+				.sort((a, b) => a.name.localeCompare(b.name)) as T[];
+		}
+
+		if (
+			sql ===
+			'SELECT * FROM zone_snapshots WHERE account_id = ? AND resource_id = ? AND timestamp >= ? AND timestamp <= ? ORDER BY timestamp ASC'
+		) {
+			return [...this.zoneSnapshots.values()]
+				.filter(
+					(snapshot) =>
+						snapshot.account_id === params[0] &&
+						snapshot.resource_id === params[1] &&
+						snapshot.timestamp >= params[2] &&
+						snapshot.timestamp <= params[3],
+				)
+				.sort((a, b) => a.timestamp.localeCompare(b.timestamp)) as T[];
+		}
+
+		if (
+			sql ===
+			'SELECT * FROM rules WHERE account_id = ? AND enabled = 1 AND deleted_at IS NULL'
+		) {
+			return [...this.rules.values()].filter(
+				(rule) => rule.account_id === params[0] && rule.enabled === 1 && rule.deleted_at === null,
+			) as T[];
+		}
+
+		if (
+			sql ===
+			'SELECT * FROM anomalies WHERE account_id = ? AND resource_id = ? ORDER BY detected_at DESC LIMIT ?'
+		) {
+			return [...this.anomalies.values()]
+				.filter((anomaly) => anomaly.account_id === params[0] && anomaly.resource_id === params[1])
+				.sort((a, b) => b.detected_at.localeCompare(a.detected_at))
+				.slice(0, Number(params[2])) as T[];
+		}
+
+		if (sql === "SELECT DISTINCT account_id FROM team_members WHERE status = 'active'") {
+			return [...new Set(
+				[...this.teamMembers.values()]
+					.filter((member) => member.status === 'active')
+					.map((member) => member.account_id),
+			)].map((account_id) => ({ account_id })) as T[];
 		}
 
 		return [];
@@ -357,6 +448,52 @@ export class FakeD1Database implements D1Database {
 
 		if (
 			sql ===
+			`INSERT INTO resources (id, account_id, cf_token_id, cf_resource_id, type, name, metadata) VALUES (?, ?, ?, ?, ?, ?, ?)`
+		) {
+			const resource: ResourceRecord = {
+				id: String(params[0]),
+				account_id: String(params[1]),
+				cf_token_id: String(params[2]),
+				cf_resource_id: String(params[3]),
+				type: params[4] as Resource['type'],
+				name: String(params[5]),
+				metadata: String(params[6]),
+				monitoring_status: 'active',
+				last_synced_at: null,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			};
+			this.insertResource(resource);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
+			`INSERT INTO zone_snapshots (id, account_id, resource_id, timestamp, requests, cached_requests, bytes, threats, page_views, unique_visitors, estimated_cost, top_endpoints, top_countries, top_user_agents) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING`
+		) {
+			const snapshot: ZoneSnapshotRecord = {
+				id: String(params[0]),
+				account_id: String(params[1]),
+				resource_id: String(params[2]),
+				timestamp: String(params[3]),
+				requests: Number(params[4]),
+				cached_requests: Number(params[5]),
+				bytes: Number(params[6]),
+				threats: Number(params[7]),
+				page_views: Number(params[8]),
+				unique_visitors: Number(params[9]),
+				estimated_cost: Number(params[10]),
+				top_endpoints: String(params[11]),
+				top_countries: String(params[12]),
+				top_user_agents: String(params[13]),
+				created_at: new Date().toISOString(),
+			};
+			this.insertZoneSnapshot(snapshot);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
 			`INSERT INTO mitigations (id, account_id, name, trigger_type, trigger_condition, action_type, action_config, resource_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		) {
 			const mitigation: Mitigation = {
@@ -398,6 +535,62 @@ export class FakeD1Database implements D1Database {
 				updated_at: new Date().toISOString(),
 			};
 			this.insertBillingSnapshot(snapshot);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
+			`INSERT INTO baselines (id, account_id, resource_id, metric, hour_of_day, day_of_week, avg_value, stddev_value, sample_count, last_calculated) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now')) ON CONFLICT (resource_id, metric, hour_of_day, day_of_week) DO UPDATE SET avg_value = excluded.avg_value, stddev_value = excluded.stddev_value, sample_count = excluded.sample_count, last_calculated = datetime('now'), updated_at = datetime('now')`
+		) {
+			const existing = [...this.baselines.values()].find(
+				(baseline) =>
+					baseline.account_id === params[1] &&
+					baseline.resource_id === params[2] &&
+					baseline.metric === params[3] &&
+					baseline.hour_of_day === params[4] &&
+					baseline.day_of_week === params[5],
+			);
+			const baseline: BaselineRecord = {
+				id: existing?.id ?? String(params[0]),
+				account_id: String(params[1]),
+				resource_id: String(params[2]),
+				metric: params[3] as Baseline['metric'],
+				hour_of_day: Number(params[4]),
+				day_of_week: Number(params[5]),
+				avg_value: Number(params[6]),
+				stddev_value: Number(params[7]),
+				sample_count: Number(params[8]),
+				last_calculated: new Date().toISOString(),
+				created_at: existing?.created_at ?? new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			};
+			this.insertBaseline(baseline);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
+			`INSERT INTO anomalies (id, account_id, resource_id, rule_id, detection_type, metric, severity, current_value, baseline_value, deviation, attribution) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		) {
+			const anomaly: AnomalyRecord = {
+				id: String(params[0]),
+				account_id: String(params[1]),
+				resource_id: String(params[2]),
+				rule_id: (params[3] as string | null) ?? null,
+				detection_type: params[4] as Anomaly['detection_type'],
+				metric: params[5] as Anomaly['metric'],
+				severity: params[6] as Anomaly['severity'],
+				current_value: Number(params[7]),
+				baseline_value: (params[8] as number | null) ?? null,
+				deviation: (params[9] as number | null) ?? null,
+				attribution: String(params[10]),
+				status: 'active',
+				dismissed_by: null,
+				resolved_at: null,
+				detected_at: new Date().toISOString(),
+				created_at: new Date().toISOString(),
+			};
+			this.insertAnomaly(anomaly);
 			return { success: true, meta: { duration: 0 } } as D1Result;
 		}
 
@@ -537,6 +730,22 @@ export class FakeD1Database implements D1Database {
 
 	insertCfToken(token: CfTokenRecord) {
 		this.cfTokens.set(token.id, token);
+	}
+
+	insertResource(resource: ResourceRecord) {
+		this.resources.set(resource.id, resource);
+	}
+
+	insertBaseline(baseline: BaselineRecord) {
+		this.baselines.set(baseline.id, baseline);
+	}
+
+	insertRule(rule: RuleRecord) {
+		this.rules.set(rule.id, rule);
+	}
+
+	insertAnomaly(anomaly: AnomalyRecord) {
+		this.anomalies.set(anomaly.id, anomaly);
 	}
 
 	insertMitigation(mitigation: Mitigation) {

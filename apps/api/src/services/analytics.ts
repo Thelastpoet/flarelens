@@ -55,6 +55,7 @@ export interface TrafficData {
 	totalRequests: number;
 	totalCachedRequests: number;
 	totalBytes: number;
+	availableStoredContributors: Array<'countries'>;
 	from: string;
 	to: string;
 }
@@ -282,13 +283,14 @@ export class AnalyticsService {
 	// getTraffic
 	// -------------------------------------------------------------------------
 
-	async getTraffic(zoneId?: string, from?: string, to?: string): Promise<TrafficData> {
+async getTraffic(zoneId?: string, from?: string, to?: string): Promise<TrafficData> {
 		const range = parseDateRange(from, to);
 		const empty: TrafficData = {
 			points: [],
 			totalRequests: 0,
 			totalCachedRequests: 0,
 			totalBytes: 0,
+			availableStoredContributors: ['countries'],
 			from: range.from,
 			to: range.to,
 		};
@@ -347,6 +349,7 @@ export class AnalyticsService {
 				totalRequests,
 				totalCachedRequests,
 				totalBytes,
+				availableStoredContributors: ['countries'],
 				from: range.from,
 				to: range.to,
 			};
@@ -494,13 +497,13 @@ export class AnalyticsService {
 		from?: string,
 		to?: string,
 		limit = 10,
-	): Promise<{ endpoints: TopEndpoint[]; from: string; to: string }> {
+	): Promise<{ endpoints: TopEndpoint[]; from: string; to: string; source: 'graphql_live' }> {
 		const range = parseDateRange(from, to);
 
 		try {
 			const ctx = await this.getClientAndZones();
 			if (!ctx || ctx.zoneIds.length === 0)
-				return { endpoints: [], from: range.from, to: range.to };
+				return { endpoints: [], from: range.from, to: range.to, source: 'graphql_live' };
 
 			const targetZones = zoneId ? [zoneId] : ctx.zoneIds;
 			const { client } = ctx;
@@ -528,9 +531,9 @@ export class AnalyticsService {
 				.sort((a, b) => b.requests - a.requests)
 				.slice(0, limit);
 
-			return { endpoints, from: range.from, to: range.to };
+			return { endpoints, from: range.from, to: range.to, source: 'graphql_live' };
 		} catch {
-			return { endpoints: [], from: range.from, to: range.to };
+			return { endpoints: [], from: range.from, to: range.to, source: 'graphql_live' };
 		}
 	}
 
@@ -542,13 +545,13 @@ export class AnalyticsService {
 		zoneId?: string,
 		from?: string,
 		to?: string,
-	): Promise<{ countries: GeoTrafficItem[]; from: string; to: string }> {
+	): Promise<{ countries: GeoTrafficItem[]; from: string; to: string; source: 'graphql_live' | 'stored_snapshots' }> {
 		const range = parseDateRange(from, to);
 
 		try {
 			const ctx = await this.getClientAndZones();
 			if (!ctx || ctx.zoneIds.length === 0)
-				return { countries: [], from: range.from, to: range.to };
+				return { countries: [], from: range.from, to: range.to, source: 'graphql_live' };
 
 			const targetZones = zoneId ? [zoneId] : ctx.zoneIds;
 			const { client } = ctx;
@@ -574,9 +577,9 @@ export class AnalyticsService {
 
 			const countries = Object.values(aggregated).sort((a, b) => b.requests - a.requests);
 
-			return { countries, from: range.from, to: range.to };
+			return { countries, from: range.from, to: range.to, source: 'graphql_live' };
 		} catch {
-			return { countries: [], from: range.from, to: range.to };
+			return { countries: [], from: range.from, to: range.to, source: 'graphql_live' };
 		}
 	}
 

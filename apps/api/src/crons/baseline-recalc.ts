@@ -2,6 +2,8 @@ import type { Env } from '../env.js';
 import { BaselinesRepository, ResourcesRepository, ZoneSnapshotsRepository } from '@flarelens/db';
 import { newId } from '@flarelens/shared';
 
+const BASELINE_METRICS = ['requests', 'bytes', 'cached_requests', 'threats'] as const;
+
 export async function runBaselineRecalc(env: Env): Promise<void> {
 	const DB = (env as unknown as { DB: D1Database }).DB;
 
@@ -31,35 +33,37 @@ async function recalcAccount(accountId: string, DB: D1Database): Promise<void> {
 			const allSnapshots = await snapshots.getTimeSeries(zone.id, cutoff, new Date().toISOString());
 			if (allSnapshots.length < 10) continue; // Need sufficient data
 
-			// Group by hour_of_day + day_of_week and compute avg/stddev
-			const groups = new Map<string, number[]>();
-			for (const snap of allSnapshots) {
-				const d = new Date(snap.timestamp);
-				const key = `${d.getUTCHours()}:${d.getUTCDay()}`;
-				const arr = groups.get(key) ?? [];
-				arr.push(snap.requests);
-				groups.set(key, arr);
-			}
+			for (const metric of BASELINE_METRICS) {
+				// Group by hour_of_day + day_of_week and compute avg/stddev per metric.
+				const groups = new Map<string, number[]>();
+				for (const snap of allSnapshots) {
+					const d = new Date(snap.timestamp);
+					const key = `${d.getUTCHours()}:${d.getUTCDay()}`;
+					const arr = groups.get(key) ?? [];
+					arr.push(snap[metric]);
+					groups.set(key, arr);
+				}
 
-			for (const [key, values] of groups) {
-				if (values.length < 3) continue;
-				const [hourStr, dayStr] = key.split(':');
-				const hour = parseInt(hourStr, 10);
-				const day = parseInt(dayStr, 10);
-				const avg = values.reduce((a, b) => a + b, 0) / values.length;
-				const variance = values.reduce((a, b) => a + (b - avg) ** 2, 0) / values.length;
-				const stddev = Math.sqrt(variance);
+				for (const [key, values] of groups) {
+					if (values.length < 3) continue;
+					const [hourStr, dayStr] = key.split(':');
+					const hour = parseInt(hourStr, 10);
+					const day = parseInt(dayStr, 10);
+					const avg = values.reduce((a, b) => a + b, 0) / values.length;
+					const variance = values.reduce((a, b) => a + (b - avg) ** 2, 0) / values.length;
+					const stddev = Math.sqrt(variance);
 
-				await baselines.upsert({
-					id: newId(),
-					resource_id: zone.id,
-					metric: 'requests',
-					hour_of_day: hour,
-					day_of_week: day,
-					avg_value: avg,
-					stddev_value: stddev,
-					sample_count: values.length,
-				});
+					await baselines.upsert({
+						id: newId(),
+						resource_id: zone.id,
+						metric,
+						hour_of_day: hour,
+						day_of_week: day,
+						avg_value: avg,
+						stddev_value: stddev,
+						sample_count: values.length,
+					});
+				}
 			}
 		} catch (err) {
 			console.error(`[BaselineRecalc] Zone ${zone.id} failed:`, err);
