@@ -44,8 +44,8 @@ Checkpoint: dashboard, analytics, settings, and inventory must render safely wit
 
 ## Phase 3: Management Route Standardization
 
-- [ ] FP014 Migrate `billing`, `rules`, `integrations`, `mitigations`, `team`, `notifications`, `audit`, `developer`, `anomalies`, `anomalies/[id]` loaders to the same server-adapter pattern.
-- [ ] FP015 Add per-route adapter modules under `apps/web/src/lib/server/` for each management route.
+- [x] FP014 Migrate `billing`, `rules`, `integrations`, `mitigations`, `team`, `notifications`, `audit`, `developer`, `anomalies`, `anomalies/[id]` loaders to the same server-adapter pattern.
+- [x] FP015 Add per-route adapter modules under `apps/web/src/lib/server/` for each management route.
 - [ ] FP016 Remove direct backend-shape assumptions from page components; rely on adapter contracts only.
 - [ ] FP017 Define and implement a consistent per-route failure policy:
   - render partial state where safe

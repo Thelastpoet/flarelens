@@ -4,16 +4,6 @@
 
 	type ActionType = 'create' | 'update' | 'delete' | 'auth' | 'system';
 
-	interface LogEntry {
-		id: string;
-		user_email: string | null;
-		action: ActionType;
-		description: string;
-		ip_address: string | null;
-		entity_type: string;
-		created_at: string;
-	}
-
 	let { data }: { data: PageData } = $props();
 
 	let selectedAction = $state('' as '' | ActionType);
@@ -21,9 +11,9 @@
 	let toDate = $state('');
 
 	$effect(() => {
-		selectedAction = (data.filters?.action ?? '') as '' | ActionType;
-		fromDate = data.filters?.from ?? '';
-		toDate = data.filters?.to ?? '';
+		selectedAction = data.filters.action as '' | ActionType;
+		fromDate = data.filters.from;
+		toDate = data.filters.to;
 	});
 
 	const actionStyles: Record<'Update' | 'Create' | 'Delete' | 'Auth' | 'System', string> = {
@@ -38,10 +28,10 @@
 		'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 ring-1 ring-inset ring-slate-500/20',
 };
 
-	const logEntries = $derived((data.logs ?? []) as LogEntry[]);
-	const currentPage = $derived(data.page ?? 1);
-	const totalResults = $derived(data.total ?? 0);
-	const totalPages = $derived(data.totalPages ?? 1);
+	const logEntries = $derived(data.logs);
+	const currentPage = $derived(data.page);
+	const totalResults = $derived(data.total);
+	const totalPages = $derived(data.totalPages);
 
 	function titleAction(action: ActionType): 'Update' | 'Create' | 'Delete' | 'Auth' | 'System' {
 		return action === 'update'

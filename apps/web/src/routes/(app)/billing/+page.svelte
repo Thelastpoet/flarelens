@@ -3,59 +3,22 @@
 	import { api, ApiRequestError } from '$lib/api.js';
 	import type { PageData } from './$types.js';
 
-	interface BillingOverview {
-		source: 'estimated_snapshots' | 'billing_snapshot' | 'none';
-		is_estimated: boolean;
-		current_estimated_spend: number;
-		projected_monthly_estimated: number;
-		daily_estimated_average: number;
-		budget_limit: number | null;
-		period_start: string | null;
-		period_end: string | null;
-		breakdown: Record<string, number>;
-	}
-
-	interface BillingBreakdownItem {
-		service: string;
-		cost: number;
-		pct: number;
-	}
-
-	interface BillingBudget {
-		budget_limit: number | null;
-		current_estimated_spend: number;
-		pct_used: number | null;
-	}
-
-	interface BillingDriver {
-		service: string;
-		cost: number;
-	}
-
-	interface InvoiceRecord {
-		id: string;
-		period_start: string;
-		period_end: string;
-		total_cost: number;
-		status: 'active' | 'invoice';
-	}
-
 	let { data }: { data: PageData } = $props();
 
 	let budgetDraft = $state('');
 	let savingBudget = $state(false);
 	let budgetError = $state<string | null>(null);
 
-	const overview = $derived(data.overview as BillingOverview);
-	const breakdown = $derived((data.breakdown?.services ?? []) as BillingBreakdownItem[]);
-	const budget = $derived(data.budget as BillingBudget);
-	const topDrivers = $derived((data.topDrivers ?? []) as BillingDriver[]);
-	const invoices = $derived((data.invoices ?? []) as InvoiceRecord[]);
+	const overview = $derived(data.overview);
+	const breakdown = $derived(data.breakdown.services);
+	const budget = $derived(data.budget);
+	const topDrivers = $derived(data.topDrivers);
+	const invoices = $derived(data.invoices);
 
 	const breakdownColors = ['bg-primary', 'bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-amber-400'];
 
 	$effect(() => {
-		budgetDraft = budget?.budget_limit != null ? String(budget.budget_limit) : '';
+		budgetDraft = budget.budget_limit != null ? String(budget.budget_limit) : '';
 	});
 
 	function formatCurrency(value: number): string {
@@ -91,9 +54,7 @@
 	const spentTrend = $derived(trendLabel(overview.current_estimated_spend, overview.daily_estimated_average * 30));
 	const projectedTrend = $derived(trendLabel(overview.projected_monthly_estimated, overview.current_estimated_spend));
 	const dailyTrend = $derived(trendLabel(overview.daily_estimated_average, overview.current_estimated_spend / 30 || overview.daily_estimated_average));
-	const budgetPct = $derived(
-		budget?.pct_used != null ? Math.max(0, Math.min(100, budget.pct_used)) : 0,
-	);
+	const budgetPct = $derived(budget.pct_used != null ? Math.max(0, Math.min(100, budget.pct_used)) : 0);
 
 	function serviceLabel(raw: string): string {
 		return raw
