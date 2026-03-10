@@ -1,15 +1,14 @@
 <script lang="ts">
-import TrafficChart from '$lib/components/charts/TrafficChart.svelte';
-import GeoTraffic from '$lib/components/dashboard/GeoTraffic.svelte';
-import TopEndpoints from '$lib/components/dashboard/TopEndpoints.svelte';
-import type { PageData } from './$types.js';
+	import TrafficChart from '$lib/components/charts/TrafficChart.svelte';
+	import GeoTraffic from '$lib/components/dashboard/GeoTraffic.svelte';
+	import TopEndpoints from '$lib/components/dashboard/TopEndpoints.svelte';
+	import type { PageData } from './$types.js';
 
-let { data }: { data: PageData } = $props();
+	let { data }: { data: PageData } = $props();
 
-let timeRange = $state('Last 7 Days');
-let activeTab = $state('Traffic');
+	let activeTab = $state<'Traffic' | 'Performance' | 'Errors'>('Traffic');
 
-const tabs = ['Traffic', 'Performance', 'Security'];
+	const tabs = ['Traffic', 'Performance', 'Errors'] as const;
 
 interface TrafficData {
 	points: Array<{
@@ -43,21 +42,81 @@ interface GeoData {
 	countries: GeoItem[];
 }
 
+interface ClientItem {
+	browser: string;
+	requests: number;
+	bytes: number;
+	percentage: number;
+}
+
+interface ClientData {
+	clients: ClientItem[];
+	from: string;
+	to: string;
+}
+
+interface PerformanceData {
+	avgResponseMs: number;
+	p95ResponseMs: number;
+	errorRate: number;
+	threatsBlocked: number;
+	workerAvgCpuMs: number;
+	workerErrorRate: number;
+	from: string;
+	to: string;
+}
+
+interface ErrorItem {
+	status: number;
+	requests: number;
+	percentage: number;
+}
+
+interface ErrorData {
+	errors: ErrorItem[];
+	totalErrors: number;
+	from: string;
+	to: string;
+}
+
 const trafficData = $derived(data.traffic as TrafficData | null);
 const endpointsData = $derived(data.endpoints as { endpoints: TopEndpointItem[] } | null);
 const geoData = $derived(data.geo as GeoData | null);
+const clientsData = $derived(data.clients as ClientData | null);
+const performanceData = $derived(data.performance as PerformanceData | null);
+const errorsData = $derived(data.errors as ErrorData | null);
 
 const trafficPoints = $derived(trafficData?.points ?? []);
 const endpoints = $derived(endpointsData?.endpoints ?? []);
 const countries = $derived(geoData?.countries ?? []);
+const clients = $derived(clientsData?.clients ?? []);
+const errors = $derived(errorsData?.errors ?? []);
 
 const totalRequests = $derived(trafficData?.totalRequests ?? 0);
+const totalCachedRequests = $derived(trafficData?.totalCachedRequests ?? 0);
+const cacheHitRate = $derived(totalRequests > 0 ? (totalCachedRequests / totalRequests) * 100 : 0);
+const liveWindow = $derived(
+	trafficData?.from && trafficData?.to
+		? `${new Date(trafficData.from).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(trafficData.to).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+		: 'Live window unavailable',
+);
 
 function formatCompact(n: number): string {
 	return new Intl.NumberFormat('en-US', { notation: 'compact' }).format(n);
 }
 
-const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+function formatPct(n: number): string {
+	return `${n.toFixed(1)}%`;
+}
+
+function formatMs(n: number): string {
+	if (n <= 0) return 'Unavailable';
+	return `${n.toFixed(1)} ms`;
+}
+
+function formatErrorStatus(status: number): string {
+	return `${status}`;
+}
 </script>
 
 <div class="max-w-[1200px] mx-auto flex flex-col gap-6">
@@ -67,26 +126,18 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 			<h1 class="text-slate-900 text-2xl font-bold leading-tight">Analytics Overview</h1>
 			<p class="text-slate-500 text-sm font-normal">Monitor your infrastructure usage and prevent unexpected costs.</p>
 		</div>
-		<div class="flex items-center gap-3">
-			<select
-				bind:value={timeRange}
-				class="form-select rounded-lg border-slate-200 bg-white text-slate-900 text-sm focus:ring-primary focus:border-primary py-2 px-3 shadow-sm font-medium"
-			>
-				<option>Last 7 Days</option>
-				<option>Last 30 Days</option>
-				<option>This Month</option>
-			</select>
-			<button class="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors">
-				<span class="material-symbols-outlined text-sm">download</span>
-				Export
-			</button>
+		<div class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm">
+			{liveWindow}
 		</div>
 	</div>
 
 	<!-- Tab bar -->
-	<div class="bg-white rounded-lg border border-slate-200 shadow-sm p-1 inline-flex self-start">
+	<div role="tablist" aria-label="Analytics sections" class="bg-white rounded-lg border border-slate-200 shadow-sm p-1 inline-flex self-start">
 		{#each tabs as tab}
 			<button
+				type="button"
+				role="tab"
+				aria-selected={activeTab === tab}
 				onclick={() => (activeTab = tab)}
 				class="flex items-center justify-center rounded-md px-5 py-1.5 transition-colors {activeTab === tab
 					? 'bg-slate-100 text-slate-900'
@@ -98,147 +149,154 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 	</div>
 
 	<div class="flex flex-col gap-6">
-		<!-- Main chart -->
-		<div class="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-			<div class="flex justify-between items-start">
-				<div>
-					<h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-1">Requests by Type</h3>
-					<div class="flex items-baseline gap-3">
-						<p class="text-slate-900 text-3xl font-bold tracking-tight">
-							{formatCompact(totalRequests)}
-						</p>
-						<p class="text-green-600 text-sm font-medium flex items-center bg-green-50 px-2 py-0.5 rounded-md">
-							<span class="material-symbols-outlined text-[16px] mr-1">trending_up</span> +5.2%
-						</p>
+		{#if activeTab === 'Traffic'}
+			<div class="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+				<div class="flex justify-between items-start gap-6">
+					<div>
+						<h3 class="text-sm font-semibold uppercase tracking-wider text-slate-500 mb-1">Requests by Type</h3>
+						<div class="flex items-baseline gap-3">
+							<p class="text-slate-900 text-3xl font-bold tracking-tight">
+								{formatCompact(totalRequests)}
+							</p>
+							<p class="text-slate-600 text-sm font-medium bg-slate-100 px-2 py-0.5 rounded-md">
+								Cache hit {formatPct(cacheHitRate)}
+							</p>
+						</div>
+					</div>
+					<div class="flex items-center gap-4 text-sm border border-slate-100 rounded-lg px-3 py-1.5 bg-white shadow-sm">
+						<div class="flex items-center gap-2 text-slate-600 font-medium">
+							<div class="size-2.5 rounded-sm bg-primary"></div>
+							<span>Actual</span>
+						</div>
+						<div class="flex items-center gap-2 text-slate-600 font-medium">
+							<div class="size-2.5 rounded-sm bg-slate-300"></div>
+							<span>Cached</span>
+						</div>
 					</div>
 				</div>
-				<div class="flex items-center gap-4 text-sm border border-slate-100 rounded-lg px-3 py-1.5 bg-white shadow-sm">
-					<div class="flex items-center gap-2 text-slate-600 font-medium">
-						<div class="size-2.5 rounded-sm bg-primary"></div>
-						<span>Actual</span>
-					</div>
-					<div class="flex items-center gap-2 text-slate-600 font-medium">
-						<div class="size-2.5 rounded-sm bg-slate-300"></div>
-						<span>Cached</span>
-					</div>
+
+				<div class="flex min-h-[280px] flex-1 flex-col justify-end relative mt-8">
+					{#if trafficPoints.length > 0}
+						<TrafficChart points={trafficPoints} height={220} />
+					{:else}
+						<div class="flex min-h-[220px] items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
+							No traffic points are available for the current analytics window.
+						</div>
+					{/if}
 				</div>
 			</div>
 
-			<div class="flex min-h-[280px] flex-1 flex-col justify-end relative mt-8">
-				{#if trafficPoints.length > 0}
-					<TrafficChart points={trafficPoints} height={220} />
-				{:else}
-					<!-- Fallback static chart when no data -->
-					<div class="absolute inset-0 flex flex-col justify-between py-6">
-						<div class="border-t border-dashed border-slate-200 w-full h-0"></div>
-						<div class="border-t border-dashed border-slate-200 w-full h-0"></div>
-						<div class="border-t border-dashed border-slate-200 w-full h-0"></div>
-						<div class="border-t border-dashed border-slate-200 w-full h-0"></div>
+			<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				<div class="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm col-span-1">
+					<h4 class="text-slate-900 text-sm font-semibold mb-6 flex items-center gap-2">
+						<span class="material-symbols-outlined text-slate-400 text-lg">list_alt</span> Top Endpoints
+					</h4>
+					<TopEndpoints {endpoints} />
+				</div>
+
+				<div class="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm col-span-1">
+					<h4 class="text-slate-900 text-sm font-semibold mb-6 flex items-center gap-2">
+						<span class="material-symbols-outlined text-slate-400 text-lg">public</span> Traffic by Country
+					</h4>
+					<GeoTraffic {countries} />
+				</div>
+
+				<div class="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm col-span-1">
+					<h4 class="text-slate-900 text-sm font-semibold mb-6 flex items-center gap-2">
+						<span class="material-symbols-outlined text-slate-400 text-lg">devices</span> Client Distribution
+					</h4>
+					{#if clients.length > 0}
+						<div class="flex flex-col gap-4">
+							{#each clients.slice(0, 6) as client}
+								<div class="flex flex-col gap-1">
+									<div class="flex items-center justify-between text-sm">
+										<span class="font-medium text-slate-700">{client.browser}</span>
+										<div class="flex items-center gap-2 text-xs text-slate-500">
+											<span class="font-medium text-slate-900">{formatCompact(client.requests)}</span>
+											<span>{formatPct(client.percentage * 100)}</span>
+										</div>
+									</div>
+									<div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+										<div class="h-full rounded-full bg-primary" style={`width: ${Math.min(100, client.percentage * 100).toFixed(1)}%`}></div>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{:else}
+						<div class="flex min-h-[150px] items-center justify-center text-sm text-slate-500">
+							No client distribution data is available for the current window.
+						</div>
+					{/if}
+				</div>
+			</div>
+		{:else if activeTab === 'Performance'}
+			<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+					<p class="text-sm font-medium text-slate-500">Average Response Time</p>
+					<p class="mt-3 text-3xl font-bold text-slate-900">{formatMs(performanceData?.avgResponseMs ?? 0)}</p>
+					<p class="mt-2 text-xs text-slate-500">Unavailable when Cloudflare latency percentiles are not exposed by the current dataset.</p>
+				</div>
+				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+					<p class="text-sm font-medium text-slate-500">P95 Response Time</p>
+					<p class="mt-3 text-3xl font-bold text-slate-900">{formatMs(performanceData?.p95ResponseMs ?? 0)}</p>
+					<p class="mt-2 text-xs text-slate-500">Current backend only reports this when the analytics dataset exposes percentile latency.</p>
+				</div>
+				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+					<p class="text-sm font-medium text-slate-500">Worker Avg CPU</p>
+					<p class="mt-3 text-3xl font-bold text-slate-900">{formatMs(performanceData?.workerAvgCpuMs ?? 0)}</p>
+					<p class="mt-2 text-xs text-slate-500">Average Worker CPU time across the current live window.</p>
+				</div>
+				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+					<p class="text-sm font-medium text-slate-500">Request Error Rate</p>
+					<p class="mt-3 text-3xl font-bold text-slate-900">{formatPct((performanceData?.errorRate ?? 0) * 100)}</p>
+					<p class="mt-2 text-xs text-slate-500">Aggregate HTTP error responses across monitored zones.</p>
+				</div>
+				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+					<p class="text-sm font-medium text-slate-500">Worker Error Rate</p>
+					<p class="mt-3 text-3xl font-bold text-slate-900">{formatPct((performanceData?.workerErrorRate ?? 0) * 100)}</p>
+					<p class="mt-2 text-xs text-slate-500">Worker execution errors relative to live Worker requests.</p>
+				</div>
+				<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+					<p class="text-sm font-medium text-slate-500">Threats Blocked</p>
+					<p class="mt-3 text-3xl font-bold text-slate-900">{formatCompact(performanceData?.threatsBlocked ?? 0)}</p>
+					<p class="mt-2 text-xs text-slate-500">Threat traffic observed in the current live window.</p>
+				</div>
+			</div>
+		{:else}
+			<div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+				<div class="flex items-center justify-between gap-4">
+					<div>
+						<h3 class="text-lg font-semibold text-slate-900">HTTP Error Breakdown</h3>
+						<p class="mt-1 text-sm text-slate-500">Live HTTP error responses by status code for the current analytics window.</p>
 					</div>
-					<svg class="relative z-10" fill="none" height="220" preserveAspectRatio="none" viewBox="0 0 800 220" width="100%" xmlns="http://www.w3.org/2000/svg">
-						<path d="M0 200 Q 100 150, 200 170 T 400 120 T 600 160 T 800 110 L 800 220 L 0 220 Z" fill="url(#gradient-uncached)" opacity="0.3"></path>
-						<path d="M0 200 Q 100 150, 200 170 T 400 120 T 600 160 T 800 110" stroke="#cbd5e1" stroke-linecap="round" stroke-width="2"></path>
-						<path d="M0 150 Q 100 100, 200 120 T 400 50 T 600 90 T 800 30 L 800 220 L 0 220 Z" fill="url(#gradient-cached)" opacity="0.2"></path>
-						<path d="M0 150 Q 100 100, 200 120 T 400 50 T 600 90 T 800 30" stroke="#f38020" stroke-linecap="round" stroke-width="3"></path>
-						<defs>
-							<linearGradient id="gradient-cached" x1="0" x2="0" y1="0" y2="1">
-								<stop stop-color="#f38020" stop-opacity="0.8"></stop>
-								<stop offset="1" stop-color="#f38020" stop-opacity="0"></stop>
-							</linearGradient>
-							<linearGradient id="gradient-uncached" x1="0" x2="0" y1="0" y2="1">
-								<stop stop-color="#cbd5e1" stop-opacity="0.8"></stop>
-								<stop offset="1" stop-color="#cbd5e1" stop-opacity="0"></stop>
-							</linearGradient>
-						</defs>
-					</svg>
-					<div class="flex justify-between mt-4 px-2 text-slate-500 text-xs font-semibold uppercase tracking-wider border-t border-slate-100 pt-3">
-						{#each days as day}
-							<span>{day}</span>
+					<div class="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700">
+						{formatCompact(errorsData?.totalErrors ?? 0)} total errors
+					</div>
+				</div>
+
+				{#if errors.length > 0}
+					<div class="mt-6 flex flex-col gap-4">
+						{#each errors as error}
+							<div class="flex flex-col gap-1">
+								<div class="flex items-center justify-between text-sm">
+									<span class="font-medium text-slate-700">HTTP {formatErrorStatus(error.status)}</span>
+									<div class="flex items-center gap-2 text-xs text-slate-500">
+										<span class="font-medium text-slate-900">{formatCompact(error.requests)}</span>
+										<span>{formatPct(error.percentage * 100)}</span>
+									</div>
+								</div>
+								<div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+									<div class="h-full rounded-full bg-amber-500" style={`width: ${Math.min(100, error.percentage * 100).toFixed(1)}%`}></div>
+								</div>
+							</div>
 						{/each}
 					</div>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Bottom grid -->
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-			<!-- Top 5 Endpoints -->
-			<div class="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm col-span-1">
-				<h4 class="text-slate-900 text-sm font-semibold mb-6 flex items-center gap-2">
-					<span class="material-symbols-outlined text-slate-400 text-lg">list_alt</span> Top 5 Endpoints
-				</h4>
-				<TopEndpoints {endpoints} />
-			</div>
-
-			<!-- Traffic by Country -->
-			<div class="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm col-span-1">
-				<h4 class="text-slate-900 text-sm font-semibold mb-6 flex items-center gap-2">
-					<span class="material-symbols-outlined text-slate-400 text-lg">public</span> Traffic by Country
-				</h4>
-				{#if countries.length > 0}
-					<GeoTraffic {countries} />
 				{:else}
-					<!-- Fallback static display -->
-					<div class="flex-1 flex flex-col justify-center items-center relative min-h-[150px]">
-						<div class="w-full h-32 bg-slate-50 border border-slate-100 rounded-lg mb-4 relative overflow-hidden">
-							<div class="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:8px_8px] opacity-60"></div>
-							<div class="absolute top-1/4 left-1/4 w-3 h-3 bg-primary rounded-full shadow-[0_0_10px_rgba(243,128,32,0.5)]"></div>
-							<div class="absolute top-1/2 left-2/3 w-2 h-2 bg-primary/80 rounded-full shadow-[0_0_8px_rgba(243,128,32,0.4)]"></div>
-							<div class="absolute top-1/3 left-1/2 w-1.5 h-1.5 bg-primary/60 rounded-full"></div>
-							<div class="absolute bottom-1/3 left-1/3 w-1 h-1 bg-primary/40 rounded-full"></div>
-						</div>
-						<div class="w-full flex justify-between text-xs text-slate-600 font-medium">
-							<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-primary"></span> US (45%)</div>
-							<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-primary/80"></span> UK (25%)</div>
-							<div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-sm bg-primary/50"></span> DE (15%)</div>
-						</div>
+					<div class="mt-6 flex min-h-[160px] items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500">
+						No HTTP error breakdown is available for the current window.
 					</div>
 				{/if}
 			</div>
-
-			<!-- Client Distribution -->
-			<div class="flex flex-col rounded-xl border border-slate-200 bg-white p-6 shadow-sm col-span-1">
-				<h4 class="text-slate-900 text-sm font-semibold mb-6 flex items-center gap-2">
-					<span class="material-symbols-outlined text-slate-400 text-lg">devices</span> Client Distribution
-				</h4>
-				<div class="flex-1 flex flex-col items-center justify-center gap-6">
-					<div class="relative w-32 h-32">
-						<svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-							<circle class="stroke-slate-50" cx="18" cy="18" fill="transparent" r="16" stroke-width="6"></circle>
-							<circle cx="18" cy="18" fill="transparent" r="16" stroke="#f38020" stroke-dasharray="100 100" stroke-dashoffset="0" stroke-width="6"></circle>
-							<circle cx="18" cy="18" fill="transparent" r="16" stroke="#94a3b8" stroke-dasharray="35 100" stroke-dashoffset="-65" stroke-width="6"></circle>
-							<circle cx="18" cy="18" fill="transparent" r="16" stroke="#e2e8f0" stroke-dasharray="10 100" stroke-dashoffset="-90" stroke-width="6"></circle>
-						</svg>
-						<div class="absolute inset-0 flex items-center justify-center flex-col">
-							<span class="text-slate-900 font-bold text-xl tracking-tight">100%</span>
-							<span class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">Total</span>
-						</div>
-					</div>
-					<div class="flex w-full justify-between gap-3 text-xs">
-						<div class="flex flex-col gap-1 text-slate-600">
-							<div class="flex items-center gap-1.5">
-								<span class="w-2 h-2 rounded-sm bg-primary"></span>
-								<span>Desktop</span>
-							</div>
-							<span class="font-bold text-slate-900 ml-3.5">65%</span>
-						</div>
-						<div class="flex flex-col gap-1 text-slate-600">
-							<div class="flex items-center gap-1.5">
-								<span class="w-2 h-2 rounded-sm bg-slate-400"></span>
-								<span>Mobile</span>
-							</div>
-							<span class="font-bold text-slate-900 ml-3.5">25%</span>
-						</div>
-						<div class="flex flex-col gap-1 text-slate-600">
-							<div class="flex items-center gap-1.5">
-								<span class="w-2 h-2 rounded-sm bg-slate-200"></span>
-								<span>Other</span>
-							</div>
-							<span class="font-bold text-slate-900 ml-3.5">10%</span>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+		{/if}
 	</div>
 </div>
