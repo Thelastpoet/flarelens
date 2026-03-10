@@ -5,78 +5,13 @@ import TopEndpoints from '$lib/components/dashboard/TopEndpoints.svelte';
 import type { PageData } from './$types.js';
 
 let { data }: { data: PageData } = $props();
-
-interface OverviewData {
-	totalRequests: number;
-	cachedRequests: number;
-	cacheHitRate: number;
-	totalBytes: number;
-	estimatedCost: number;
-	activeAnomalies: number;
-	workerExecutions: number;
-	threatsBlocked: number;
-	periodFrom: string;
-	periodTo: string;
-}
-
-interface BaselineItem {
-	metric: string;
-	currentValue: number;
-	baselineAvg: number;
-	baselineStddev: number;
-	deviationSigma: number;
-	status: 'normal' | 'warning' | 'high' | 'critical';
-}
-
-interface BaselineData {
-	comparisons: BaselineItem[];
-	from: string;
-	to: string;
-}
-
-interface TrafficData {
-	points: Array<{
-		datetime: string;
-		requests: number;
-		cachedRequests: number;
-		uncachedRequests: number;
-		bytes: number;
-	}>;
-	totalRequests: number;
-	totalCachedRequests: number;
-	totalBytes: number;
-	from: string;
-	to: string;
-}
-
-interface TopEndpointItem {
-	path: string;
-	requests: number;
-	bytes: number;
-	pctOfTotal: number;
-}
-
-interface BotActivityData {
-	items: Array<{
-		userAgent: string;
-		requests: number;
-		pctOfTotal: number;
-		isBot: boolean;
-	}>;
-	botTrafficPct: number;
-}
-
-const overview = $derived(data.overview as OverviewData | null);
-const traffic = $derived(data.traffic as TrafficData | null);
-const baselineData = $derived(data.baseline as BaselineData | null);
-const baseline = $derived(baselineData?.comparisons ?? []);
-const endpointsData = $derived(data.endpoints as { endpoints: TopEndpointItem[] } | null);
-const botData = $derived(data.botActivity as BotActivityData | null);
-
-const trafficPoints = $derived(traffic?.points ?? []);
-const endpoints = $derived(endpointsData?.endpoints ?? []);
-const bots = $derived(botData?.items ?? []);
-const botTrafficPct = $derived(botData?.botTrafficPct ?? 0);
+const overview = $derived(data.overview);
+const traffic = $derived(data.traffic);
+const baseline = $derived(data.baseline.comparisons);
+const endpoints = $derived(data.endpoints.endpoints);
+const bots = $derived(data.botActivity.items);
+const botTrafficPct = $derived(data.botActivity.botTrafficPct);
+const trafficPoints = $derived(data.traffic.points);
 
 function formatCompact(n: number): string {
 	return new Intl.NumberFormat('en-US', { notation: 'compact' }).format(n);
@@ -86,11 +21,9 @@ function formatCost(n: number): string {
 	return `$${n.toFixed(2)}`;
 }
 
-function formatPeriodLabel(from: string | undefined, to: string | undefined): string {
-	if (!from || !to) return 'Live window unavailable';
+function formatPeriodLabel(from: string, to: string): string {
 	const fromDate = new Date(from);
 	const toDate = new Date(to);
-	if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) return 'Live window unavailable';
 
 	const sameDay = fromDate.toDateString() === toDate.toDateString();
 	if (sameDay) {
@@ -100,19 +33,12 @@ function formatPeriodLabel(from: string | undefined, to: string | undefined): st
 	return `${fromDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${toDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 }
 
-const periodLabel = $derived(formatPeriodLabel(overview?.periodFrom, overview?.periodTo));
+const periodLabel = $derived(formatPeriodLabel(overview.periodFrom, overview.periodTo));
 
 const headlineStatus = $derived.by(() => {
-	if (!overview) {
+	if (overview.activeAnomalies > 0 || overview.threatsBlocked > 0) {
 		return {
-			label: 'Analytics Unavailable',
-			dot: 'bg-slate-400',
-			text: 'text-slate-500',
-		};
-	}
-	if ((overview.activeAnomalies ?? 0) > 0 || (overview.threatsBlocked ?? 0) > 0) {
-		return {
-			label: `${overview.activeAnomalies ?? 0} active anomaly${overview.activeAnomalies === 1 ? '' : 'ies'}`,
+			label: `${overview.activeAnomalies} active anomaly${overview.activeAnomalies === 1 ? '' : 'ies'}`,
 			dot: 'bg-amber-500',
 			text: 'text-amber-600',
 		};
@@ -156,36 +82,36 @@ function trendIcon(metric: string): string {
 }
 
 const estimatedBudgetPct = $derived(() => {
-	if (!overview || overview.estimatedCost <= 0) return 0;
+	if (overview.estimatedCost <= 0) return 0;
 	return Math.min(100, Math.max(5, overview.estimatedCost * 10));
 });
 
 const recentActivity = $derived.by(() => {
 	const items: Array<{ dot: string; title: string; sub: string; time: string }> = [];
 
-	if ((overview?.activeAnomalies ?? 0) > 0) {
+	if (overview.activeAnomalies > 0) {
 		items.push({
 			dot: 'bg-amber-500',
 			title: 'Active anomalies detected',
-			sub: `${overview?.activeAnomalies ?? 0} anomaly${overview?.activeAnomalies === 1 ? '' : 'ies'} currently require review.`,
+			sub: `${overview.activeAnomalies} anomaly${overview.activeAnomalies === 1 ? '' : 'ies'} currently require review.`,
 			time: periodLabel,
 		});
 	}
 
-	if ((overview?.threatsBlocked ?? 0) > 0) {
+	if (overview.threatsBlocked > 0) {
 		items.push({
 			dot: 'bg-emerald-500',
 			title: 'Threat traffic blocked',
-			sub: `${formatCompact(overview?.threatsBlocked ?? 0)} requests were flagged or blocked in the current window.`,
+			sub: `${formatCompact(overview.threatsBlocked)} requests were flagged or blocked in the current window.`,
 			time: periodLabel,
 		});
 	}
 
-	if ((overview?.workerExecutions ?? 0) > 0) {
+	if (overview.workerExecutions > 0) {
 		items.push({
 			dot: 'bg-slate-300',
 			title: 'Worker activity observed',
-			sub: `${formatCompact(overview?.workerExecutions ?? 0)} worker executions recorded in the current analytics window.`,
+			sub: `${formatCompact(overview.workerExecutions)} worker executions recorded in the current analytics window.`,
 			time: periodLabel,
 		});
 	}
@@ -225,7 +151,7 @@ const recentActivity = $derived.by(() => {
 		</div>
 		<div class="flex items-baseline gap-3">
 			<p class="text-slate-900 text-3xl font-bold leading-tight tracking-tight">
-				{formatCompact(overview?.totalRequests ?? 0)}
+				{formatCompact(overview.totalRequests)}
 			</p>
 			<div class="flex items-center text-sm font-semibold px-2 py-0.5 rounded-md {trendClasses('requests')}">
 				<span class="material-symbols-outlined !text-[16px]">{trendIcon('requests')}</span>
@@ -242,7 +168,7 @@ const recentActivity = $derived.by(() => {
 		</div>
 		<div class="flex items-baseline gap-3">
 			<p class="text-slate-900 text-3xl font-bold leading-tight tracking-tight">
-				{formatCompact(overview?.workerExecutions ?? 0)}
+				{formatCompact(overview.workerExecutions)}
 			</p>
 			<div class="flex items-center text-sm font-semibold px-2 py-0.5 rounded-md {trendClasses('requests')}">
 				<span class="material-symbols-outlined !text-[16px]">{trendIcon('requests')}</span>
@@ -259,7 +185,7 @@ const recentActivity = $derived.by(() => {
 		</div>
 		<div class="flex items-baseline gap-3">
 			<p class="text-slate-900 text-3xl font-bold leading-tight tracking-tight">
-				{formatCost(overview?.estimatedCost ?? 0)}
+				{formatCost(overview.estimatedCost)}
 			</p>
 			<div class="flex items-center text-sm font-semibold px-2 py-0.5 rounded-md {trendClasses('bytes')}">
 				<span class="material-symbols-outlined !text-[16px]">{trendIcon('bytes')}</span>

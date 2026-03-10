@@ -10,22 +10,14 @@ interface Props {
 	endpoints: TopEndpoint[];
 }
 
-let { endpoints = [] }: Props = $props();
-
-const totalRequests = $derived(endpoints.reduce((sum, endpoint) => sum + (endpoint.requests ?? 0), 0));
+let { endpoints }: Props = $props();
 
 function formatRequests(n: number): string {
 	return new Intl.NumberFormat('en-US', { notation: 'compact' }).format(n);
 }
 
 function widthPct(endpoint: TopEndpoint): string {
-	const pct =
-		typeof endpoint.pctOfTotal === 'number'
-			? endpoint.pctOfTotal
-			: totalRequests > 0
-				? (endpoint.requests / totalRequests) * 100
-				: 0;
-	return `${Math.min(100, pct).toFixed(1)}%`;
+	return `${Math.min(100, endpoint.pctOfTotal).toFixed(1)}%`;
 }
 </script>
 

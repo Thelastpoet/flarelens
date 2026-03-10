@@ -13,10 +13,10 @@ Track the architecture-level frontend fixes needed to make `apps/web` production
 
 ## Phase 1: Foundation (Blocking)
 
-- [ ] FP001 Create `apps/web/src/lib/server/` with shared server fetch helpers and typed route result helpers.
-- [ ] FP002 Define a standard route view-model pattern (`raw -> normalized -> page props`) and document it in `apps/web/src/lib/server/README.md`.
-- [ ] FP003 Add a shared `normalizeNumber`/`normalizeArray`/`normalizePercent` utility for route adapters in `apps/web/src/lib/server/normalize.ts`.
-- [ ] FP004 Enforce server-only loading for high-risk authenticated routes (`+page.server.ts` migration baseline for dashboard/analytics/settings/inventory).
+- [x] FP001 Create `apps/web/src/lib/server/` with shared server fetch helpers and typed route result helpers.
+- [x] FP002 Define a standard route view-model pattern (`raw -> normalized -> page props`) and document it in `apps/web/src/lib/server/README.md`.
+- [x] FP003 Add strict response assertion helpers for nullable/optional backend fields in `apps/web/src/lib/server/assert.ts`.
+- [x] FP004 Enforce server-only loading for high-risk authenticated routes (`+page.server.ts` migration baseline for dashboard/analytics/settings/inventory).
 
 Checkpoint: no crash-surface route should still depend on ad hoc universal-loading behavior.
 
@@ -24,20 +24,20 @@ Checkpoint: no crash-surface route should still depend on ad hoc universal-loadi
 
 ### Dashboard
 
-- [ ] FP005 Move dashboard loader from `apps/web/src/routes/(app)/dashboard/+page.ts` to `+page.server.ts`.
-- [ ] FP006 Create `apps/web/src/lib/server/dashboard.ts` to fetch and normalize all dashboard dependencies.
-- [ ] FP007 Update `apps/web/src/routes/(app)/dashboard/+page.svelte` to consume only normalized view-model fields (no direct contract assumptions).
+- [x] FP005 Move dashboard loader from `apps/web/src/routes/(app)/dashboard/+page.ts` to `+page.server.ts`.
+- [x] FP006 Create `apps/web/src/lib/server/dashboard.ts` to fetch and normalize all dashboard dependencies.
+- [x] FP007 Update `apps/web/src/routes/(app)/dashboard/+page.svelte` to consume only normalized view-model fields (no direct contract assumptions).
 
 ### Analytics
 
-- [ ] FP008 Move analytics loader from `apps/web/src/routes/(app)/analytics/+page.ts` to `+page.server.ts`.
-- [ ] FP009 Create `apps/web/src/lib/server/analytics.ts` to normalize traffic/geo/clients/endpoints/performance/errors.
-- [ ] FP010 Update `apps/web/src/routes/(app)/analytics/+page.svelte` and dependent components to remove raw `.toFixed` and similar assumptions on optional fields.
+- [x] FP008 Move analytics loader from `apps/web/src/routes/(app)/analytics/+page.ts` to `+page.server.ts`.
+- [x] FP009 Create `apps/web/src/lib/server/analytics.ts` to normalize traffic/geo/clients/endpoints/performance/errors.
+- [x] FP010 Update `apps/web/src/routes/(app)/analytics/+page.svelte` and dependent components to remove raw `.toFixed` and similar assumptions on optional fields.
 
 ### Settings and Inventory
 
-- [ ] FP011 Move settings loader to server-only route loading and map responses through `apps/web/src/lib/server/settings.ts`.
-- [ ] FP012 Move inventory loader to server-only route loading and map responses through `apps/web/src/lib/server/inventory.ts`.
+- [x] FP011 Move settings loader to server-only route loading and map responses through `apps/web/src/lib/server/settings.ts`.
+- [x] FP012 Move inventory loader to server-only route loading and map responses through `apps/web/src/lib/server/inventory.ts`.
 - [ ] FP013 Standardize route-level error fallback behavior for settings/inventory (render-safe route state, no hard crash).
 
 Checkpoint: dashboard, analytics, settings, and inventory must render safely with partial/empty live data and no hydration crash.

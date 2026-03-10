@@ -11,7 +11,7 @@ interface Props {
 	botTrafficPct: number;
 }
 
-let { bots = [], botTrafficPct = 0 }: Props = $props();
+let { bots, botTrafficPct }: Props = $props();
 
 const botPctColor = $derived(
 	botTrafficPct > 30 ? 'text-red-600' : botTrafficPct > 10 ? 'text-amber-600' : 'text-emerald-600',

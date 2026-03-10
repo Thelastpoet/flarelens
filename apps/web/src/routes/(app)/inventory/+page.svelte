@@ -30,8 +30,8 @@
 	let openMenuId = $state<string | null>(null);
 	let busyAction = $state<'sync' | string | null>(null);
 
-	const resources = $derived((data.resources ?? []) as ResourceRow[]);
-	const rules = $derived((data.rules ?? []) as RuleRecord[]);
+	const resources = $derived(data.resources as ResourceRow[]);
+	const rules = $derived(data.rules as RuleRecord[]);
 
 	const typeMeta: Record<
 		ResourceType,
@@ -78,7 +78,7 @@
 		const base = resources
 			.filter((resource) => filterMode === 'all' || resource.monitoring_status === filterMode)
 			.filter((resource) => {
-				const typeLabel = typeMeta[resource.type]?.label ?? resource.type;
+				const typeLabel = typeMeta[resource.type].label;
 				return (
 					searchValue.length === 0 ||
 					resource.name.toLowerCase().includes(searchValue) ||
@@ -87,10 +87,10 @@
 			})
 			.map((resource) => ({
 				...resource,
-				typeLabel: typeMeta[resource.type]?.label ?? resource.type,
-				iconBg: typeMeta[resource.type]?.iconBg ?? 'bg-slate-100',
-				iconColor: typeMeta[resource.type]?.iconColor ?? 'text-slate-600',
-				icon: typeMeta[resource.type]?.icon ?? 'deployed_code',
+				typeLabel: typeMeta[resource.type].label,
+				iconBg: typeMeta[resource.type].iconBg,
+				iconColor: typeMeta[resource.type].iconColor,
+				icon: typeMeta[resource.type].icon,
 				rules: ruleCount(resource.id),
 			}));
 
