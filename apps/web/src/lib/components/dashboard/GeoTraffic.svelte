@@ -12,6 +12,7 @@ interface Props {
 let { countries = [] }: Props = $props();
 
 const topCountries = $derived(countries.slice(0, 10));
+const totalRequests = $derived(countries.reduce((sum, item) => sum + (item.requests ?? 0), 0));
 
 function formatRequests(n: number): string {
 	return new Intl.NumberFormat('en-US', { notation: 'compact' }).format(n);
@@ -19,6 +20,11 @@ function formatRequests(n: number): string {
 
 function formatPct(n: number): string {
 	return `${n.toFixed(1)}%`;
+}
+
+function pctFor(item: GeoTrafficItem): number {
+	if (typeof item.pctOfTotal === 'number') return item.pctOfTotal;
+	return totalRequests > 0 ? (item.requests / totalRequests) * 100 : 0;
 }
 </script>
 
@@ -32,13 +38,13 @@ function formatPct(n: number): string {
 					<span class="text-slate-700 font-medium">{item.country}</span>
 					<div class="flex items-center gap-2 text-xs text-slate-500">
 						<span class="font-medium text-slate-900">{formatRequests(item.requests)}</span>
-						<span class="text-slate-400">{formatPct(item.pctOfTotal)}</span>
+						<span class="text-slate-400">{formatPct(pctFor(item))}</span>
 					</div>
 				</div>
 				<div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
 					<div
 						class="bg-primary h-full rounded-full"
-						style="width: {Math.min(100, item.pctOfTotal).toFixed(1)}%"
+						style={`width: ${Math.min(100, pctFor(item)).toFixed(1)}%`}
 					></div>
 				</div>
 			</div>

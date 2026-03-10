@@ -1,4 +1,3 @@
-import { createApiClient } from '$lib/api.js';
 import type { PageLoad } from './$types.js';
 
 interface ResourceRecord {
@@ -16,14 +15,18 @@ interface RuleRecord {
 }
 
 export const load: PageLoad = async ({ fetch }) => {
-	const api = createApiClient(fetch, '/api');
 	const [resourcesRes, rulesRes] = await Promise.all([
-		api.get<{ resources: ResourceRecord[] }>('/resources'),
-		api.get<{ rules: RuleRecord[] }>('/rules'),
+		fetch('/api/resources', { credentials: 'include' }),
+		fetch('/api/rules', { credentials: 'include' }),
+	]);
+
+	const [resourcesData, rulesData] = await Promise.all([
+		resourcesRes.json() as Promise<{ resources: ResourceRecord[] }>,
+		rulesRes.json() as Promise<{ rules: RuleRecord[] }>,
 	]);
 
 	return {
-		resources: resourcesRes.resources,
-		rules: rulesRes.rules,
+		resources: resourcesData.resources,
+		rules: rulesData.rules,
 	};
 };

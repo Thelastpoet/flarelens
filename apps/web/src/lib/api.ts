@@ -1,3 +1,5 @@
+import { browser } from '$app/environment';
+
 // API error shape returned by Hono
 export interface ApiError {
 	error: string;
@@ -27,10 +29,9 @@ export function createApiClient(fetchFn: FetchFn, baseUrl = '') {
 		options?: { body?: unknown; query?: Record<string, string | number | boolean | undefined> },
 	): Promise<T> {
 		const requestPath = `${baseUrl}${path}`;
-		const url =
-			typeof window !== 'undefined'
-				? new URL(requestPath, window.location.origin)
-				: new URL(requestPath, 'https://internal.flarelens');
+		const url = browser
+			? new URL(requestPath, window.location.origin)
+			: new URL(requestPath, 'https://internal.flarelens');
 		if (options?.query) {
 			for (const [key, value] of Object.entries(options.query)) {
 				if (value !== undefined) {
@@ -48,9 +49,7 @@ export function createApiClient(fetchFn: FetchFn, baseUrl = '') {
 		}
 
 		const target =
-			typeof window !== 'undefined' || /^https?:\/\//.test(requestPath)
-				? url.toString()
-				: `${url.pathname}${url.search}`;
+			browser || /^https?:\/\//.test(requestPath) ? url.toString() : `${url.pathname}${url.search}`;
 
 		const response = await fetchFn(target, {
 			method,

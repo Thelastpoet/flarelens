@@ -1,4 +1,3 @@
-import { createApiClient } from '$lib/api.js';
 import type { PageLoad } from './$types.js';
 
 export interface SettingsProfile {
@@ -30,12 +29,16 @@ export interface SettingsAccount {
 }
 
 export const load: PageLoad = async ({ fetch }) => {
-	const api = createApiClient(fetch, '/api');
+	const [profileRes, notificationsRes, accountRes] = await Promise.all([
+		fetch('/api/settings/profile', { credentials: 'include' }),
+		fetch('/api/settings/notifications', { credentials: 'include' }),
+		fetch('/api/settings/account', { credentials: 'include' }),
+	]);
 
 	const [profile, notifications, account] = await Promise.all([
-		api.get<SettingsProfile>('/settings/profile'),
-		api.get<SettingsNotificationPrefs>('/settings/notifications'),
-		api.get<SettingsAccount>('/settings/account'),
+		profileRes.json() as Promise<SettingsProfile>,
+		notificationsRes.json() as Promise<SettingsNotificationPrefs>,
+		accountRes.json() as Promise<SettingsAccount>,
 	]);
 
 	return {
