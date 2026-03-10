@@ -58,7 +58,7 @@ Checkpoint: all management routes follow the same loading and normalization cont
 
 - [x] FP018 Move onboarding to a dedicated layout flow outside operational dashboard shell concerns.
 - [x] FP019 Ensure onboarding zone/resource sync work does not block first meaningful render.
-- [ ] FP020 Define explicit onboarding states: `connecting`, `syncing`, `ready`, `no-resources`, `retry`.
+- [x] FP020 Define explicit onboarding states: `connecting`, `syncing`, `ready`, `no-resources`, `retry`.
 
 Checkpoint: first-run experience is operationally isolated and does not depend on dashboard stability.
 

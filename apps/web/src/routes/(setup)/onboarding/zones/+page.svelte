@@ -18,6 +18,12 @@
 	const allResources = $derived((data.resources ?? []) as ResourceRecord[]);
 	const primaryResources = $derived(allResources.filter((resource) => resource.type === 'zone'));
 	const fallbackResources = $derived(primaryResources.length > 0 ? primaryResources : allResources);
+	const pageState = $derived.by(() => {
+		if (fallbackResources.length > 0) return 'ready';
+		if (syncState === 'syncing') return 'syncing';
+		if (syncState === 'error') return 'retry';
+		return 'no-resources';
+	});
 
 	function typeLabel(type: ResourceRecord['type']): string {
 		switch (type) {
@@ -37,6 +43,10 @@
 	onMount(async () => {
 		if (allResources.length > 0 || syncState !== 'idle') return;
 
+		await startSync();
+	});
+
+	async function startSync() {
 		syncState = 'syncing';
 		try {
 			await api.post('/resources/sync');
@@ -45,7 +55,7 @@
 		} catch {
 			syncState = 'error';
 		}
-	});
+	}
 </script>
 
 <!-- Onboarding Step 3: Review resources — split left/right panel layout -->
@@ -152,10 +162,20 @@
               <div class="space-y-3">
                 {#if fallbackResources.length === 0}
                   <div class="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
-                    {#if syncState === 'syncing'}
+                    {#if pageState === 'syncing'}
                       We are syncing your Cloudflare resources now. This usually takes a few seconds.
-                    {:else if syncState === 'error'}
-                      Resource sync did not complete. You can finish setup and retry from inventory after onboarding.
+                    {:else if pageState === 'retry'}
+                      <div class="space-y-4">
+                        <p>Resource sync did not complete. Retry sync now, or continue and retry later from inventory.</p>
+                        <button
+                          type="button"
+                          class="inline-flex items-center gap-2 rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                          onclick={startSync}
+                        >
+                          <span class="material-symbols-outlined text-base">refresh</span>
+                          Retry Sync
+                        </button>
+                      </div>
                     {:else}
                       No resources were discovered yet. Finish setup anyway and use the inventory page to sync again after onboarding.
                     {/if}

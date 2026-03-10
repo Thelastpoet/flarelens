@@ -1,3 +1,11 @@
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import type { ActionData } from './$types.js';
+
+	let { form }: { form: ActionData } = $props();
+	let submitting = $state(false);
+</script>
+
 <!-- Onboarding Step 2: Connect Cloudflare — split left/right panel layout -->
 <div class="bg-[var(--color-background-light)] font-sans text-slate-900 antialiased h-screen flex overflow-hidden">
   <div class="flex w-full h-full">
@@ -108,7 +116,18 @@
           </div>
 
           <div class="mt-8">
-            <form class="space-y-6" method="POST" action="?/connect">
+            <form
+              class="space-y-6"
+              method="POST"
+              action="?/connect"
+              use:enhance={() => {
+                submitting = true;
+                return async ({ update }) => {
+                  await update();
+                  submitting = false;
+                };
+              }}
+            >
               <div class="space-y-5">
                 <div>
                   <div class="flex items-center justify-between">
@@ -142,12 +161,21 @@
                   <p class="mt-2 text-xs text-slate-500" id="account-id-description">Cloudflare account discovery happens during verification. This label is just for your reference.</p>
                 </div>
               </div>
+              {#if form?.error}
+                <p class="text-sm text-red-600">{form.error}</p>
+              {/if}
               <div class="pt-2">
                 <button
-                  class="flex w-full justify-center rounded-md bg-[var(--color-primary)] px-3 py-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-[var(--color-primary)]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] transition-colors"
+                  class="flex w-full items-center justify-center gap-2 rounded-md bg-[var(--color-primary)] px-3 py-3 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-[var(--color-primary)]/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-primary)] transition-colors disabled:cursor-not-allowed disabled:opacity-70"
                   type="submit"
+                  disabled={submitting}
                 >
-                  Verify &amp; Connect
+                  {#if submitting}
+                    <span class="material-symbols-outlined animate-spin text-base">progress_activity</span>
+                    Connecting…
+                  {:else}
+                    Verify &amp; Connect
+                  {/if}
                 </button>
               </div>
             </form>
