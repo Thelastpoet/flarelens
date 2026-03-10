@@ -14,8 +14,8 @@ This file tracks the frontend work required to replace mock data with live backe
 
 ### Phase 1: Shared Shell
 
-- [ ] F001 Replace mock account and user data in `apps/web/src/lib/components/layout/Sidebar.svelte`
-  Status: still open. The active shell is `AppShell.svelte`, but the older `Sidebar.svelte` component still imports mock data and should be cleaned or retired.
+- [x] F001 Replace mock account and user data in `apps/web/src/lib/components/layout/Sidebar.svelte`
+  Outcome: passed by retirement. The unused legacy `Sidebar.svelte` component and the detached `lib/data/mock.ts` module were removed from the active frontend.
 - [x] F002 Confirm `(app)` layout data shape is sufficient for shared shell identity display
   Outcome: passed. `(app)/+layout.ts` now provides authenticated user plus account data that can drive the active shell.
 - [x] F003 Audit shared notification UI (`NotificationBadge`, `NotificationInbox`, stores) against `/notifications`
@@ -63,7 +63,6 @@ This file tracks the frontend work required to replace mock data with live backe
 
 ### Phase 4: Settings and Profile
 
-- [ ] F018 Replace mock profile data in `settings/+page.svelte`
 - [x] F018 Replace mock profile data in `settings/+page.svelte`
   Outcome: passed for identity display. The settings page now reads authenticated user name and email from layout data instead of `lib/data/mock.ts`.
 - [x] F019 Map settings page sections to real backend routes (`/auth/me`, `/settings`, related account settings APIs)
@@ -90,8 +89,6 @@ This file tracks the frontend work required to replace mock data with live backe
 
 ## Current Audit Findings
 
-- `Sidebar.svelte` still imports `account` and `currentUser` from `lib/data/mock.ts`
-- `settings/+page.svelte` still imports `currentUser` from `lib/data/mock.ts`
 - The active authenticated shell now uses real layout data for account identity and unread notification count
 - The notifications page is now backend-backed, but page-level pagination is still a follow-up gap if the inbox grows beyond the first page
 - The inventory page is now backend-backed; pagination is still visual-only because the `/resources` API is not paginated
@@ -102,15 +99,15 @@ This file tracks the frontend work required to replace mock data with live backe
 - The billing page is now backend-backed; period selection and invoice downloads are not surfaced because the current backend only exposes current summary/budget plus stored invoice snapshots
 - The audit page is now backend-backed; user-specific filtering is not surfaced because the current UI has no user directory input and the API only supports raw `user_id` filters
 - The developer page is now backend-backed; the UI explicitly documents that generated developer tokens are managed inventory and not an active public bearer-auth API surface
-- Dashboard and analytics pages have live loaders but still contain hardcoded trend badges, fallback visual content, or static activity sections
+- Dashboard and analytics pages are now backend-backed with honest empty-state handling; remaining quality work is primarily accessibility and a few local-only success screens
 - The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
-- Most management pages (`billing`, `inventory`, `integrations`, `rules`, `team`, `audit`, `developer`, `mitigations`, `notifications`) are still UI-only with no page loader or server actions
-- `onboarding/connect` already matches the current backend token contract (`{ label, token }`)
-- `onboarding/zones` already hits `/resources/sync` and `/resources`, but the UI still needs a full route-level audit during implementation
+- Most management pages are now backend-backed; the remaining unchecked work is concentrated in anomaly-state review plus cross-page accessibility and cleanup
+- `onboarding/connect` now matches the current backend token contract (`{ label, token }`)
+- `onboarding/zones` now uses live `/resources` data for monitoring selection
 
 ## Exit Criteria
 
-- [ ] no production app page depends on `lib/data/mock.ts`
+- [x] no production app page depends on `lib/data/mock.ts`
 - [ ] every current app screen is classified as backend-backed or explicitly blocked by a backend gap
 - [ ] all loader-backed screens preserve the current UI while using real API data
 - [ ] backend gaps needed by the existing UI are documented separately
