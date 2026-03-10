@@ -40,7 +40,8 @@ This file tracks the frontend work required to replace mock data with live backe
 
 ### Phase 3: Management Screens With Existing Backend Support
 
-- [ ] F009 Wire inventory page to `/resources`
+- [x] F009 Wire inventory page to `/resources`
+  Outcome: passed for the current inventory surface. The page now loads real resources, derives active-rule counts from `/rules`, supports sync/pause/resume/remove actions, and replaces the mock table with honest empty states.
 - [ ] F010 Wire rules page to `/rules`
 - [ ] F011 Wire integrations page to `/integrations/*`
 - [ ] F012 Wire team page to `/team/*`
@@ -79,6 +80,7 @@ This file tracks the frontend work required to replace mock data with live backe
 - `settings/+page.svelte` still imports `currentUser` from `lib/data/mock.ts`
 - The active authenticated shell now uses real layout data for account identity and unread notification count
 - The notifications page is now backend-backed, but page-level pagination is still a follow-up gap if the inbox grows beyond the first page
+- The inventory page is now backend-backed; pagination is still visual-only because the `/resources` API is not paginated
 - Dashboard and analytics pages have live loaders but still contain hardcoded trend badges, fallback visual content, or static activity sections
 - The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
 - Most management pages (`billing`, `inventory`, `integrations`, `rules`, `team`, `audit`, `developer`, `mitigations`, `notifications`) are still UI-only with no page loader or server actions

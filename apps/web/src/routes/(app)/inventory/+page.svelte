@@ -1,71 +1,156 @@
 <script lang="ts">
-type ResourceStatus = 'active' | 'paused';
+	import { invalidateAll } from '$app/navigation';
+	import { api } from '$lib/api.js';
+	import type { PageData } from './$types.js';
 
-type Resource = {
-	name: string;
-	id: string;
-	type: string;
-	status: ResourceStatus;
-	rules: number;
-	iconBg: string;
-	iconColor: string;
-	icon: string;
-};
+	type ResourceStatus = 'active' | 'paused';
+	type ResourceType = 'zone' | 'worker' | 'r2_bucket' | 'kv_namespace' | 'd1_database';
+	type FilterMode = 'all' | ResourceStatus;
+	type SortMode = 'name' | 'type' | 'rules';
 
-let search = $state('');
+	interface ResourceRow {
+		id: string;
+		name: string;
+		type: ResourceType;
+		monitoring_status: ResourceStatus;
+		cf_resource_id: string;
+	}
 
-const resources = $state<Resource[]>([
-	{
-		name: 'example.com',
-		id: 'z1a2b3c4...',
-		type: 'Zone',
-		status: 'active',
-		rules: 3,
-		iconBg: 'bg-blue-100',
-		iconColor: 'text-blue-600',
-		icon: 'language',
-	},
-	{
-		name: 'api-worker',
-		id: 'w9x8y7z6...',
-		type: 'Worker',
-		status: 'active',
-		rules: 2,
-		iconBg: 'bg-orange-100',
-		iconColor: 'text-orange-600',
-		icon: 'code',
-	},
-	{
-		name: 'images-bucket',
-		id: 'r2b5n6m7...',
-		type: 'R2 Bucket',
-		status: 'paused',
-		rules: 0,
-		iconBg: 'bg-purple-100',
-		iconColor: 'text-purple-600',
-		icon: 'cloud',
-	},
-	{
-		name: 'session-cache',
-		id: 'kv1k2j3h...',
-		type: 'KV Namespace',
-		status: 'active',
-		rules: 1,
-		iconBg: 'bg-indigo-100',
-		iconColor: 'text-indigo-600',
-		icon: 'storage',
-	},
-]);
+	interface RuleRecord {
+		id: string;
+		resource_id: string | null;
+		enabled: 0 | 1;
+	}
 
-let filtered = $derived(
-	search
-		? resources.filter(
-				(r) =>
-					r.name.toLowerCase().includes(search.toLowerCase()) ||
-					r.type.toLowerCase().includes(search.toLowerCase()),
-			)
-		: resources,
-);
+	let { data }: { data: PageData } = $props();
+
+	let search = $state('');
+	let filterMode = $state<FilterMode>('all');
+	let sortMode = $state<SortMode>('name');
+	let openMenuId = $state<string | null>(null);
+	let busyAction = $state<'sync' | string | null>(null);
+
+	const resources = $derived((data.resources ?? []) as ResourceRow[]);
+	const rules = $derived((data.rules ?? []) as RuleRecord[]);
+
+	const typeMeta: Record<
+		ResourceType,
+		{ label: string; iconBg: string; iconColor: string; icon: string }
+	> = {
+		zone: {
+			label: 'Zone',
+			iconBg: 'bg-blue-100',
+			iconColor: 'text-blue-600',
+			icon: 'language',
+		},
+		worker: {
+			label: 'Worker',
+			iconBg: 'bg-orange-100',
+			iconColor: 'text-orange-600',
+			icon: 'code',
+		},
+		r2_bucket: {
+			label: 'R2 Bucket',
+			iconBg: 'bg-purple-100',
+			iconColor: 'text-purple-600',
+			icon: 'cloud',
+		},
+		kv_namespace: {
+			label: 'KV Namespace',
+			iconBg: 'bg-indigo-100',
+			iconColor: 'text-indigo-600',
+			icon: 'storage',
+		},
+		d1_database: {
+			label: 'D1 Database',
+			iconBg: 'bg-emerald-100',
+			iconColor: 'text-emerald-700',
+			icon: 'database',
+		},
+	};
+
+	function ruleCount(resourceId: string): number {
+		return rules.filter((rule) => rule.resource_id === resourceId && rule.enabled === 1).length;
+	}
+
+	const filtered = $derived.by(() => {
+		const searchValue = search.trim().toLowerCase();
+		const base = resources
+			.filter((resource) => filterMode === 'all' || resource.monitoring_status === filterMode)
+			.filter((resource) => {
+				const typeLabel = typeMeta[resource.type]?.label ?? resource.type;
+				return (
+					searchValue.length === 0 ||
+					resource.name.toLowerCase().includes(searchValue) ||
+					typeLabel.toLowerCase().includes(searchValue)
+				);
+			})
+			.map((resource) => ({
+				...resource,
+				typeLabel: typeMeta[resource.type]?.label ?? resource.type,
+				iconBg: typeMeta[resource.type]?.iconBg ?? 'bg-slate-100',
+				iconColor: typeMeta[resource.type]?.iconColor ?? 'text-slate-600',
+				icon: typeMeta[resource.type]?.icon ?? 'deployed_code',
+				rules: ruleCount(resource.id),
+			}));
+
+		return [...base].sort((left, right) => {
+			if (sortMode === 'type') return left.typeLabel.localeCompare(right.typeLabel);
+			if (sortMode === 'rules') return right.rules - left.rules || left.name.localeCompare(right.name);
+			return left.name.localeCompare(right.name);
+		});
+	});
+
+	function nextFilterMode() {
+		filterMode = filterMode === 'all' ? 'active' : filterMode === 'active' ? 'paused' : 'all';
+	}
+
+	function nextSortMode() {
+		sortMode = sortMode === 'name' ? 'type' : sortMode === 'type' ? 'rules' : 'name';
+	}
+
+	function filterLabel(): string {
+		return filterMode === 'all' ? 'All resources' : filterMode === 'active' ? 'Active only' : 'Paused only';
+	}
+
+	function sortLabel(): string {
+		return sortMode === 'name' ? 'Name' : sortMode === 'type' ? 'Type' : 'Active rules';
+	}
+
+	async function refreshInventory() {
+		openMenuId = null;
+		await invalidateAll();
+	}
+
+	async function syncResources() {
+		busyAction = 'sync';
+		try {
+			await api.post('/resources/sync');
+			await refreshInventory();
+		} finally {
+			busyAction = null;
+		}
+	}
+
+	async function setMonitoringStatus(resourceId: string, status: ResourceStatus) {
+		busyAction = resourceId;
+		try {
+			await api.patch(`/resources/${resourceId}`, { monitoring_status: status });
+			await refreshInventory();
+		} finally {
+			busyAction = null;
+		}
+	}
+
+	async function removeResource(resourceId: string) {
+		busyAction = resourceId;
+		try {
+			await api.delete(`/resources/${resourceId}`);
+			await refreshInventory();
+		} finally {
+			busyAction = null;
+		}
+	}
 </script>
 
 <div class="max-w-6xl mx-auto flex flex-col gap-6">
@@ -75,9 +160,14 @@ let filtered = $derived(
       <h1 class="text-2xl font-bold text-slate-900">Infrastructure Inventory</h1>
       <p class="text-sm text-slate-500 mt-1">Manage and monitor all detected Cloudflare resources.</p>
     </div>
-    <button class="flex items-center justify-center rounded-md px-4 py-2 bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+    <button
+      type="button"
+      class="flex items-center justify-center rounded-md px-4 py-2 bg-primary text-white text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+      onclick={syncResources}
+      disabled={busyAction !== null}
+    >
       <span class="material-symbols-outlined text-sm mr-2">add</span>
-      Add Resource manually
+      Sync resources
     </button>
   </div>
 
@@ -92,13 +182,23 @@ let filtered = $derived(
         type="text"
       />
     </div>
-    <button class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+    <button
+      type="button"
+      class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+      onclick={nextFilterMode}
+      aria-label={`Filter resources, current filter ${filterLabel()}`}
+    >
       <span class="material-symbols-outlined text-sm">filter_list</span>
-      Filter
+      {filterLabel()}
     </button>
-    <button class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm">
+    <button
+      type="button"
+      class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 bg-white rounded-md text-sm font-medium text-slate-700 hover:bg-slate-50 shadow-sm"
+      onclick={nextSortMode}
+      aria-label={`Sort resources, current sort ${sortLabel()}`}
+    >
       <span class="material-symbols-outlined text-sm">sort</span>
-      Sort
+      {sortLabel()}
     </button>
   </div>
 
@@ -115,6 +215,17 @@ let filtered = $derived(
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-200">
+        {#if filtered.length === 0}
+          <tr>
+            <td colspan="5" class="px-6 py-12 text-center text-sm text-slate-500">
+              {#if resources.length === 0}
+                No resources have been synced yet.
+              {:else}
+                No resources match the current search and filter.
+              {/if}
+            </td>
+          </tr>
+        {:else}
         {#each filtered as resource}
           <tr class="hover:bg-slate-50 transition-colors group">
             <td class="px-6 py-4">
@@ -124,17 +235,17 @@ let filtered = $derived(
                 </div>
                 <div class="flex flex-col">
                   <span class="text-sm font-medium text-slate-900">{resource.name}</span>
-                  <span class="text-xs text-slate-500">ID: {resource.id}</span>
+                  <span class="text-xs text-slate-500">ID: {resource.cf_resource_id}</span>
                 </div>
               </div>
             </td>
             <td class="px-6 py-4">
               <span class="inline-flex items-center rounded bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 border border-slate-200">
-                {resource.type}
+                {resource.typeLabel}
               </span>
             </td>
             <td class="px-6 py-4">
-              {#if resource.status === 'active'}
+              {#if resource.monitoring_status === 'active'}
                 <div class="flex items-center gap-1.5 text-sm">
                   <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -154,20 +265,52 @@ let filtered = $derived(
                 {resource.rules}
               </span>
             </td>
-            <td class="px-6 py-4 text-right">
-              <button class="text-slate-400 hover:text-slate-700 transition-colors p-1">
+            <td class="relative px-6 py-4 text-right">
+              <button
+                type="button"
+                class="p-1 text-slate-400 transition-colors hover:text-slate-700"
+                aria-expanded={openMenuId === resource.id}
+                aria-haspopup="menu"
+                aria-label={`Open actions for ${resource.name}`}
+                onclick={() => openMenuId = openMenuId === resource.id ? null : resource.id}
+              >
                 <span class="material-symbols-outlined text-lg">more_vert</span>
               </button>
+              {#if openMenuId === resource.id}
+                <div class="absolute right-6 z-10 mt-2 w-44 rounded-lg border border-slate-200 bg-white py-1 text-left shadow-lg">
+                  <button
+                    type="button"
+                    class="block w-full px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    onclick={() =>
+                      setMonitoringStatus(
+                        resource.id,
+                        resource.monitoring_status === 'active' ? 'paused' : 'active',
+                      )}
+                    disabled={busyAction !== null}
+                  >
+                    {resource.monitoring_status === 'active' ? 'Pause monitoring' : 'Resume monitoring'}
+                  </button>
+                  <button
+                    type="button"
+                    class="block w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    onclick={() => removeResource(resource.id)}
+                    disabled={busyAction !== null}
+                  >
+                    Remove resource
+                  </button>
+                </div>
+              {/if}
             </td>
           </tr>
         {/each}
+        {/if}
       </tbody>
     </table>
     <div class="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-3">
-      <span class="text-sm text-slate-500">Showing 1 to {filtered.length} of {filtered.length} results</span>
+      <span class="text-sm text-slate-500">Showing {filtered.length} of {resources.length} results</span>
       <div class="flex gap-1">
-        <button class="px-2 py-1 border border-slate-200 rounded text-slate-400 cursor-not-allowed text-sm">Previous</button>
-        <button class="px-2 py-1 border border-slate-200 rounded text-slate-400 cursor-not-allowed text-sm">Next</button>
+        <button type="button" class="px-2 py-1 border border-slate-200 rounded text-slate-400 cursor-not-allowed text-sm" disabled>Previous</button>
+        <button type="button" class="px-2 py-1 border border-slate-200 rounded text-slate-400 cursor-not-allowed text-sm" disabled>Next</button>
       </div>
     </div>
   </div>
