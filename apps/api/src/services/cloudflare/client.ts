@@ -228,30 +228,29 @@ export class CloudflareClient {
 		});
 	}
 
-	async createRateLimitRule(zoneId: string, opts: { threshold: number; period: number }): Promise<string> {
+	async createRateLimitRule(zoneId: string, opts: {
+		threshold: number;
+		period: number;
+		actionMode: 'ban' | 'challenge' | 'js_challenge' | 'managed_challenge';
+		urlPattern?: string;
+		mitigationTimeout?: number;
+	}): Promise<string> {
+		const action: Record<string, unknown> = { mode: opts.actionMode };
+		if (opts.actionMode === 'ban' && opts.mitigationTimeout) {
+			action.timeout = opts.mitigationTimeout;
+		}
+
 		const result = await this.request<{ id: string }>(`/zones/${zoneId}/rate_limits`, {
 			method: 'POST',
 			body: JSON.stringify({
-				match: { request: { url: { pattern: `*${zoneId}/*`, zone_name: '' } } },
+				match: { request: { url: opts.urlPattern ?? '*' } },
 				threshold: opts.threshold,
 				period: opts.period,
-				action: { mode: 'simulate' },
-				enabled: true,
+				action,
 				description: 'FlareLens auto rate limit',
 			}),
 		});
 		return result.id;
-	}
-
-	async blockUserAgent(zoneId: string, userAgent: string): Promise<void> {
-		await this.request(`/zones/${zoneId}/firewall/access_rules/rules`, {
-			method: 'POST',
-			body: JSON.stringify({
-				mode: 'block',
-				configuration: { target: 'user_agent', value: userAgent },
-				notes: `FlareLens auto-block UA: ${userAgent}`,
-			}),
-		});
 	}
 
 	async disableWorkerSubdomain(scriptName: string): Promise<void> {

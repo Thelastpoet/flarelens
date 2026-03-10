@@ -96,16 +96,16 @@
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T019 [P] [US2] Add unit tests for mitigation action validation in `apps/api/test/unit/test_mitigation_executor.ts`
-- [ ] T020 [P] [US2] Add integration tests for mitigation route validation and opt-in safety gates in `apps/api/test/integration/test_mitigation_safety.ts`
+- [x] T019 [P] [US2] Add unit tests for mitigation action validation in `apps/api/test/unit/test_mitigation_executor.ts`
+- [x] T020 [P] [US2] Add integration tests for mitigation route validation and opt-in safety gates in `apps/api/test/integration/test_mitigation_safety.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T021 [US2] Audit and correct Cloudflare mitigation request shapes in `apps/api/src/services/cloudflare/client.ts`
-- [ ] T022 [US2] Remove, disable, or replace unsupported user-agent blocking behavior in `apps/api/src/services/cloudflare/client.ts` and `apps/api/src/services/mitigation/executor.ts`
-- [ ] T023 [US2] Replace `simulate`-only rate limiting with a valid mitigation configuration in `apps/api/src/services/cloudflare/client.ts`
-- [ ] T024 [US2] Add account-level safety gating and dry-run support in `apps/api/src/services/detection/index.ts`, `apps/api/src/routes/mitigations.ts`, and related shared schemas
-- [ ] T025 [US2] Record mitigation request/response metadata in audit logs via `apps/api/src/middleware/audit.ts` and relevant route/service files
+- [x] T021 [US2] Audit and correct Cloudflare mitigation request shapes in `apps/api/src/services/cloudflare/client.ts`
+- [x] T022 [US2] Remove, disable, or replace unsupported user-agent blocking behavior in `apps/api/src/services/cloudflare/client.ts` and `apps/api/src/services/mitigation/executor.ts`
+- [x] T023 [US2] Replace `simulate`-only rate limiting with a valid mitigation configuration in `apps/api/src/services/cloudflare/client.ts`
+- [x] T024 [US2] Add account-level safety gating and dry-run support in `apps/api/src/services/detection/index.ts`, `apps/api/src/routes/mitigations.ts`, and related shared schemas
+- [x] T025 [US2] Record mitigation request/response metadata in audit logs via `apps/api/src/middleware/audit.ts` and relevant route/service files
 
 **Checkpoint**: Automatic mitigation paths are aligned with documented Cloudflare behavior and cannot silently do the wrong thing
 

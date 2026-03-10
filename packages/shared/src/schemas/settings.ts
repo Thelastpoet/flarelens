@@ -12,6 +12,7 @@ export const UpdateAccountSchema = z.object({
 			timezone: z.string().optional(),
 			default_notify_freq: z.enum(['instant', 'hourly', 'daily']).optional(),
 			budget_limit: z.number().positive().optional().nullable(),
+			auto_mitigation_enabled: z.boolean().optional(),
 		})
 		.optional(),
 });

@@ -1,5 +1,12 @@
-import { NotFoundError, newId } from '@flarelens/shared';
-import { z } from 'zod';
+import {
+	CreateMitigationSchema,
+	TriggerMitigationSchema,
+	UpdateMitigationSchema,
+	type CreateMitigationInput,
+	type TriggerMitigationInput,
+	type UpdateMitigationInput,
+} from '@flarelens/shared/schemas/mitigations';
+import { NotFoundError, ValidationError, newId } from '@flarelens/shared';
 import { Hono } from 'hono';
 import { validate } from '../middleware/validate.js';
 import { logAudit } from '../middleware/audit.js';
@@ -12,19 +19,6 @@ import { decryptToken } from '../auth/crypto.js';
 import { CloudflareClient } from '../services/cloudflare/client.js';
 import { executeMitigation } from '../services/mitigation/executor.js';
 import type { ActionType, MitigationActionConfig } from '../services/mitigation/executor.js';
-
-const MitigationSchema = z.object({
-	name: z.string().min(1).max(100),
-	trigger_type: z.enum(['traffic_rate', 'error_spike', 'cost_threshold']),
-	trigger_condition: z.object({
-		metric: z.string(),
-		operator: z.enum(['gt', 'lt', 'gte', 'lte']),
-		threshold: z.number(),
-	}),
-	action_type: z.enum(['rate_limit', 'under_attack_mode', 'block_ua', 'pause_worker']),
-	action_config: z.record(z.string(), z.unknown()),
-	resource_id: z.string().optional().nullable(),
-});
 
 const mitigations = new Hono<AppContext>();
 mitigations.use('*', authMiddleware, reposMiddleware);
@@ -41,9 +35,9 @@ mitigations.post(
 	'/',
 	requireRole('admin', 'editor'),
 	rateLimit('writes'),
-	validate(MitigationSchema),
+	validate(CreateMitigationSchema),
 	async (c) => {
-		const input = c.get('validatedBody') as z.infer<typeof MitigationSchema>;
+		const input = c.get('validatedBody') as CreateMitigationInput;
 		const repos = c.get('repos');
 		const session = c.get('session');
 
@@ -69,10 +63,10 @@ mitigations.patch(
 	'/:id',
 	requireRole('admin', 'editor'),
 	rateLimit('writes'),
-	validate(MitigationSchema.partial()),
+	validate(UpdateMitigationSchema),
 	async (c) => {
 		const { id } = c.req.param();
-		const input = c.get('validatedBody') as Partial<z.infer<typeof MitigationSchema>>;
+		const input = c.get('validatedBody') as UpdateMitigationInput;
 		const repos = c.get('repos');
 
 		const existing = await repos.mitigations.findById(id);
@@ -119,26 +113,62 @@ mitigations.delete('/:id', requireRole('admin', 'editor'), rateLimit('writes'), 
 });
 
 // POST /mitigations/:id/trigger — manual trigger
-mitigations.post('/:id/trigger', requireRole('admin', 'editor'), rateLimit('writes'), async (c) => {
-	const { id } = c.req.param();
-	const repos = c.get('repos');
+mitigations.post(
+	'/:id/trigger',
+	requireRole('admin', 'editor'),
+	rateLimit('writes'),
+	validate(TriggerMitigationSchema),
+	async (c) => {
+		const { id } = c.req.param();
+		const input = c.get('validatedBody') as TriggerMitigationInput;
+		const repos = c.get('repos');
 
-	const mitigation = await repos.mitigations.findById(id);
-	if (!mitigation) throw new NotFoundError('Mitigation', id);
+		const mitigation = await repos.mitigations.findById(id);
+		if (!mitigation) throw new NotFoundError('Mitigation', id);
+		if (input.dry_run === false && input.confirm !== true) {
+			throw new ValidationError('Manual mitigation execution requires confirm=true when dry_run is false');
+		}
 
-	const cfTokens = await repos.cfTokens.findActiveByAccount();
-	if (!cfTokens.length) return c.json({ success: false, detail: 'No active Cloudflare token' }, 422);
+		const cfTokens = await repos.cfTokens.findVerifiedByAccount();
+		if (!cfTokens.length) {
+			return c.json(
+				{ success: false, detail: 'No verified Cloudflare token is available for mitigation execution' },
+				422,
+			);
+		}
 
-	const plainToken = await decryptToken(cfTokens[0].encrypted_token, c.env.TOKEN_ENCRYPTION_KEY);
-	const cfAccountId = cfTokens[0].cf_account_id ?? '';
-	const client = new CloudflareClient(plainToken, cfAccountId);
-	const actionConfig = JSON.parse(mitigation.action_config) as MitigationActionConfig;
+		const plainToken = await decryptToken(cfTokens[0].encrypted_token, c.env.TOKEN_ENCRYPTION_KEY);
+		const cfAccountId = cfTokens[0].cf_account_id ?? '';
+		const client = new CloudflareClient(plainToken, cfAccountId);
+		const actionConfig = JSON.parse(mitigation.action_config) as MitigationActionConfig;
+		const result = await executeMitigation(
+			client,
+			mitigation.action_type as ActionType,
+			actionConfig,
+			{ dryRun: input.dry_run },
+		);
 
-	const result = await executeMitigation(client, mitigation.action_type as ActionType, actionConfig);
-	await repos.mitigations.recordTrigger(id, 0);
+		if (result.executed) {
+			await repos.mitigations.recordTrigger(id, 0);
+		}
 
-	await logAudit(c, { action: 'system', entity_type: 'mitigation', entity_id: id, description: `Manually triggered mitigation "${mitigation.name}": ${result.detail}` });
-	return c.json(result);
-});
+		await logAudit(c, {
+			action: 'system',
+			entity_type: 'mitigation',
+			entity_id: id,
+			description: `Manually triggered mitigation "${mitigation.name}": ${result.detail}`,
+			metadata: {
+				confirm: input.confirm,
+				dry_run: result.dry_run,
+				executed: result.executed,
+				provider_action: result.provider_action,
+				provider_reference: result.provider_reference,
+				request: result.request,
+				response: result.response,
+			},
+		});
+		return c.json(result);
+	},
+);
 
 export { mitigations as mitigationsRoutes };

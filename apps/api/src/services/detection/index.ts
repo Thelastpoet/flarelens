@@ -1,4 +1,4 @@
-import type { Severity } from '@flarelens/shared';
+import type { AccountSettings, Severity } from '@flarelens/shared';
 import { newId } from '@flarelens/shared';
 import type { Repos } from '../../middleware/repos.js';
 import type { Env } from '../../env.js';
@@ -163,6 +163,14 @@ export async function runDetection(
 
 	// 9. Check active mitigations and auto-trigger if condition matches
 	try {
+		const account = await repos.accounts.findById();
+		const accountSettings = account?.settings
+			? (JSON.parse(account.settings) as AccountSettings)
+			: {};
+		if (accountSettings.auto_mitigation_enabled !== true) {
+			return;
+		}
+
 		const activeMitigations = await repos.mitigations.findTriggerable();
 		for (const m of activeMitigations) {
 			const condition = JSON.parse(m.trigger_condition) as { metric: string; operator: string; threshold: number };
@@ -177,7 +185,7 @@ export async function runDetection(
 
 			try {
 				const { executeMitigation } = await import('../mitigation/executor.js');
-				const cfTokens = await repos.cfTokens.findActiveByAccount();
+				const cfTokens = await repos.cfTokens.findVerifiedByAccount();
 				if (!cfTokens.length) continue;
 				const { decryptToken: dt } = await import('../../auth/crypto.js');
 				const plainToken = await dt(cfTokens[0].encrypted_token, env.TOKEN_ENCRYPTION_KEY);
@@ -185,10 +193,43 @@ export async function runDetection(
 				const { CloudflareClient: CFC } = await import('../cloudflare/client.js');
 				const client = new CFC(plainToken, cfAccountId);
 				const actionConfig = JSON.parse(m.action_config) as Record<string, unknown>;
-				await executeMitigation(client, m.action_type as import('../mitigation/executor.js').ActionType, actionConfig);
-				await repos.mitigations.recordTrigger(m.id, 0);
+				const result = await executeMitigation(
+					client,
+					m.action_type as import('../mitigation/executor.js').ActionType,
+					actionConfig,
+				);
+				if (result.executed) {
+					await repos.mitigations.recordTrigger(m.id, 0);
+				}
+				await repos.auditLogs.create({
+					id: newId(),
+					action: 'system',
+					entity_type: 'mitigation',
+					entity_id: m.id,
+					description: `Auto-triggered mitigation "${m.name}" for anomaly ${anomalyId}: ${result.detail}`,
+					metadata: {
+						anomaly_id: anomalyId,
+						dry_run: result.dry_run,
+						executed: result.executed,
+						provider_action: result.provider_action,
+						provider_reference: result.provider_reference,
+						request: result.request,
+						response: result.response,
+					},
+				});
 				console.log(`[Detection] Auto-triggered mitigation "${m.name}" for anomaly ${anomalyId}`);
 			} catch (err) {
+				await repos.auditLogs.create({
+					id: newId(),
+					action: 'system',
+					entity_type: 'mitigation',
+					entity_id: m.id,
+					description: `Mitigation "${m.name}" failed during auto-trigger`,
+					metadata: {
+						anomaly_id: anomalyId,
+						error: err instanceof Error ? err.message : 'Unknown mitigation error',
+					},
+				});
 				console.error(`[Detection] Mitigation "${m.name}" execution failed:`, err);
 			}
 		}

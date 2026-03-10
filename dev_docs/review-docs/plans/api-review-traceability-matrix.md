@@ -43,8 +43,8 @@ Use it to answer four questions quickly:
 ### Section 03: Cloudflare Integration Correctness
 
 - `S03-F01` High. Cloudflare account discovery is not actually implemented. Tasks: `T004`, `T005`, `T006`, `T007`, `T013`, `T014`, `T015`, `T016`. Status: `Resolved`
-- `S03-F02` High. User-agent blocking is implemented against the wrong Cloudflare API. Tasks: `T019`, `T020`, `T021`, `T022`, `T024`. Status: `Mapped`
-- `S03-F03` High. Rate-limiting mitigation uses a deprecated API shape and does not perform a real mitigation. Tasks: `T019`, `T020`, `T021`, `T023`, `T024`. Status: `Mapped`
+- `S03-F02` High. User-agent blocking is implemented against the wrong Cloudflare API. Tasks: `T019`, `T020`, `T021`, `T022`, `T024`. Status: `Resolved`
+- `S03-F03` High. Rate-limiting mitigation uses a deprecated API shape and does not perform a real mitigation. Tasks: `T019`, `T020`, `T021`, `T023`, `T024`. Status: `Resolved`
 - `S03-F04` Medium. “Verified permissions” are derived from assumptions not backed by the current token-verify response. Tasks: `T004`, `T006`, `T007`, `T013`, `T014`. Status: `Resolved`
 - `S03-F05` Medium. Metrics poll cadence and GraphQL bucket granularity do not match. Tasks: `T063`. Status: `Mapped`
 
@@ -105,7 +105,7 @@ These findings come from `dev_docs/review-docs/summaries/api-redundancy-conflict
 
 - `SUM-F01` KV-based rate limiting is a poor fit for strict limits. Tasks: `T059`. Status: `Mapped`
 - `SUM-F02` Analytics Engine is provisioned but unused. Tasks: `T060`. Status: `Mapped`
-- `SUM-F03` Mitigation behavior is implemented as if Cloudflare is simpler than it is. Tasks: `T021`, `T022`, `T023`, `T024`. Status: `Mapped`
+- `SUM-F03` Mitigation behavior is implemented as if Cloudflare is simpler than it is. Tasks: `T021`, `T022`, `T023`, `T024`. Status: `Resolved`
 - `SUM-F04` Developer-token auth exists but is not mounted. Tasks: `T043`, `T057`. Status: `Mapped`
 - `SUM-F05` `SESSION_SECRET` is declared but unused. Tasks: `T058`, `T061`. Status: `Mapped`
 - `SUM-F06` Custom request validation is narrower than the framework surface. Tasks: `T055`. Status: `Mapped`

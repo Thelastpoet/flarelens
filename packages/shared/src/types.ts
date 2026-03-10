@@ -89,6 +89,7 @@ export interface AccountSettings {
 	timezone?: string;
 	default_notify_freq?: NotifyFrequency;
 	budget_limit?: number;
+	auto_mitigation_enabled?: boolean;
 }
 
 export interface TeamMember {

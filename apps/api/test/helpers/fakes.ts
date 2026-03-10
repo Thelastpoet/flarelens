@@ -1,4 +1,4 @@
-import type { Account, CfToken, TeamMember, User } from '@flarelens/shared';
+import type { Account, CfToken, Mitigation, TeamMember, User } from '@flarelens/shared';
 import type { Env } from '../../src/env.js';
 
 type AuditLogRecord = {
@@ -84,6 +84,7 @@ export class FakeD1Database implements D1Database {
 	usersByEmail = new Map<string, User>();
 	teamMembers = new Map<string, TeamMember>();
 	cfTokens = new Map<string, CfTokenRecord>();
+	mitigations = new Map<string, Mitigation>();
 	auditLogs: AuditLogRecord[] = [];
 
 	prepare(query: string): D1PreparedStatement {
@@ -141,6 +142,12 @@ export class FakeD1Database implements D1Database {
 			return (this.teamMembers.get(String(params[0])) ?? null) as T | null;
 		}
 
+		if (sql === 'SELECT * FROM mitigations WHERE id = ? AND account_id = ?') {
+			const mitigation = this.mitigations.get(String(params[0]));
+			if (!mitigation || mitigation.account_id !== params[1]) return null;
+			return mitigation as T;
+		}
+
 		if (sql === 'SELECT * FROM cf_tokens WHERE id = ? AND account_id = ?') {
 			const token = this.cfTokens.get(String(params[0]));
 			if (!token || token.account_id !== params[1]) return null;
@@ -150,7 +157,40 @@ export class FakeD1Database implements D1Database {
 		throw new Error(`Unsupported first() query in FakeD1Database: ${sql}`);
 	}
 
-	async executeAll<T>(): Promise<T[]> {
+	async executeAll<T>(query: string, params: unknown[]): Promise<T[]> {
+		const sql = normalizeSql(query);
+
+		if (sql === "SELECT * FROM cf_tokens WHERE account_id = ? AND status = 'active'") {
+			return [...this.cfTokens.values()].filter(
+				(token) => token.account_id === params[0] && token.status === 'active',
+			) as T[];
+		}
+
+		if (
+			sql ===
+			`SELECT * FROM cf_tokens WHERE account_id = ? AND status = 'active' AND cf_account_id IS NOT NULL AND verified_at IS NOT NULL`
+		) {
+			return [...this.cfTokens.values()].filter(
+				(token) =>
+					token.account_id === params[0] &&
+					token.status === 'active' &&
+					token.cf_account_id !== null &&
+					token.verified_at !== null,
+			) as T[];
+		}
+
+		if (sql === 'SELECT * FROM mitigations WHERE account_id = ? ORDER BY created_at DESC') {
+			return [...this.mitigations.values()]
+				.filter((mitigation) => mitigation.account_id === params[0])
+				.sort((a, b) => b.created_at.localeCompare(a.created_at)) as T[];
+		}
+
+		if (sql === 'SELECT * FROM mitigations WHERE account_id = ? AND enabled = 1') {
+			return [...this.mitigations.values()].filter(
+				(mitigation) => mitigation.account_id === params[0] && mitigation.enabled === 1,
+			) as T[];
+		}
+
 		return [];
 	}
 
@@ -241,6 +281,31 @@ export class FakeD1Database implements D1Database {
 
 		if (
 			sql ===
+			`INSERT INTO mitigations (id, account_id, name, trigger_type, trigger_condition, action_type, action_config, resource_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		) {
+			const mitigation: Mitigation = {
+				id: String(params[0]),
+				account_id: String(params[1]),
+				name: String(params[2]),
+				trigger_type: params[3] as Mitigation['trigger_type'],
+				trigger_condition: String(params[4]),
+				action_type: params[5] as Mitigation['action_type'],
+				action_config: String(params[6]),
+				resource_id: (params[7] as string | null) ?? null,
+				enabled: 1,
+				last_triggered: null,
+				trigger_count: 0,
+				estimated_savings: 0,
+				created_by: (params[8] as string | null) ?? null,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			};
+			this.insertMitigation(mitigation);
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
 			"UPDATE team_members SET last_active_at = datetime('now') WHERE id = ? AND account_id = ?"
 		) {
 			const member = this.teamMembers.get(String(params[0]));
@@ -259,6 +324,16 @@ export class FakeD1Database implements D1Database {
 			if (token && token.account_id === params[1]) {
 				token.last_used_at = new Date().toISOString();
 				this.cfTokens.set(token.id, token);
+			}
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (sql === "UPDATE accounts SET settings = ?, updated_at = datetime('now') WHERE id = ?") {
+			const account = this.accounts.get(String(params[1]));
+			if (account) {
+				account.settings = String(params[0]);
+				account.updated_at = new Date().toISOString();
+				this.accounts.set(account.id, account);
 			}
 			return { success: true, meta: { duration: 0 } } as D1Result;
 		}
@@ -301,6 +376,34 @@ export class FakeD1Database implements D1Database {
 
 		if (
 			sql ===
+			"UPDATE mitigations SET enabled = ?, updated_at = datetime('now') WHERE id = ? AND account_id = ?"
+		) {
+			const mitigation = this.mitigations.get(String(params[1]));
+			if (mitigation && mitigation.account_id === params[2]) {
+				mitigation.enabled = Number(params[0]);
+				mitigation.updated_at = new Date().toISOString();
+				this.mitigations.set(mitigation.id, mitigation);
+			}
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
+			`UPDATE mitigations SET last_triggered = datetime('now'), trigger_count = trigger_count + 1, estimated_savings = estimated_savings + ?, updated_at = datetime('now') WHERE id = ? AND account_id = ?`
+		) {
+			const mitigation = this.mitigations.get(String(params[1]));
+			if (mitigation && mitigation.account_id === params[2]) {
+				mitigation.last_triggered = new Date().toISOString();
+				mitigation.trigger_count += 1;
+				mitigation.estimated_savings += Number(params[0]);
+				mitigation.updated_at = new Date().toISOString();
+				this.mitigations.set(mitigation.id, mitigation);
+			}
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
 			`INSERT INTO audit_logs (id, account_id, user_id, user_email, action, entity_type, entity_id, description, ip_address, user_agent, metadata) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		) {
 			this.auditLogs.push({
@@ -337,6 +440,10 @@ export class FakeD1Database implements D1Database {
 
 	insertCfToken(token: CfTokenRecord) {
 		this.cfTokens.set(token.id, token);
+	}
+
+	insertMitigation(mitigation: Mitigation) {
+		this.mitigations.set(mitigation.id, mitigation);
 	}
 }
 
