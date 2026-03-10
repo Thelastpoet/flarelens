@@ -42,7 +42,8 @@ This file tracks the frontend work required to replace mock data with live backe
 
 - [x] F009 Wire inventory page to `/resources`
   Outcome: passed for the current inventory surface. The page now loads real resources, derives active-rule counts from `/rules`, supports sync/pause/resume/remove actions, and replaces the mock table with honest empty states.
-- [ ] F010 Wire rules page to `/rules`
+- [x] F010 Wire rules page to `/rules`
+  Outcome: passed for the current rules surface. The page now loads real rules and resources, supports create/toggle/delete flows, and replaces the fake custom-rules banner with an honest backend-scope note.
 - [ ] F011 Wire integrations page to `/integrations/*`
 - [ ] F012 Wire team page to `/team/*`
 - [x] F013 Wire notifications page to `/notifications`
@@ -81,6 +82,7 @@ This file tracks the frontend work required to replace mock data with live backe
 - The active authenticated shell now uses real layout data for account identity and unread notification count
 - The notifications page is now backend-backed, but page-level pagination is still a follow-up gap if the inbox grows beyond the first page
 - The inventory page is now backend-backed; pagination is still visual-only because the `/resources` API is not paginated
+- The rules page is now backend-backed; rule editing is not yet surfaced because the current UI only has create, toggle, and delete affordances
 - Dashboard and analytics pages have live loaders but still contain hardcoded trend badges, fallback visual content, or static activity sections
 - The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
 - Most management pages (`billing`, `inventory`, `integrations`, `rules`, `team`, `audit`, `developer`, `mitigations`, `notifications`) are still UI-only with no page loader or server actions
