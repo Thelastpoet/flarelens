@@ -51,11 +51,7 @@ export type AuditEntityType =
 	| 'resource'
 	| 'anomaly';
 export type BillingSnapshotStatus = 'active' | 'invoice';
-export type MetricName =
-	| 'requests'
-	| 'cached_requests'
-	| 'bytes'
-	| 'threats';
+export type MetricName = 'requests' | 'cached_requests' | 'bytes' | 'threats';
 
 export interface User {
 	id: string;

@@ -83,9 +83,7 @@ export class FakeKVNamespace implements KVNamespace {
 	}
 
 	async put(key: string, value: string, options?: KVNamespacePutOptions): Promise<void> {
-		const expiresAt = options?.expirationTtl
-			? Date.now() + options.expirationTtl * 1000
-			: null;
+		const expiresAt = options?.expirationTtl ? Date.now() + options.expirationTtl * 1000 : null;
 		this.store.set(key, { value, expiresAt });
 	}
 
@@ -167,11 +165,9 @@ export class FakeD1Database implements D1Database {
 		}
 
 		if (sql === 'SELECT * FROM users WHERE oauth_provider = ? AND oauth_id = ?') {
-			return (
-				[...this.users.values()].find(
-					(user) => user.oauth_provider === params[0] && user.oauth_id === params[1],
-				) ?? null
-			) as T | null;
+			return ([...this.users.values()].find(
+				(user) => user.oauth_provider === params[0] && user.oauth_id === params[1],
+			) ?? null) as T | null;
 		}
 
 		if (sql === 'SELECT * FROM users WHERE id = ?') {
@@ -199,20 +195,15 @@ export class FakeD1Database implements D1Database {
 		}
 
 		if (sql === 'SELECT * FROM team_members WHERE account_id = ? AND user_id = ?') {
-			return (
-				[...this.teamMembers.values()].find(
-					(member) =>
-						member.account_id === params[0] && member.user_id === params[1],
-				) ?? null
-			) as T | null;
+			return ([...this.teamMembers.values()].find(
+				(member) => member.account_id === params[0] && member.user_id === params[1],
+			) ?? null) as T | null;
 		}
 
 		if (sql === 'SELECT * FROM team_members WHERE account_id = ? AND email = ?') {
-			return (
-				[...this.teamMembers.values()].find(
-					(member) => member.account_id === params[0] && member.email === params[1],
-				) ?? null
-			) as T | null;
+			return ([...this.teamMembers.values()].find(
+				(member) => member.account_id === params[0] && member.email === params[1],
+			) ?? null) as T | null;
 		}
 
 		if (sql === 'SELECT * FROM team_members WHERE id = ?') {
@@ -247,11 +238,9 @@ export class FakeD1Database implements D1Database {
 			sql ===
 			"SELECT * FROM billing_snapshots WHERE account_id = ? AND status = 'active' ORDER BY period_start DESC LIMIT 1"
 		) {
-			return (
-				[...this.billingSnapshots.values()]
-					.filter((snapshot) => snapshot.account_id === params[0] && snapshot.status === 'active')
-					.sort((a, b) => b.period_start.localeCompare(a.period_start))[0] ?? null
-			) as T | null;
+			return ([...this.billingSnapshots.values()]
+				.filter((snapshot) => snapshot.account_id === params[0] && snapshot.status === 'active')
+				.sort((a, b) => b.period_start.localeCompare(a.period_start))[0] ?? null) as T | null;
 		}
 
 		if (sql === 'SELECT * FROM resources WHERE id = ? AND account_id = ?') {
@@ -260,31 +249,29 @@ export class FakeD1Database implements D1Database {
 			return resource as T;
 		}
 
-		if (sql === 'SELECT * FROM resources WHERE account_id = ? AND cf_resource_id = ? AND type = ?') {
-			return (
-				[...this.resources.values()].find(
-					(resource) =>
-						resource.account_id === params[0] &&
-						resource.cf_resource_id === params[1] &&
-						resource.type === params[2],
-				) ?? null
-			) as T | null;
+		if (
+			sql === 'SELECT * FROM resources WHERE account_id = ? AND cf_resource_id = ? AND type = ?'
+		) {
+			return ([...this.resources.values()].find(
+				(resource) =>
+					resource.account_id === params[0] &&
+					resource.cf_resource_id === params[1] &&
+					resource.type === params[2],
+			) ?? null) as T | null;
 		}
 
 		if (
 			sql ===
 			'SELECT * FROM baselines WHERE account_id = ? AND resource_id = ? AND metric = ? AND hour_of_day = ? AND day_of_week = ?'
 		) {
-			return (
-				[...this.baselines.values()].find(
-					(baseline) =>
-						baseline.account_id === params[0] &&
-						baseline.resource_id === params[1] &&
-						baseline.metric === params[2] &&
-						baseline.hour_of_day === params[3] &&
-						baseline.day_of_week === params[4],
-				) ?? null
-			) as T | null;
+			return ([...this.baselines.values()].find(
+				(baseline) =>
+					baseline.account_id === params[0] &&
+					baseline.resource_id === params[1] &&
+					baseline.metric === params[2] &&
+					baseline.hour_of_day === params[3] &&
+					baseline.day_of_week === params[4],
+			) ?? null) as T | null;
 		}
 
 		if (sql === 'SELECT * FROM anomalies WHERE id = ? AND account_id = ?') {
@@ -307,7 +294,9 @@ export class FakeD1Database implements D1Database {
 			return notification as T;
 		}
 
-		if (sql === "SELECT COUNT(*) as total FROM anomalies WHERE account_id = ? AND status = 'active'") {
+		if (
+			sql === "SELECT COUNT(*) as total FROM anomalies WHERE account_id = ? AND status = 'active'"
+		) {
 			const total = [...this.anomalies.values()].filter(
 				(anomaly) => anomaly.account_id === params[0] && anomaly.status === 'active',
 			).length;
@@ -429,10 +418,7 @@ export class FakeD1Database implements D1Database {
 				.sort((a, b) => a.timestamp.localeCompare(b.timestamp)) as T[];
 		}
 
-		if (
-			sql ===
-			'SELECT * FROM rules WHERE account_id = ? AND enabled = 1 AND deleted_at IS NULL'
-		) {
+		if (sql === 'SELECT * FROM rules WHERE account_id = ? AND enabled = 1 AND deleted_at IS NULL') {
 			return [...this.rules.values()].filter(
 				(rule) => rule.account_id === params[0] && rule.enabled === 1 && rule.deleted_at === null,
 			) as T[];
@@ -455,13 +441,11 @@ export class FakeD1Database implements D1Database {
 		}
 
 		if (sql === 'SELECT * FROM team_members WHERE account_id = ? AND email = ?') {
-			return (
-				[...this.teamMembers.values()].find(
-					(member) => member.account_id === params[0] && member.email === params[1],
-				) ? [ [...this.teamMembers.values()].find(
-					(member) => member.account_id === params[0] && member.email === params[1],
-				)! ] : []
-			) as T[];
+			const member = [...this.teamMembers.values()].find(
+				(existingMember) =>
+					existingMember.account_id === params[0] && existingMember.email === params[1],
+			);
+			return (member ? [member] : []) as T[];
 		}
 
 		if (
@@ -493,11 +477,13 @@ export class FakeD1Database implements D1Database {
 		}
 
 		if (sql === "SELECT DISTINCT account_id FROM team_members WHERE status = 'active'") {
-			return [...new Set(
-				[...this.teamMembers.values()]
-					.filter((member) => member.status === 'active')
-					.map((member) => member.account_id),
-			)].map((account_id) => ({ account_id })) as T[];
+			return [
+				...new Set(
+					[...this.teamMembers.values()]
+						.filter((member) => member.status === 'active')
+						.map((member) => member.account_id),
+				),
+			].map((account_id) => ({ account_id })) as T[];
 		}
 
 		return [];
@@ -506,10 +492,7 @@ export class FakeD1Database implements D1Database {
 	async executeRun(query: string, params: unknown[]): Promise<D1Result> {
 		const sql = normalizeSql(query);
 
-		if (
-			sql ===
-			'INSERT INTO accounts (id, name, plan) VALUES (?, ?, ?)'
-		) {
+		if (sql === 'INSERT INTO accounts (id, name, plan) VALUES (?, ?, ?)') {
 			const account: Account = {
 				id: String(params[0]),
 				name: String(params[1]),
@@ -822,8 +805,7 @@ export class FakeD1Database implements D1Database {
 		}
 
 		if (
-			sql ===
-			"UPDATE cf_tokens SET last_used_at = datetime('now') WHERE id = ? AND account_id = ?"
+			sql === "UPDATE cf_tokens SET last_used_at = datetime('now') WHERE id = ? AND account_id = ?"
 		) {
 			const token = this.cfTokens.get(String(params[0]));
 			if (token && token.account_id === params[1]) {
@@ -852,7 +834,10 @@ export class FakeD1Database implements D1Database {
 			return { success: true, meta: { duration: 0 } } as D1Result;
 		}
 
-		if (sql === "UPDATE accounts SET updated_at = datetime('now'), name = ?, settings = ? WHERE id = ?") {
+		if (
+			sql ===
+			"UPDATE accounts SET updated_at = datetime('now'), name = ?, settings = ? WHERE id = ?"
+		) {
 			const account = this.accounts.get(String(params[2]));
 			if (account) {
 				account.name = String(params[0]);
@@ -884,8 +869,7 @@ export class FakeD1Database implements D1Database {
 				token.permissions = (params[2] as string | null) ?? token.permissions;
 				token.capabilities = (params[3] as string | null) ?? token.capabilities;
 				token.verification_error = (params[4] as string | null) ?? null;
-				token.verification_details =
-					(params[5] as string | null) ?? token.verification_details;
+				token.verification_details = (params[5] as string | null) ?? token.verification_details;
 				this.cfTokens.set(token.id, token);
 			}
 			return { success: true, meta: { duration: 0 } } as D1Result;
@@ -963,7 +947,11 @@ export class FakeD1Database implements D1Database {
 			'UPDATE notifications SET read = 1 WHERE id = ? AND account_id = ? AND (user_id = ? OR user_id IS NULL)'
 		) {
 			const notification = this.notifications.get(String(params[0]));
-			if (notification && notification.account_id === params[1] && (notification.user_id === null || notification.user_id === params[2])) {
+			if (
+				notification &&
+				notification.account_id === params[1] &&
+				(notification.user_id === null || notification.user_id === params[2])
+			) {
 				notification.read = 1;
 				this.notifications.set(notification.id, notification);
 			}
@@ -1083,8 +1071,7 @@ export function createTestEnv(overrides: Partial<Env> = {}): Env {
 		ENVIRONMENT: 'test',
 		WEB_URL: 'http://localhost:5173',
 		API_URL: 'http://localhost:5174',
-		TOKEN_ENCRYPTION_KEY:
-			'0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+		TOKEN_ENCRYPTION_KEY: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
 		RESEND_API_KEY: '',
 		...overrides,
 	};

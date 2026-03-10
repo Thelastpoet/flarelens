@@ -20,11 +20,13 @@ const messages: Record<number, { title: string; description: string; icon: strin
 };
 
 const status = $derived($page.status);
-const info = $derived(messages[status] ?? {
-	title: 'Something went wrong',
-	description: $page.error?.message ?? 'An unexpected error occurred.',
-	icon: 'warning',
-});
+const info = $derived(
+	messages[status] ?? {
+		title: 'Something went wrong',
+		description: $page.error?.message ?? 'An unexpected error occurred.',
+		icon: 'warning',
+	},
+);
 </script>
 
 <svelte:head>

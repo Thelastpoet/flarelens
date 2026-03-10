@@ -1,11 +1,11 @@
-import { Resend } from 'resend';
 import type { Anomaly } from '@flarelens/shared';
+import { Resend } from 'resend';
 import type { Env } from '../../../env.js';
 
 export async function sendEmailAlert(
 	env: Env,
 	toEmail: string,
-	toName: string,
+	_toName: string,
 	anomaly: Anomaly,
 ): Promise<void> {
 	try {

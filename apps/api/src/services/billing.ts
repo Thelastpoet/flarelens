@@ -21,8 +21,10 @@ function daysBetween(start: Date, end: Date): number {
 	return Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86_400_000));
 }
 
-export function getBudgetLimitFromSettings(accountSettings: AccountSettings | Record<string, unknown>): number | null {
-	const raw = accountSettings['budget_limit'];
+export function getBudgetLimitFromSettings(
+	accountSettings: AccountSettings | Record<string, unknown>,
+): number | null {
+	const raw = accountSettings.budget_limit;
 	return typeof raw === 'number' ? raw : null;
 }
 

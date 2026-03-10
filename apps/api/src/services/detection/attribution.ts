@@ -1,4 +1,4 @@
-import { CloudflareClient } from '../cloudflare/client.js';
+import type { CloudflareClient } from '../cloudflare/client.js';
 
 export interface AttributionContributor {
 	type: 'endpoint' | 'user_agent' | 'country' | 'asn';

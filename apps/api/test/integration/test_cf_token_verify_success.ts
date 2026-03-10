@@ -1,8 +1,8 @@
+import type { User } from '@flarelens/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSession } from '../../src/auth/session.js';
 import { createTestApp } from '../helpers/app.js';
 import { createTestEnv, FakeD1Database } from '../helpers/fakes.js';
-import type { User } from '@flarelens/shared';
 
 const accountId = 'acct_success';
 const userId = 'user_success';

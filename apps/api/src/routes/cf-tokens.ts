@@ -1,5 +1,5 @@
-import { CF_REQUIRED_CAPABILITIES, NotFoundError, ValidationError, newId } from '@flarelens/shared';
-import { AddCfTokenSchema, type AddCfTokenInput } from '@flarelens/shared/schemas/cf-tokens';
+import { CF_REQUIRED_CAPABILITIES, NotFoundError, newId, ValidationError } from '@flarelens/shared';
+import { type AddCfTokenInput, AddCfTokenSchema } from '@flarelens/shared/schemas/cf-tokens';
 import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { decryptToken, encryptToken } from '../auth/crypto.js';
@@ -94,10 +94,7 @@ cfTokens.post('/:id/verify', requireRole('admin'), rateLimit('writes'), async (c
 		if (
 			err instanceof ValidationError ||
 			(err instanceof Error && err.name === 'ValidationError') ||
-			(typeof err === 'object' &&
-				err !== null &&
-				'code' in err &&
-				err.code === 'VALIDATION_ERROR')
+			(typeof err === 'object' && err !== null && 'code' in err && err.code === 'VALIDATION_ERROR')
 		) {
 			throw err;
 		}
@@ -152,7 +149,11 @@ cfTokens.post('/:id/verify', requireRole('admin'), rateLimit('writes'), async (c
 		throw new ValidationError(`Token status is '${verifyResult.status}', expected 'active'`);
 	}
 
-	let account: { id: string; name: string | null; source: import('@flarelens/shared').CfAccountSource };
+	let account: {
+		id: string;
+		name: string | null;
+		source: import('@flarelens/shared').CfAccountSource;
+	};
 	let capabilityResult: {
 		capabilities: import('@flarelens/shared').CfCapability[];
 		probes: import('@flarelens/shared').CfCapabilityProbe[];

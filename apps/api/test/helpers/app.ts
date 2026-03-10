@@ -1,7 +1,7 @@
 import { createApp } from '../../src/app.js';
-import { authRoutes } from '../../src/routes/auth.js';
 import { anomaliesRoutes } from '../../src/routes/anomalies.js';
 import { auditLogsRoutes } from '../../src/routes/audit-logs.js';
+import { authRoutes } from '../../src/routes/auth.js';
 import { billingRoutes } from '../../src/routes/billing.js';
 import { cfTokensRoutes } from '../../src/routes/cf-tokens.js';
 import { developerRoutes } from '../../src/routes/developer.js';

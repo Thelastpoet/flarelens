@@ -1,24 +1,17 @@
-import type { Env } from '../env.js';
+import { CfTokensRepository, ResourcesRepository, ZoneSnapshotsRepository } from '@flarelens/db';
+import { newId } from '@flarelens/shared';
 import { decryptToken } from '../auth/crypto.js';
+import type { Env } from '../env.js';
 import { CloudflareClient } from '../services/cloudflare/client.js';
 import { GqlQueries } from '../services/cloudflare/graphql.js';
-import {
-	AccountsRepository,
-	CfTokensRepository,
-	ResourcesRepository,
-	ZoneSnapshotsRepository,
-	RulesRepository,
-	AnomaliesRepository,
-	BaselinesRepository,
-	MitigationsRepository,
-	CfTokensRepository as _CFT,
-} from '@flarelens/db';
-import { newId } from '@flarelens/shared';
 
 const DETECTION_METRICS = [
 	{ metric: 'requests', value: (bucket: { requests: number }) => bucket.requests },
 	{ metric: 'bytes', value: (bucket: { bytes: number }) => bucket.bytes },
-	{ metric: 'cached_requests', value: (bucket: { cachedRequests: number }) => bucket.cachedRequests },
+	{
+		metric: 'cached_requests',
+		value: (bucket: { cachedRequests: number }) => bucket.cachedRequests,
+	},
 	{ metric: 'threats', value: (bucket: { threats: number }) => bucket.threats },
 ] as const;
 
@@ -102,11 +95,19 @@ async function pollAccount(accountId: string, DB: D1Database, env: Env): Promise
 			try {
 				const liveId = env.LIVE_FEED.idFromName(accountId);
 				const stub = env.LIVE_FEED.get(liveId);
-				await stub.fetch(new Request('https://internal/push', {
-					method: 'POST',
-					body: JSON.stringify({ type: 'metrics', resource_id: zone.id, requests: latest.requests }),
-				}));
-			} catch { /* non-critical */ }
+				await stub.fetch(
+					new Request('https://internal/push', {
+						method: 'POST',
+						body: JSON.stringify({
+							type: 'metrics',
+							resource_id: zone.id,
+							requests: latest.requests,
+						}),
+					}),
+				);
+			} catch {
+				/* non-critical */
+			}
 		} catch (err) {
 			console.error(`[MetricsPoll] Zone ${zone.id} poll failed:`, err);
 		}

@@ -1,9 +1,9 @@
+import { UnauthorizedError } from '@flarelens/shared';
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
-import { UnauthorizedError } from '@flarelens/shared';
-import type { AppContext } from '../middleware/auth.js';
 import { validateSession } from '../auth/session.js';
 import type { Env } from '../env.js';
+import type { AppContext } from '../middleware/auth.js';
 
 const ws = new Hono<AppContext>();
 

@@ -185,13 +185,16 @@ describe('Cloudflare token verification', () => {
 					return Response.json({ success: true, result: [] });
 				}
 				if (url.endsWith('/graphql')) {
-					return new Response(JSON.stringify({
-						success: false,
-						errors: [{ message: 'Forbidden' }],
-					}), {
-						status: 403,
-						headers: { 'Content-Type': 'application/json' },
-					});
+					return new Response(
+						JSON.stringify({
+							success: false,
+							errors: [{ message: 'Forbidden' }],
+						}),
+						{
+							status: 403,
+							headers: { 'Content-Type': 'application/json' },
+						},
+					);
 				}
 				throw new Error(`Unexpected fetch URL in failure test: ${url}`);
 			}),

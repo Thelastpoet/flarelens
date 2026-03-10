@@ -137,12 +137,7 @@ export const RESOURCE_TYPES = [
 ] as const;
 
 // Metric names
-export const METRIC_NAMES = [
-	'requests',
-	'cached_requests',
-	'bytes',
-	'threats',
-] as const;
+export const METRIC_NAMES = ['requests', 'cached_requests', 'bytes', 'threats'] as const;
 
 // Cost per unit (approximate CF pricing)
 export const CF_COST_PER_UNIT = {

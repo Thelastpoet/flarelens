@@ -1,5 +1,14 @@
-import { CF_REQUIRED_CAPABILITIES, NotFoundError, ValidationError, newId, PLAN_LIMITS } from '@flarelens/shared';
-import { UpdateResourceSchema, type UpdateResourceInput } from '@flarelens/shared/schemas/resources';
+import {
+	CF_REQUIRED_CAPABILITIES,
+	NotFoundError,
+	newId,
+	PLAN_LIMITS,
+	ValidationError,
+} from '@flarelens/shared';
+import {
+	type UpdateResourceInput,
+	UpdateResourceSchema,
+} from '@flarelens/shared/schemas/resources';
 import { Hono } from 'hono';
 import { decryptToken } from '../auth/crypto.js';
 import { logAudit } from '../middleware/audit.js';
@@ -50,7 +59,9 @@ resources.patch(
 			const limit = PLAN_LIMITS[account?.plan as keyof typeof PLAN_LIMITS]?.max_resources ?? 3;
 			const active = (await repos.resources.list()).filter((r) => r.monitoring_status === 'active');
 			if (active.length >= limit && resource.monitoring_status !== 'active') {
-				throw new ValidationError(`Plan limit reached: max ${limit} monitored resource${limit === 1 ? '' : 's'}`);
+				throw new ValidationError(
+					`Plan limit reached: max ${limit} monitored resource${limit === 1 ? '' : 's'}`,
+				);
 			}
 		}
 

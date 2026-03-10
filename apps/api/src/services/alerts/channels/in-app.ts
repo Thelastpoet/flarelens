@@ -1,6 +1,6 @@
-import type { Repos } from '../../../middleware/repos.js';
 import type { Anomaly } from '@flarelens/shared';
 import { newId } from '@flarelens/shared';
+import type { Repos } from '../../../middleware/repos.js';
 
 export async function sendInAppNotification(repos: Repos, anomaly: Anomaly): Promise<void> {
 	await repos.notifications.create({
@@ -9,7 +9,12 @@ export async function sendInAppNotification(repos: Repos, anomaly: Anomaly): Pro
 		type: 'anomaly',
 		title: `${anomaly.severity} anomaly: ${anomaly.metric}`,
 		body: `Detected ${anomaly.metric} = ${anomaly.current_value}`,
-		severity: anomaly.severity === 'critical' ? 'critical' : anomaly.severity === 'high' ? 'warning' : 'info',
+		severity:
+			anomaly.severity === 'critical'
+				? 'critical'
+				: anomaly.severity === 'high'
+					? 'warning'
+					: 'info',
 		link: `/anomalies/${anomaly.id}`,
 	});
 }

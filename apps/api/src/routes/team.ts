@@ -1,7 +1,13 @@
-import { ConflictError, ForbiddenError, NotFoundError, PLAN_LIMITS, newId } from '@flarelens/shared';
-import { z } from 'zod';
+import {
+	ConflictError,
+	ForbiddenError,
+	NotFoundError,
+	newId,
+	PLAN_LIMITS,
+} from '@flarelens/shared';
 import { Hono } from 'hono';
 import { Resend } from 'resend';
+import { z } from 'zod';
 import { logAudit } from '../middleware/audit.js';
 import type { AppContext } from '../middleware/auth.js';
 import { authMiddleware } from '../middleware/auth.js';
@@ -57,7 +63,8 @@ team.post(
 
 		// Check if already a member
 		const existing = await repos.teamMembers.findByEmail(input.email);
-		if (existing) throw new ConflictError('This email is already a team member or has a pending invite.');
+		if (existing)
+			throw new ConflictError('This email is already a team member or has a pending invite.');
 
 		const memberId = newId();
 		await repos.teamMembers.create({
@@ -69,9 +76,13 @@ team.post(
 
 		// Store invite token in KV
 		const token = crypto.randomUUID().replace(/-/g, '');
-		await CACHE.put(`invite:${token}`, JSON.stringify({ memberId, accountId: session.account_id }), {
-			expirationTtl: INVITE_TTL,
-		});
+		await CACHE.put(
+			`invite:${token}`,
+			JSON.stringify({ memberId, accountId: session.account_id }),
+			{
+				expirationTtl: INVITE_TTL,
+			},
+		);
 
 		const inviteUrl = `${WEB_URL}/accept-invite?token=${token}`;
 
@@ -168,9 +179,13 @@ team.post('/invites/:id/resend', requireRole('admin'), rateLimit('writes'), asyn
 	if (!member) throw new NotFoundError('Pending invite', id);
 
 	const token = crypto.randomUUID().replace(/-/g, '');
-	await CACHE.put(`invite:${token}`, JSON.stringify({ memberId: id, accountId: member.account_id }), {
-		expirationTtl: INVITE_TTL,
-	});
+	await CACHE.put(
+		`invite:${token}`,
+		JSON.stringify({ memberId: id, accountId: member.account_id }),
+		{
+			expirationTtl: INVITE_TTL,
+		},
+	);
 
 	const inviteUrl = `${WEB_URL}/accept-invite?token=${token}`;
 

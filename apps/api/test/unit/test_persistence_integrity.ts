@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import { ResourcesRepository, ZoneSnapshotsRepository } from '@flarelens/db';
+import { describe, expect, it } from 'vitest';
 import { isDuplicate, markSent } from '../../src/services/alerts/dedup.js';
 import { createTestEnv, FakeD1Database, FakeKVNamespace } from '../helpers/fakes.js';
 
@@ -68,12 +68,12 @@ describe('persistence integrity', () => {
 
 		await markSent(env, 'acct_alerts', 'rule_1', 'resource_1', 'requests', 'high');
 
-		expect(
-			await isDuplicate(env, 'acct_alerts', 'rule_1', 'resource_1', 'requests', 'high'),
-		).toBe(true);
-		expect(
-			await isDuplicate(env, 'acct_alerts', 'rule_1', 'resource_1', 'bytes', 'high'),
-		).toBe(false);
+		expect(await isDuplicate(env, 'acct_alerts', 'rule_1', 'resource_1', 'requests', 'high')).toBe(
+			true,
+		);
+		expect(await isDuplicate(env, 'acct_alerts', 'rule_1', 'resource_1', 'bytes', 'high')).toBe(
+			false,
+		);
 		expect(
 			await isDuplicate(env, 'acct_alerts', 'rule_1', 'resource_1', 'requests', 'critical'),
 		).toBe(false);

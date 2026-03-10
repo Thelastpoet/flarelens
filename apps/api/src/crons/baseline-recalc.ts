@@ -1,6 +1,6 @@
-import type { Env } from '../env.js';
 import { BaselinesRepository, ResourcesRepository, ZoneSnapshotsRepository } from '@flarelens/db';
 import { newId } from '@flarelens/shared';
+import type { Env } from '../env.js';
 
 const BASELINE_METRICS = ['requests', 'bytes', 'cached_requests', 'threats'] as const;
 

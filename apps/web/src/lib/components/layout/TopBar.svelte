@@ -6,7 +6,9 @@ import Icon from '$lib/components/ui/Icon.svelte';
 let { title = '' }: { title?: string } = $props();
 
 let notificationCount = $state(0);
-let notifications = $state<{ id: string; title: string; body: string; read: 0 | 1; created_at: string }[]>([]);
+let notifications = $state<
+	{ id: string; title: string; body: string; read: 0 | 1; created_at: string }[]
+>([]);
 let inboxOpen = $state(false);
 
 $effect(() => {

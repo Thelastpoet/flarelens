@@ -1,9 +1,5 @@
 import { z } from 'zod';
-import {
-	CF_CAPABILITIES,
-	CF_REQUIRED_CAPABILITIES,
-	type CfAccountSource,
-} from '../types.js';
+import { CF_CAPABILITIES, CF_REQUIRED_CAPABILITIES, type CfAccountSource } from '../types.js';
 
 export const AddCfTokenSchema = z.object({
 	label: z.string().min(1).max(100),

@@ -1,16 +1,22 @@
-import { ConflictError, NotFoundError, UnauthorizedError, ValidationError, newId } from '@flarelens/shared';
 import type { Role } from '@flarelens/shared';
 import {
-	ForgotPasswordSchema,
-	LoginSchema,
-	RegisterSchema,
-	ResetPasswordSchema,
-	AcceptInviteSchema,
+	ConflictError,
+	NotFoundError,
+	newId,
+	UnauthorizedError,
+	ValidationError,
+} from '@flarelens/shared';
+import {
 	type AcceptInviteInput,
+	AcceptInviteSchema,
 	type ForgotPasswordInput,
+	ForgotPasswordSchema,
 	type LoginInput,
+	LoginSchema,
 	type RegisterInput,
+	RegisterSchema,
 	type ResetPasswordInput,
+	ResetPasswordSchema,
 } from '@flarelens/shared/schemas/auth';
 import { Hono } from 'hono';
 import { getCookie } from 'hono/cookie';
@@ -65,11 +71,15 @@ auth.post('/register', rateLimitByIp('auth'), validate(RegisterSchema), async (c
 		user_id: userId,
 	});
 
-	const { cookieHeader } = await createSession(SESSIONS, {
-		user_id: userId,
-		account_id: accountId,
-		role: 'admin',
-	}, getRequestHost(c));
+	const { cookieHeader } = await createSession(
+		SESSIONS,
+		{
+			user_id: userId,
+			account_id: accountId,
+			role: 'admin',
+		},
+		getRequestHost(c),
+	);
 
 	// Send verification email (best-effort)
 	if (c.env.RESEND_API_KEY) {
@@ -84,7 +94,9 @@ auth.post('/register', rateLimitByIp('auth'), validate(RegisterSchema), async (c
 				subject: 'Verify your FlareLens email',
 				html: `<p>Hi ${input.name},</p><p>Please verify your email: <a href="${verifyUrl}">${verifyUrl}</a></p><p>This link expires in 24 hours.</p>`,
 			});
-		} catch { /* non-critical */ }
+		} catch {
+			/* non-critical */
+		}
 	}
 
 	c.header('Set-Cookie', cookieHeader);
@@ -127,11 +139,15 @@ auth.post('/login', rateLimitByIp('auth'), validate(LoginSchema), async (c) => {
 	const members = new TeamMembersRepository(DB, memberRow.account_id);
 	await members.updateLastActive((await members.findByUserId(user.id))?.id ?? '');
 
-	const { cookieHeader } = await createSession(SESSIONS, {
-		user_id: user.id,
-		account_id: memberRow.account_id,
-		role: memberRow.role as Role,
-	}, getRequestHost(c));
+	const { cookieHeader } = await createSession(
+		SESSIONS,
+		{
+			user_id: user.id,
+			account_id: memberRow.account_id,
+			role: memberRow.role as Role,
+		},
+		getRequestHost(c),
+	);
 
 	c.header('Set-Cookie', cookieHeader);
 	return c.json({
@@ -297,11 +313,15 @@ auth.post('/accept-invite', validate(AcceptInviteSchema), async (c) => {
 	await members.accept(memberId, user.id);
 	await CACHE.delete(`invite:${token}`);
 
-	const { cookieHeader } = await createSession(SESSIONS, {
-		user_id: user.id,
-		account_id: accountId,
-		role: member.role as Role,
-	}, getRequestHost(c));
+	const { cookieHeader } = await createSession(
+		SESSIONS,
+		{
+			user_id: user.id,
+			account_id: accountId,
+			role: member.role as Role,
+		},
+		getRequestHost(c),
+	);
 
 	c.header('Set-Cookie', cookieHeader);
 	return c.json({
@@ -346,14 +366,18 @@ auth.get('/oauth/:provider', async (c) => {
 	// PKCE: code_verifier → code_challenge
 	const verifierBytes = crypto.getRandomValues(new Uint8Array(32));
 	const codeVerifier = btoa(String.fromCharCode(...verifierBytes))
-		.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+		.replace(/\+/g, '-')
+		.replace(/\//g, '_')
+		.replace(/=/g, '');
 
 	const challengeBuffer = await crypto.subtle.digest(
 		'SHA-256',
 		new TextEncoder().encode(codeVerifier),
 	);
 	const codeChallenge = btoa(String.fromCharCode(...new Uint8Array(challengeBuffer)))
-		.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+		.replace(/\+/g, '-')
+		.replace(/\//g, '_')
+		.replace(/=/g, '');
 
 	const state = crypto.randomUUID();
 	await c.env.CACHE.put(`oauth_state:${state}`, JSON.stringify({ codeVerifier, provider }), {
@@ -391,8 +415,12 @@ auth.get('/oauth/:provider/callback', async (c) => {
 	const { codeVerifier } = JSON.parse(stateRaw) as { codeVerifier: string; provider: string };
 	await c.env.CACHE.delete(`oauth_state:${state}`);
 
-	const clientId = provider === 'google' ? c.env.GOOGLE_CLIENT_ID! : c.env.GITHUB_CLIENT_ID!;
-	const clientSecret = provider === 'google' ? c.env.GOOGLE_CLIENT_SECRET! : c.env.GITHUB_CLIENT_SECRET!;
+	const clientId = provider === 'google' ? c.env.GOOGLE_CLIENT_ID : c.env.GITHUB_CLIENT_ID;
+	const clientSecret =
+		provider === 'google' ? c.env.GOOGLE_CLIENT_SECRET : c.env.GITHUB_CLIENT_SECRET;
+	if (!clientId || !clientSecret) {
+		return c.redirect(`${c.env.WEB_URL}/login?error=oauth_unconfigured`);
+	}
 	const redirectUri = `${c.env.API_URL}/auth/oauth/${provider}/callback`;
 
 	// Exchange code for access token
@@ -413,7 +441,7 @@ auth.get('/oauth/:provider/callback', async (c) => {
 	});
 
 	if (!tokenRes.ok) return c.redirect(`${c.env.WEB_URL}/login?error=oauth_token`);
-	const tokenData = await tokenRes.json() as { access_token?: string };
+	const tokenData = (await tokenRes.json()) as { access_token?: string };
 	if (!tokenData.access_token) return c.redirect(`${c.env.WEB_URL}/login?error=oauth_token`);
 
 	// Fetch user profile
@@ -425,39 +453,53 @@ auth.get('/oauth/:provider/callback', async (c) => {
 		},
 	});
 	if (!userRes.ok) return c.redirect(`${c.env.WEB_URL}/login?error=oauth_user`);
-	const profile = await userRes.json() as Record<string, unknown>;
-	const providerSubject = String(
-		(provider === 'google' ? profile['sub'] : profile['id']) ?? '',
-	);
+	const profile = (await userRes.json()) as Record<string, unknown>;
+	const providerSubject = String((provider === 'google' ? profile.sub : profile.id) ?? '');
 	if (!providerSubject) return c.redirect(`${c.env.WEB_URL}/login?error=oauth_subject`);
 
-	const email = (provider === 'google'
-		? (profile['email'] as string)
-		: await (async () => {
-			// GitHub may need separate emails endpoint
-			const em = profile['email'] as string | null;
-			if (em) return em;
-			const emailsRes = await fetch('https://api.github.com/user/emails', {
-				headers: { Authorization: `Bearer ${tokenData.access_token}`, 'User-Agent': 'FlareLens' },
-			});
-			const emails = await emailsRes.json() as Array<{ email: string; primary: boolean; verified: boolean }>;
-			return emails.find((e) => e.primary && e.verified)?.email ?? null;
-		})());
+	const email =
+		provider === 'google'
+			? (profile.email as string)
+			: await (async () => {
+					// GitHub may need separate emails endpoint
+					const em = profile.email as string | null;
+					if (em) return em;
+					const emailsRes = await fetch('https://api.github.com/user/emails', {
+						headers: {
+							Authorization: `Bearer ${tokenData.access_token}`,
+							'User-Agent': 'FlareLens',
+						},
+					});
+					const emails = (await emailsRes.json()) as Array<{
+						email: string;
+						primary: boolean;
+						verified: boolean;
+					}>;
+					return emails.find((e) => e.primary && e.verified)?.email ?? null;
+				})();
 
 	if (!email) return c.redirect(`${c.env.WEB_URL}/login?error=oauth_email`);
 
-	const name = (profile['name'] as string | null) ?? (profile['login'] as string | null) ?? email.split('@')[0];
-	const avatar_url = (profile['picture'] as string | null) ?? (profile['avatar_url'] as string | null) ?? null;
+	const name =
+		(profile.name as string | null) ?? (profile.login as string | null) ?? email.split('@')[0];
+	const avatar_url =
+		(profile.picture as string | null) ?? (profile.avatar_url as string | null) ?? null;
 
 	const { DB, SESSIONS } = c.env;
-	const { UsersRepository, AccountsRepository, TeamMembersRepository } = await import('@flarelens/db');
+	const { UsersRepository, AccountsRepository, TeamMembersRepository } = await import(
+		'@flarelens/db'
+	);
 
 	const usersLookup = new UsersRepository(DB, 'oauth');
 	let user = await usersLookup.findByOAuthIdentity(provider, providerSubject);
 	if (!user) {
 		user = await usersLookup.findByEmail(email);
 		if (user) {
-			if (user.oauth_provider && user.oauth_id && (user.oauth_provider !== provider || user.oauth_id !== providerSubject)) {
+			if (
+				user.oauth_provider &&
+				user.oauth_id &&
+				(user.oauth_provider !== provider || user.oauth_id !== providerSubject)
+			) {
 				return c.redirect(`${c.env.WEB_URL}/login?error=oauth_conflict`);
 			}
 			await usersLookup.updateOAuthIdentity(user.id, {
@@ -484,7 +526,13 @@ auth.get('/oauth/:provider/callback', async (c) => {
 		});
 		if (avatar_url) await usersLookup.updateProfile(userId, { avatar_url });
 		const members = new TeamMembersRepository(DB, accountId);
-		await members.create({ id: newId(), email, role: 'admin', invited_by: userId, user_id: userId });
+		await members.create({
+			id: newId(),
+			email,
+			role: 'admin',
+			invited_by: userId,
+			user_id: userId,
+		});
 		user = await usersLookup.findById(userId);
 	}
 
@@ -492,15 +540,21 @@ auth.get('/oauth/:provider/callback', async (c) => {
 
 	const memberRow = await DB.prepare(
 		"SELECT account_id, role FROM team_members WHERE user_id = ? AND status = 'active' ORDER BY CASE role WHEN 'admin' THEN 0 WHEN 'editor' THEN 1 ELSE 2 END LIMIT 1",
-	).bind(user.id).first<{ account_id: string; role: string }>();
+	)
+		.bind(user.id)
+		.first<{ account_id: string; role: string }>();
 
 	if (!memberRow) return c.redirect(`${c.env.WEB_URL}/login?error=oauth_member`);
 
-	const { cookieHeader } = await createSession(SESSIONS, {
-		user_id: user.id,
-		account_id: memberRow.account_id,
-		role: memberRow.role as Role,
-	}, getRequestHost(c));
+	const { cookieHeader } = await createSession(
+		SESSIONS,
+		{
+			user_id: user.id,
+			account_id: memberRow.account_id,
+			role: memberRow.role as Role,
+		},
+		getRequestHost(c),
+	);
 
 	c.header('Set-Cookie', cookieHeader);
 	return c.redirect(`${c.env.WEB_URL}/dashboard`);
@@ -520,8 +574,8 @@ auth.get('/verify-email', async (c) => {
 	await c.env.CACHE.delete(key);
 
 	const { UsersRepository } = await import('@flarelens/db');
-	const users = new UsersRepository(c.env.DB, 'verify');
-	await c.env.DB.prepare("UPDATE users SET email_verified = 1 WHERE id = ?").bind(userId).run();
+	const _users = new UsersRepository(c.env.DB, 'verify');
+	await c.env.DB.prepare('UPDATE users SET email_verified = 1 WHERE id = ?').bind(userId).run();
 
 	return c.redirect(`${c.env.WEB_URL}/dashboard?verified=1`);
 });

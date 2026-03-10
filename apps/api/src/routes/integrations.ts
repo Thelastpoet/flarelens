@@ -1,18 +1,18 @@
-import { NotFoundError, ValidationError, newId, PLAN_LIMITS } from '@flarelens/shared';
+import { NotFoundError, newId, PLAN_LIMITS, ValidationError } from '@flarelens/shared';
 import {
-	DiscordIntegrationSchema,
-	PagerDutyIntegrationSchema,
-	SlackIntegrationSchema,
-	TeamsIntegrationSchema,
-	WebhookIntegrationSchema,
 	type DiscordIntegrationInput,
+	DiscordIntegrationSchema,
 	type PagerDutyIntegrationInput,
+	PagerDutyIntegrationSchema,
 	type SlackIntegrationInput,
+	SlackIntegrationSchema,
 	type TeamsIntegrationInput,
+	TeamsIntegrationSchema,
 	type WebhookIntegrationInput,
+	WebhookIntegrationSchema,
 } from '@flarelens/shared/schemas/integrations';
 import { Hono } from 'hono';
-import { encryptToken, decryptToken } from '../auth/crypto.js';
+import { decryptToken, encryptToken } from '../auth/crypto.js';
 import { logAudit } from '../middleware/audit.js';
 import type { AppContext } from '../middleware/auth.js';
 import { authMiddleware } from '../middleware/auth.js';
@@ -20,9 +20,9 @@ import { rateLimit } from '../middleware/rate-limit.js';
 import { requireRole } from '../middleware/rbac.js';
 import { reposMiddleware } from '../middleware/repos.js';
 import { validate } from '../middleware/validate.js';
-import { testSlackWebhook } from '../services/alerts/channels/slack.js';
 import { testDiscordWebhook } from '../services/alerts/channels/discord.js';
 import { testPagerDutyIntegration } from '../services/alerts/channels/pagerduty.js';
+import { testSlackWebhook } from '../services/alerts/channels/slack.js';
 import { testTeamsWebhook } from '../services/alerts/channels/teams.js';
 import { testWebhook } from '../services/alerts/channels/webhook.js';
 
@@ -52,7 +52,10 @@ integrations.post(
 		const account = await repos.accounts.findById();
 		const limit = PLAN_LIMITS[account?.plan as keyof typeof PLAN_LIMITS]?.max_integrations ?? 1;
 		const existing = await repos.integrations.list();
-		if (existing.length >= limit) throw new ValidationError(`Plan limit reached: max ${limit} integration${limit === 1 ? '' : 's'}`);
+		if (existing.length >= limit)
+			throw new ValidationError(
+				`Plan limit reached: max ${limit} integration${limit === 1 ? '' : 's'}`,
+			);
 
 		const encryptedUrl = await encryptToken(input.webhook_url, TOKEN_ENCRYPTION_KEY);
 		const integration = await repos.integrations.upsert({
@@ -62,7 +65,12 @@ integrations.post(
 			config: { encrypted_webhook_url: encryptedUrl },
 		});
 
-		await logAudit(c, { action: 'create', entity_type: 'integration', entity_id: integration.id, description: 'Configured Slack integration' });
+		await logAudit(c, {
+			action: 'create',
+			entity_type: 'integration',
+			entity_id: integration.id,
+			description: 'Configured Slack integration',
+		});
 		return c.json({ success: true, id: integration.id }, 201);
 	},
 );
@@ -86,7 +94,12 @@ integrations.post(
 			config: { encrypted_webhook_url: encryptedUrl },
 		});
 
-		await logAudit(c, { action: 'create', entity_type: 'integration', entity_id: integration.id, description: 'Configured Discord integration' });
+		await logAudit(c, {
+			action: 'create',
+			entity_type: 'integration',
+			entity_id: integration.id,
+			description: 'Configured Discord integration',
+		});
 		return c.json({ success: true, id: integration.id }, 201);
 	},
 );
@@ -110,7 +123,12 @@ integrations.post(
 			config: { encrypted_routing_key: encryptedKey, severity_map: input.severity_map },
 		});
 
-		await logAudit(c, { action: 'create', entity_type: 'integration', entity_id: integration.id, description: 'Configured PagerDuty integration' });
+		await logAudit(c, {
+			action: 'create',
+			entity_type: 'integration',
+			entity_id: integration.id,
+			description: 'Configured PagerDuty integration',
+		});
 		return c.json({ success: true, id: integration.id }, 201);
 	},
 );
@@ -134,7 +152,12 @@ integrations.post(
 			config: { encrypted_webhook_url: encryptedUrl },
 		});
 
-		await logAudit(c, { action: 'create', entity_type: 'integration', entity_id: integration.id, description: 'Configured MS Teams integration' });
+		await logAudit(c, {
+			action: 'create',
+			entity_type: 'integration',
+			entity_id: integration.id,
+			description: 'Configured MS Teams integration',
+		});
 		return c.json({ success: true, id: integration.id }, 201);
 	},
 );
@@ -175,7 +198,12 @@ integrations.post(
 			},
 		});
 
-		await logAudit(c, { action: 'create', entity_type: 'integration', entity_id: id, description: `Created webhook "${input.name}"` });
+		await logAudit(c, {
+			action: 'create',
+			entity_type: 'integration',
+			entity_id: id,
+			description: `Created webhook "${input.name}"`,
+		});
 		return c.json({ success: true, id: integration.id }, 201);
 	},
 );
@@ -196,16 +224,25 @@ integrations.patch(
 		if (!existing) throw new NotFoundError('Webhook', id);
 
 		const configUpdates: Record<string, unknown> = {};
-		if (input.url) configUpdates['encrypted_url'] = await encryptToken(input.url, TOKEN_ENCRYPTION_KEY);
-		if (input.secret) configUpdates['encrypted_secret'] = await encryptToken(input.secret, TOKEN_ENCRYPTION_KEY);
-		if (input.headers !== undefined) configUpdates['headers'] = input.headers;
+		if (input.url)
+			configUpdates.encrypted_url = await encryptToken(input.url, TOKEN_ENCRYPTION_KEY);
+		if (input.secret)
+			configUpdates.encrypted_secret = await encryptToken(input.secret, TOKEN_ENCRYPTION_KEY);
+		if (input.headers !== undefined) configUpdates.headers = input.headers;
 
 		await repos.integrations.update(id, {
 			...(input.name && { name: input.name }),
-			...(Object.keys(configUpdates).length > 0 && { config: { ...JSON.parse(existing.config), ...configUpdates } }),
+			...(Object.keys(configUpdates).length > 0 && {
+				config: { ...JSON.parse(existing.config), ...configUpdates },
+			}),
 		});
 
-		await logAudit(c, { action: 'update', entity_type: 'integration', entity_id: id, description: `Updated webhook "${existing.name}"` });
+		await logAudit(c, {
+			action: 'update',
+			entity_type: 'integration',
+			entity_id: id,
+			description: `Updated webhook "${existing.name}"`,
+		});
 		return c.json({ success: true });
 	},
 );
@@ -219,7 +256,12 @@ integrations.delete('/:id', requireRole('admin', 'editor'), rateLimit('writes'),
 	if (!existing) throw new NotFoundError('Integration', id);
 
 	await repos.integrations.delete(id);
-	await logAudit(c, { action: 'delete', entity_type: 'integration', entity_id: id, description: `Deleted ${existing.type} integration "${existing.name}"` });
+	await logAudit(c, {
+		action: 'delete',
+		entity_type: 'integration',
+		entity_id: id,
+		description: `Deleted ${existing.type} integration "${existing.name}"`,
+	});
 	return c.json({ success: true });
 });
 
@@ -261,9 +303,15 @@ integrations.post('/:type/test', requireRole('admin', 'editor'), rateLimit('writ
 			if (!webhookId) throw new ValidationError('Provide ?id= for the webhook to test');
 			const integration = await repos.integrations.findById(webhookId);
 			if (!integration) throw new NotFoundError('Webhook', webhookId);
-			const cfg = JSON.parse(integration.config) as { encrypted_url: string; encrypted_secret?: string; headers?: Record<string, string> };
+			const cfg = JSON.parse(integration.config) as {
+				encrypted_url: string;
+				encrypted_secret?: string;
+				headers?: Record<string, string>;
+			};
 			const url = await decryptToken(cfg.encrypted_url, TOKEN_ENCRYPTION_KEY);
-			const secret = cfg.encrypted_secret ? await decryptToken(cfg.encrypted_secret, TOKEN_ENCRYPTION_KEY) : undefined;
+			const secret = cfg.encrypted_secret
+				? await decryptToken(cfg.encrypted_secret, TOKEN_ENCRYPTION_KEY)
+				: undefined;
 			await testWebhook({ url, secret, headers: cfg.headers });
 		} else {
 			throw new ValidationError(`Unknown integration type: ${type}`);
@@ -274,8 +322,9 @@ integrations.post('/:type/test', requireRole('admin', 'editor'), rateLimit('writ
 	}
 
 	await repos.integrations.markUsed(
-		(type === 'webhook' && webhookId) ? webhookId :
-		(await repos.integrations.findByType(type))?.id ?? '',
+		type === 'webhook' && webhookId
+			? webhookId
+			: ((await repos.integrations.findByType(type))?.id ?? ''),
 	);
 
 	return c.json({ success: true });

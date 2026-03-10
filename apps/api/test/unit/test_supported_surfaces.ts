@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { METRIC_NAMES } from '@flarelens/shared';
 import { CreateMitigationSchema } from '@flarelens/shared/schemas/mitigations';
 import { CreateRuleSchema } from '@flarelens/shared/schemas/rules';
-import { METRIC_NAMES } from '@flarelens/shared';
+import { describe, expect, it } from 'vitest';
 
 describe('supported backend surfaces', () => {
 	it('exposes only implemented detection metrics for rules', () => {

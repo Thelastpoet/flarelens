@@ -1,16 +1,16 @@
 import type { Anomaly } from '@flarelens/shared';
 import { newId } from '@flarelens/shared';
-import type { Repos } from '../../middleware/repos.js';
-import type { Env } from '../../env.js';
 import { decryptToken } from '../../auth/crypto.js';
-import { isDuplicate, markSent } from './dedup.js';
-import { sendInAppNotification } from './channels/in-app.js';
-import { sendEmailAlert } from './channels/email.js';
-import { sendSlackAlert } from './channels/slack.js';
+import type { Env } from '../../env.js';
+import type { Repos } from '../../middleware/repos.js';
 import { sendDiscordAlert } from './channels/discord.js';
+import { sendEmailAlert } from './channels/email.js';
+import { sendInAppNotification } from './channels/in-app.js';
 import { sendPagerDutyAlert } from './channels/pagerduty.js';
+import { sendSlackAlert } from './channels/slack.js';
 import { sendTeamsAlert } from './channels/teams.js';
 import { sendWebhookAlert } from './channels/webhook.js';
+import { isDuplicate, markSent } from './dedup.js';
 
 export async function dispatchAlert(anomaly: Anomaly, repos: Repos, env: Env): Promise<void> {
 	// 1. Dedup check
@@ -35,7 +35,10 @@ export async function dispatchAlert(anomaly: Anomaly, repos: Repos, env: Env): P
 		const adminMember = members.find((m) => m.role === 'admin' && m.status === 'active');
 		if (adminMember?.user_id) {
 			const user = await repos.users.findById(adminMember.user_id);
-			if (user) { adminEmail = user.email; adminName = user.name; }
+			if (user) {
+				adminEmail = user.email;
+				adminName = user.name;
+			}
 		}
 	} catch (err) {
 		console.error('[Dispatcher] Failed to fetch admin user:', err);
@@ -69,32 +72,49 @@ export async function dispatchAlert(anomaly: Anomaly, repos: Repos, env: Env): P
 
 					switch (integration.type) {
 						case 'slack': {
-							const url = await decryptToken(cfg['encrypted_webhook_url'] as string, env.TOKEN_ENCRYPTION_KEY);
+							const url = await decryptToken(
+								cfg.encrypted_webhook_url as string,
+								env.TOKEN_ENCRYPTION_KEY,
+							);
 							await sendSlackAlert(url, anomaly);
 							break;
 						}
 						case 'discord': {
-							const url = await decryptToken(cfg['encrypted_webhook_url'] as string, env.TOKEN_ENCRYPTION_KEY);
+							const url = await decryptToken(
+								cfg.encrypted_webhook_url as string,
+								env.TOKEN_ENCRYPTION_KEY,
+							);
 							await sendDiscordAlert(url, anomaly);
 							break;
 						}
 						case 'pagerduty': {
-							const key = await decryptToken(cfg['encrypted_routing_key'] as string, env.TOKEN_ENCRYPTION_KEY);
-							const severityMap = cfg['severity_map'] as Record<string, 'info' | 'warning' | 'error' | 'critical'> | undefined;
+							const key = await decryptToken(
+								cfg.encrypted_routing_key as string,
+								env.TOKEN_ENCRYPTION_KEY,
+							);
+							const severityMap = cfg.severity_map as
+								| Record<string, 'info' | 'warning' | 'error' | 'critical'>
+								| undefined;
 							await sendPagerDutyAlert(key, anomaly, severityMap);
 							break;
 						}
 						case 'teams': {
-							const url = await decryptToken(cfg['encrypted_webhook_url'] as string, env.TOKEN_ENCRYPTION_KEY);
+							const url = await decryptToken(
+								cfg.encrypted_webhook_url as string,
+								env.TOKEN_ENCRYPTION_KEY,
+							);
 							await sendTeamsAlert(url, anomaly);
 							break;
 						}
 						case 'webhook': {
-							const url = await decryptToken(cfg['encrypted_url'] as string, env.TOKEN_ENCRYPTION_KEY);
-							const secret = cfg['encrypted_secret']
-								? await decryptToken(cfg['encrypted_secret'] as string, env.TOKEN_ENCRYPTION_KEY)
+							const url = await decryptToken(cfg.encrypted_url as string, env.TOKEN_ENCRYPTION_KEY);
+							const secret = cfg.encrypted_secret
+								? await decryptToken(cfg.encrypted_secret as string, env.TOKEN_ENCRYPTION_KEY)
 								: undefined;
-							await sendWebhookAlert({ url, secret, headers: cfg['headers'] as Record<string, string> | undefined }, anomaly);
+							await sendWebhookAlert(
+								{ url, secret, headers: cfg.headers as Record<string, string> | undefined },
+								anomaly,
+							);
 							break;
 						}
 					}
@@ -136,7 +156,9 @@ export async function dispatchAlert(anomaly: Anomaly, repos: Repos, env: Env): P
 		try {
 			const rule = await repos.rules.findById(anomaly.rule_id);
 			if (rule) notifyFrequency = rule.notify_frequency as 'instant' | 'hourly' | 'daily';
-		} catch { /* use default */ }
+		} catch {
+			/* use default */
+		}
 	}
 	await markSent(
 		env,

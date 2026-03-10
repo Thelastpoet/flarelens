@@ -1,16 +1,13 @@
+import { type MitigationActionType, ValidationError } from '@flarelens/shared';
 import {
-	ValidationError,
-	type MitigationActionType,
-} from '@flarelens/shared';
-import {
-	PauseWorkerMitigationConfigSchema,
-	RateLimitMitigationConfigSchema,
-	UnderAttackMitigationConfigSchema,
 	type PauseWorkerMitigationConfig,
+	PauseWorkerMitigationConfigSchema,
 	type RateLimitMitigationConfig,
+	RateLimitMitigationConfigSchema,
 	type UnderAttackMitigationConfig,
+	UnderAttackMitigationConfigSchema,
 } from '@flarelens/shared/schemas/mitigations';
-import { CloudflareClient } from '../cloudflare/client.js';
+import type { CloudflareClient } from '../cloudflare/client.js';
 
 export type MitigationActionConfig =
 	| RateLimitMitigationConfig

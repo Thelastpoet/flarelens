@@ -9,7 +9,6 @@ import type { Env } from '../env.js';
 export class AccountLiveFeed implements DurableObject {
 	private sessions: Set<WebSocket> = new Set();
 	private state: DurableObjectState;
-	private env: Env;
 
 	constructor(state: DurableObjectState, env: Env) {
 		this.state = state;

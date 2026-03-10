@@ -22,10 +22,18 @@ class ToastStore {
 		this.toasts = this.toasts.filter((t) => t.id !== id);
 	}
 
-	success(message: string, duration?: number) { this.add('success', message, duration); }
-	error(message: string, duration?: number) { this.add('error', message, duration); }
-	info(message: string, duration?: number) { this.add('info', message, duration); }
-	warning(message: string, duration?: number) { this.add('warning', message, duration); }
+	success(message: string, duration?: number) {
+		this.add('success', message, duration);
+	}
+	error(message: string, duration?: number) {
+		this.add('error', message, duration);
+	}
+	info(message: string, duration?: number) {
+		this.add('info', message, duration);
+	}
+	warning(message: string, duration?: number) {
+		this.add('warning', message, duration);
+	}
 }
 
 export const toast = new ToastStore();

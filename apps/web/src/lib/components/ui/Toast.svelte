@@ -2,10 +2,30 @@
 import { toast } from '$lib/stores/toast.svelte.js';
 
 const typeConfig = {
-	success: { icon: 'check_circle', bg: 'bg-green-50 border-green-200', text: 'text-green-800', icon_cls: 'text-green-500' },
-	error:   { icon: 'error', bg: 'bg-red-50 border-red-200', text: 'text-red-800', icon_cls: 'text-red-500' },
-	warning: { icon: 'warning', bg: 'bg-yellow-50 border-yellow-200', text: 'text-yellow-800', icon_cls: 'text-yellow-500' },
-	info:    { icon: 'info', bg: 'bg-blue-50 border-blue-200', text: 'text-blue-800', icon_cls: 'text-blue-500' },
+	success: {
+		icon: 'check_circle',
+		bg: 'bg-green-50 border-green-200',
+		text: 'text-green-800',
+		icon_cls: 'text-green-500',
+	},
+	error: {
+		icon: 'error',
+		bg: 'bg-red-50 border-red-200',
+		text: 'text-red-800',
+		icon_cls: 'text-red-500',
+	},
+	warning: {
+		icon: 'warning',
+		bg: 'bg-yellow-50 border-yellow-200',
+		text: 'text-yellow-800',
+		icon_cls: 'text-yellow-500',
+	},
+	info: {
+		icon: 'info',
+		bg: 'bg-blue-50 border-blue-200',
+		text: 'text-blue-800',
+		icon_cls: 'text-blue-500',
+	},
 };
 </script>
 

@@ -79,7 +79,7 @@ export class BillingSnapshotsRepository extends BaseRepository {
 		);
 		if (!account?.settings) return null;
 		const settings = JSON.parse(account.settings) as Record<string, unknown>;
-		return typeof settings['budget_limit'] === 'number' ? (settings['budget_limit'] as number) : null;
+		return typeof settings.budget_limit === 'number' ? (settings.budget_limit as number) : null;
 	}
 
 	async setBudget(limit: number | null): Promise<void> {
@@ -101,7 +101,10 @@ export class BillingSnapshotsRepository extends BaseRepository {
 		);
 	}
 
-	async listCurrentPeriodEstimatedSnapshots(from: string, to: string): Promise<Array<{ estimated_cost: number; timestamp: string }>> {
+	async listCurrentPeriodEstimatedSnapshots(
+		from: string,
+		to: string,
+	): Promise<Array<{ estimated_cost: number; timestamp: string }>> {
 		return this.all<{ estimated_cost: number; timestamp: string }>(
 			`SELECT estimated_cost, timestamp
        FROM zone_snapshots

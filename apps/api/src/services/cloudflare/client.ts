@@ -175,10 +175,7 @@ export class CloudflareClient {
 	private requireAccountId(accountId?: string | null): string {
 		const resolved = accountId ?? this.accountId;
 		if (!resolved) {
-			throw new ExternalServiceError(
-				'Cloudflare',
-				'Account ID is required for this operation',
-			);
+			throw new ExternalServiceError('Cloudflare', 'Account ID is required for this operation');
 		}
 		return resolved;
 	}
@@ -228,13 +225,16 @@ export class CloudflareClient {
 		});
 	}
 
-	async createRateLimitRule(zoneId: string, opts: {
-		threshold: number;
-		period: number;
-		actionMode: 'ban' | 'challenge' | 'js_challenge' | 'managed_challenge';
-		urlPattern?: string;
-		mitigationTimeout?: number;
-	}): Promise<string> {
+	async createRateLimitRule(
+		zoneId: string,
+		opts: {
+			threshold: number;
+			period: number;
+			actionMode: 'ban' | 'challenge' | 'js_challenge' | 'managed_challenge';
+			urlPattern?: string;
+			mitigationTimeout?: number;
+		},
+	): Promise<string> {
 		const action: Record<string, unknown> = { mode: opts.actionMode };
 		if (opts.actionMode === 'ban' && opts.mitigationTimeout) {
 			action.timeout = opts.mitigationTimeout;

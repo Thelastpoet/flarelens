@@ -11,16 +11,18 @@ interface Contributor {
 let { contributors }: { contributors: Contributor[] } = $props();
 
 const typeConfig: Record<string, { label: string; icon: string }> = {
-	endpoint:   { label: 'Top Endpoints',   icon: 'link' },
-	user_agent: { label: 'User Agents',     icon: 'devices' },
-	country:    { label: 'Countries',        icon: 'public' },
-	asn:        { label: 'ASNs / Networks',  icon: 'router' },
+	endpoint: { label: 'Top Endpoints', icon: 'link' },
+	user_agent: { label: 'User Agents', icon: 'devices' },
+	country: { label: 'Countries', icon: 'public' },
+	asn: { label: 'ASNs / Networks', icon: 'router' },
 };
 
 const grouped = $derived(
 	Object.entries(
 		contributors.reduce<Record<string, Contributor[]>>((acc, c) => {
-			(acc[c.type] ??= []).push(c);
+			const group = acc[c.type] ?? [];
+			group.push(c);
+			acc[c.type] = group;
 			return acc;
 		}, {}),
 	),
@@ -32,7 +34,7 @@ function toggle(type: string) {
 }
 
 function formatChange(pct: number): string {
-	return (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+	return `${(pct >= 0 ? '+' : '') + pct.toFixed(1)}%`;
 }
 </script>
 

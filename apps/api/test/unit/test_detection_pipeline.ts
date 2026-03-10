@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { runDetection } from '../../src/services/detection/index.js';
 import type { Env } from '../../src/env.js';
+import { runDetection } from '../../src/services/detection/index.js';
 
 describe('detection pipeline', () => {
 	it('creates anomalies for supported non-request zone metrics', async () => {
@@ -47,7 +47,9 @@ describe('detection pipeline', () => {
 				findVerifiedByAccount: vi.fn().mockResolvedValue([]),
 			},
 			accounts: {
-				findById: vi.fn().mockResolvedValue({ settings: JSON.stringify({ auto_mitigation_enabled: false }) }),
+				findById: vi
+					.fn()
+					.mockResolvedValue({ settings: JSON.stringify({ auto_mitigation_enabled: false }) }),
 			},
 			mitigations: {
 				findTriggerable: vi.fn(),

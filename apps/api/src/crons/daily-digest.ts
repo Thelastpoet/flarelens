@@ -1,6 +1,6 @@
-import type { Env } from '../env.js';
 import { AccountsRepository, TeamMembersRepository, UsersRepository } from '@flarelens/db';
 import { Resend } from 'resend';
+import type { Env } from '../env.js';
 
 export async function runDailyDigest(env: Env): Promise<void> {
 	if (!env.RESEND_API_KEY) return;
@@ -20,23 +20,37 @@ export async function runDailyDigest(env: Env): Promise<void> {
 	}
 }
 
-async function sendDigest(accountId: string, DB: D1Database, resend: Resend, webUrl: string): Promise<void> {
+async function sendDigest(
+	accountId: string,
+	DB: D1Database,
+	resend: Resend,
+	webUrl: string,
+): Promise<void> {
 	const accounts = new AccountsRepository(DB, accountId);
 	const account = await accounts.findById();
 	if (!account) return;
 
-	const settings = account.settings ? JSON.parse(account.settings) as Record<string, unknown> : {};
-	if (!settings['digest_enabled']) return;
+	const settings = account.settings
+		? (JSON.parse(account.settings) as Record<string, unknown>)
+		: {};
+	if (!settings.digest_enabled) return;
 
 	const members = new TeamMembersRepository(DB, accountId);
 	const users = new UsersRepository(DB, accountId);
 
 	const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-	const recentAnomalies = (await DB.prepare(
-		'SELECT * FROM anomalies WHERE account_id = ? AND detected_at >= ? ORDER BY detected_at DESC LIMIT 100',
-	).bind(accountId, since).all<{ severity: string; metric: string; resource_id: string; detected_at: string }>()).results ?? [];
+	const recentAnomalies =
+		(
+			await DB.prepare(
+				'SELECT * FROM anomalies WHERE account_id = ? AND detected_at >= ? ORDER BY detected_at DESC LIMIT 100',
+			)
+				.bind(accountId, since)
+				.all<{ severity: string; metric: string; resource_id: string; detected_at: string }>()
+		).results ?? [];
 
-	const adminMember = (await members.list()).find((m) => m.role === 'admin' && m.status === 'active');
+	const adminMember = (await members.list()).find(
+		(m) => m.role === 'admin' && m.status === 'active',
+	);
 	if (!adminMember?.user_id) return;
 	const adminUser = await users.findById(adminMember.user_id);
 	if (!adminUser) return;
@@ -45,9 +59,13 @@ async function sendDigest(accountId: string, DB: D1Database, resend: Resend, web
 	const highCount = recentAnomalies.filter((a) => a.severity === 'high').length;
 	const warningCount = recentAnomalies.filter((a) => a.severity === 'warning').length;
 
-	const rows = recentAnomalies.slice(0, 10).map((a) =>
-		`<tr><td>${a.severity}</td><td>${a.metric}</td><td>${a.resource_id}</td><td>${new Date(a.detected_at).toLocaleString()}</td></tr>`
-	).join('');
+	const rows = recentAnomalies
+		.slice(0, 10)
+		.map(
+			(a) =>
+				`<tr><td>${a.severity}</td><td>${a.metric}</td><td>${a.resource_id}</td><td>${new Date(a.detected_at).toLocaleString()}</td></tr>`,
+		)
+		.join('');
 
 	const html = `
 		<h2>FlareLens Daily Digest — ${new Date().toDateString()}</h2>
@@ -58,11 +76,15 @@ async function sendDigest(accountId: string, DB: D1Database, resend: Resend, web
 			<li>High: ${highCount}</li>
 			<li>Warning: ${warningCount}</li>
 		</ul>
-		${recentAnomalies.length > 0 ? `
+		${
+			recentAnomalies.length > 0
+				? `
 		<table border="1" cellpadding="4" cellspacing="0">
 			<tr><th>Severity</th><th>Metric</th><th>Resource</th><th>Detected</th></tr>
 			${rows}
-		</table>` : '<p>No anomalies detected in the last 24 hours. 🎉</p>'}
+		</table>`
+				: '<p>No anomalies detected in the last 24 hours. 🎉</p>'
+		}
 		<p><a href="${webUrl}/dashboard">View Dashboard</a></p>
 	`;
 

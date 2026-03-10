@@ -27,8 +27,7 @@ notifications.get('/', rateLimit('reads'), async (c) => {
 	if (!parsed.success) throw new ValidationError('Validation failed', parsed.error.issues);
 	const { read: readParam, page, per_page } = parsed.data;
 
-	const read =
-		readParam === 'true' ? true : readParam === 'false' ? false : undefined;
+	const read = readParam === 'true' ? true : readParam === 'false' ? false : undefined;
 
 	const result = await repos.notifications.list(session.user_id, {
 		read,

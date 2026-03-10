@@ -1,5 +1,7 @@
 <script lang="ts">
-interface Props { count: number; }
+interface Props {
+	count: number;
+}
 let { count = 0 }: Props = $props();
 </script>
 

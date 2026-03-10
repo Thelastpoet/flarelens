@@ -37,8 +37,7 @@ export async function sendTeamsAlert(webhookUrl: string, anomaly: Anomaly): Prom
 								{ title: 'Current Value', value: String(anomaly.current_value) },
 								{
 									title: 'Baseline',
-									value:
-										anomaly.baseline_value != null ? String(anomaly.baseline_value) : '—',
+									value: anomaly.baseline_value != null ? String(anomaly.baseline_value) : '—',
 								},
 								{ title: 'Resource', value: anomaly.resource_id },
 								{ title: 'Detected At', value: `${detectedAt} UTC` },

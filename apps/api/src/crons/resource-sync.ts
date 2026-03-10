@@ -1,8 +1,8 @@
-import type { Env } from '../env.js';
 import { CfTokensRepository, ResourcesRepository } from '@flarelens/db';
-import { CloudflareClient } from '../services/cloudflare/client.js';
-import { decryptToken } from '../auth/crypto.js';
 import { newId } from '@flarelens/shared';
+import { decryptToken } from '../auth/crypto.js';
+import type { Env } from '../env.js';
+import { CloudflareClient } from '../services/cloudflare/client.js';
 
 export async function runResourceSync(env: Env): Promise<void> {
 	const DB = (env as unknown as { DB: D1Database }).DB;
@@ -41,27 +41,62 @@ async function syncAccount(accountId: string, DB: D1Database, env: Env): Promise
 
 	if (zones.status === 'fulfilled') {
 		for (const z of zones.value) {
-			await resources.upsertFromCF({ id: newId(), cf_token_id: token.id, cf_resource_id: z.id, type: 'zone', name: z.name, metadata: { status: z.status } });
+			await resources.upsertFromCF({
+				id: newId(),
+				cf_token_id: token.id,
+				cf_resource_id: z.id,
+				type: 'zone',
+				name: z.name,
+				metadata: { status: z.status },
+			});
 		}
 	}
 	if (workers.status === 'fulfilled') {
 		for (const w of workers.value) {
-			await resources.upsertFromCF({ id: newId(), cf_token_id: token.id, cf_resource_id: w.id, type: 'worker', name: w.id, metadata: {} });
+			await resources.upsertFromCF({
+				id: newId(),
+				cf_token_id: token.id,
+				cf_resource_id: w.id,
+				type: 'worker',
+				name: w.id,
+				metadata: {},
+			});
 		}
 	}
 	if (r2Buckets.status === 'fulfilled') {
 		for (const b of r2Buckets.value) {
-			await resources.upsertFromCF({ id: newId(), cf_token_id: token.id, cf_resource_id: b.name, type: 'r2_bucket', name: b.name, metadata: {} });
+			await resources.upsertFromCF({
+				id: newId(),
+				cf_token_id: token.id,
+				cf_resource_id: b.name,
+				type: 'r2_bucket',
+				name: b.name,
+				metadata: {},
+			});
 		}
 	}
 	if (kvNamespaces.status === 'fulfilled') {
 		for (const ns of kvNamespaces.value) {
-			await resources.upsertFromCF({ id: newId(), cf_token_id: token.id, cf_resource_id: ns.id, type: 'kv_namespace', name: ns.title, metadata: {} });
+			await resources.upsertFromCF({
+				id: newId(),
+				cf_token_id: token.id,
+				cf_resource_id: ns.id,
+				type: 'kv_namespace',
+				name: ns.title,
+				metadata: {},
+			});
 		}
 	}
 	if (d1Databases.status === 'fulfilled') {
 		for (const db of d1Databases.value) {
-			await resources.upsertFromCF({ id: newId(), cf_token_id: token.id, cf_resource_id: db.uuid, type: 'd1_database', name: db.name, metadata: {} });
+			await resources.upsertFromCF({
+				id: newId(),
+				cf_token_id: token.id,
+				cf_resource_id: db.uuid,
+				type: 'd1_database',
+				name: db.name,
+				metadata: {},
+			});
 		}
 	}
 

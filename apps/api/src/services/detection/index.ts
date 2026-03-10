@@ -1,13 +1,13 @@
 import type { AccountSettings, Severity } from '@flarelens/shared';
 import { newId } from '@flarelens/shared';
-import type { Repos } from '../../middleware/repos.js';
-import type { Env } from '../../env.js';
 import { decryptToken } from '../../auth/crypto.js';
+import type { Env } from '../../env.js';
+import type { Repos } from '../../middleware/repos.js';
 import { CloudflareClient } from '../cloudflare/client.js';
-import { evaluateThresholds } from './threshold.js';
-import { evaluateBaseline } from './baseline.js';
-import { evaluateVelocity } from './velocity.js';
 import { analyzeAttribution } from './attribution.js';
+import { evaluateBaseline } from './baseline.js';
+import { evaluateThresholds } from './threshold.js';
+import { evaluateVelocity } from './velocity.js';
 
 export interface DetectionInput {
 	accountId: string;
@@ -21,7 +21,9 @@ export interface DetectionInput {
 	to: Date;
 }
 
-function highestSeverity(severities: Array<Severity | 'normal' | null | undefined>): Severity | null {
+function highestSeverity(
+	severities: Array<Severity | 'normal' | null | undefined>,
+): Severity | null {
 	const order: Record<string, number> = { critical: 3, high: 2, warning: 1, normal: 0 };
 	let best: Severity | null = null;
 	let bestScore = -1;
@@ -38,13 +40,18 @@ function highestSeverity(severities: Array<Severity | 'normal' | null | undefine
 	return best;
 }
 
-export async function runDetection(
-	input: DetectionInput,
-	repos: Repos,
-	env: Env,
-): Promise<void> {
-	const { accountId, resourceId, resourceType, zoneId, metric, currentValue, recentValues, from, to } =
-		input;
+export async function runDetection(input: DetectionInput, repos: Repos, env: Env): Promise<void> {
+	const {
+		accountId,
+		resourceId,
+		resourceType,
+		zoneId,
+		metric,
+		currentValue,
+		recentValues,
+		from,
+		to,
+	} = input;
 
 	// 1. Get enabled rules for this resource type + metric
 	const allRules = await repos.rules.findEnabledByAccount();
@@ -86,7 +93,12 @@ export async function runDetection(
 	const topSeverity = highestSeverity(severityCandidates);
 
 	// If nothing triggered, exit early
-	if (!topSeverity && triggeredThresholds.length === 0 && !baselineResult?.severity && !velocityResult?.severity) {
+	if (
+		!topSeverity &&
+		triggeredThresholds.length === 0 &&
+		!baselineResult?.severity &&
+		!velocityResult?.severity
+	) {
 		return;
 	}
 
@@ -174,7 +186,11 @@ export async function runDetection(
 
 		const activeMitigations = await repos.mitigations.findTriggerable();
 		for (const m of activeMitigations) {
-			const condition = JSON.parse(m.trigger_condition) as { metric: string; operator: string; threshold: number };
+			const condition = JSON.parse(m.trigger_condition) as {
+				metric: string;
+				operator: string;
+				threshold: number;
+			};
 			if (condition.metric !== metric) continue;
 			const triggered =
 				(condition.operator === 'gt' && currentValue > condition.threshold) ||

@@ -15,8 +15,8 @@ import {
 	UsersRepository,
 	ZoneSnapshotsRepository,
 } from '@flarelens/db';
-import type { Repos } from '../middleware/repos.js';
 import type { Env } from '../env.js';
+import type { Repos } from '../middleware/repos.js';
 import { runDetection } from '../services/detection/index.js';
 
 interface AnomalyCheckMessage {

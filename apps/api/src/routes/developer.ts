@@ -1,6 +1,6 @@
 import { NotFoundError, newId } from '@flarelens/shared';
-import { z } from 'zod';
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { logAudit } from '../middleware/audit.js';
 import type { AppContext } from '../middleware/auth.js';
 import { authMiddleware } from '../middleware/auth.js';
@@ -45,9 +45,17 @@ developer.get('/tokens', rateLimit('reads'), async (c) => {
 developer.post(
 	'/tokens',
 	rateLimit('writes'),
-	validate(z.object({ name: z.string().min(1).max(100), expires_in_days: z.number().int().positive().optional() })),
+	validate(
+		z.object({
+			name: z.string().min(1).max(100),
+			expires_in_days: z.number().int().positive().optional(),
+		}),
+	),
 	async (c) => {
-		const { name, expires_in_days } = c.get('validatedBody') as { name: string; expires_in_days?: number };
+		const { name, expires_in_days } = c.get('validatedBody') as {
+			name: string;
+			expires_in_days?: number;
+		};
 		const repos = c.get('repos');
 		const session = c.get('session');
 

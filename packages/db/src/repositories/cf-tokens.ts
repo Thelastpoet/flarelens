@@ -27,7 +27,9 @@ export class CfTokensRepository extends BaseRepository {
 		);
 	}
 
-	async findVerifiedByAccount(requiredCapabilities: readonly CfCapability[] = []): Promise<CfToken[]> {
+	async findVerifiedByAccount(
+		requiredCapabilities: readonly CfCapability[] = [],
+	): Promise<CfToken[]> {
 		const rows = await this.all<CfToken>(
 			`SELECT * FROM cf_tokens
        WHERE account_id = ?

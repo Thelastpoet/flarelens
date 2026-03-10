@@ -1,5 +1,5 @@
-import type { Env } from '../../src/env.js';
 import { describe, expect, it, vi } from 'vitest';
+import type { Env } from '../../src/env.js';
 import { runDetection } from '../../src/services/detection/index.js';
 
 describe('detection auto-mitigation gate', () => {

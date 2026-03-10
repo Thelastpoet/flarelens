@@ -283,7 +283,7 @@ export class AnalyticsService {
 	// getTraffic
 	// -------------------------------------------------------------------------
 
-async getTraffic(zoneId?: string, from?: string, to?: string): Promise<TrafficData> {
+	async getTraffic(zoneId?: string, from?: string, to?: string): Promise<TrafficData> {
 		const range = parseDateRange(from, to);
 		const empty: TrafficData = {
 			points: [],
@@ -545,7 +545,12 @@ async getTraffic(zoneId?: string, from?: string, to?: string): Promise<TrafficDa
 		zoneId?: string,
 		from?: string,
 		to?: string,
-	): Promise<{ countries: GeoTrafficItem[]; from: string; to: string; source: 'graphql_live' | 'stored_snapshots' }> {
+	): Promise<{
+		countries: GeoTrafficItem[];
+		from: string;
+		to: string;
+		source: 'graphql_live' | 'stored_snapshots';
+	}> {
 		const range = parseDateRange(from, to);
 
 		try {

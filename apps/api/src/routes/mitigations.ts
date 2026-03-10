@@ -1,24 +1,24 @@
+import { NotFoundError, newId, ValidationError } from '@flarelens/shared';
 import {
-	CreateMitigationSchema,
-	TriggerMitigationSchema,
-	UpdateMitigationSchema,
 	type CreateMitigationInput,
+	CreateMitigationSchema,
 	type TriggerMitigationInput,
+	TriggerMitigationSchema,
 	type UpdateMitigationInput,
+	UpdateMitigationSchema,
 } from '@flarelens/shared/schemas/mitigations';
-import { NotFoundError, ValidationError, newId } from '@flarelens/shared';
 import { Hono } from 'hono';
-import { validate } from '../middleware/validate.js';
+import { decryptToken } from '../auth/crypto.js';
 import { logAudit } from '../middleware/audit.js';
 import type { AppContext } from '../middleware/auth.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 import { requireRole } from '../middleware/rbac.js';
 import { reposMiddleware } from '../middleware/repos.js';
-import { decryptToken } from '../auth/crypto.js';
+import { validate } from '../middleware/validate.js';
 import { CloudflareClient } from '../services/cloudflare/client.js';
-import { executeMitigation } from '../services/mitigation/executor.js';
 import type { ActionType, MitigationActionConfig } from '../services/mitigation/executor.js';
+import { executeMitigation } from '../services/mitigation/executor.js';
 
 const mitigations = new Hono<AppContext>();
 mitigations.use('*', authMiddleware, reposMiddleware);
@@ -53,7 +53,12 @@ mitigations.post(
 			created_by: session.user_id,
 		});
 
-		await logAudit(c, { action: 'create', entity_type: 'mitigation', entity_id: id, description: `Created mitigation rule "${input.name}"` });
+		await logAudit(c, {
+			action: 'create',
+			entity_type: 'mitigation',
+			entity_id: id,
+			description: `Created mitigation rule "${input.name}"`,
+		});
 		return c.json({ mitigation }, 201);
 	},
 );
@@ -79,7 +84,12 @@ mitigations.patch(
 			...(input.resource_id !== undefined && { resource_id: input.resource_id ?? null }),
 		});
 
-		await logAudit(c, { action: 'update', entity_type: 'mitigation', entity_id: id, description: `Updated mitigation "${existing.name}"` });
+		await logAudit(c, {
+			action: 'update',
+			entity_type: 'mitigation',
+			entity_id: id,
+			description: `Updated mitigation "${existing.name}"`,
+		});
 		return c.json({ success: true });
 	},
 );
@@ -95,7 +105,12 @@ mitigations.patch('/:id/toggle', requireRole('admin', 'editor'), rateLimit('writ
 	const newEnabled = !existing.enabled;
 	await repos.mitigations.toggle(id, newEnabled);
 
-	await logAudit(c, { action: 'update', entity_type: 'mitigation', entity_id: id, description: `${newEnabled ? 'Enabled' : 'Disabled'} mitigation "${existing.name}"` });
+	await logAudit(c, {
+		action: 'update',
+		entity_type: 'mitigation',
+		entity_id: id,
+		description: `${newEnabled ? 'Enabled' : 'Disabled'} mitigation "${existing.name}"`,
+	});
 	return c.json({ success: true, enabled: newEnabled });
 });
 
@@ -108,7 +123,12 @@ mitigations.delete('/:id', requireRole('admin', 'editor'), rateLimit('writes'), 
 	if (!existing) throw new NotFoundError('Mitigation', id);
 
 	await repos.mitigations.delete(id);
-	await logAudit(c, { action: 'delete', entity_type: 'mitigation', entity_id: id, description: `Deleted mitigation "${existing.name}"` });
+	await logAudit(c, {
+		action: 'delete',
+		entity_type: 'mitigation',
+		entity_id: id,
+		description: `Deleted mitigation "${existing.name}"`,
+	});
 	return c.json({ success: true });
 });
 
@@ -126,13 +146,18 @@ mitigations.post(
 		const mitigation = await repos.mitigations.findById(id);
 		if (!mitigation) throw new NotFoundError('Mitigation', id);
 		if (input.dry_run === false && input.confirm !== true) {
-			throw new ValidationError('Manual mitigation execution requires confirm=true when dry_run is false');
+			throw new ValidationError(
+				'Manual mitigation execution requires confirm=true when dry_run is false',
+			);
 		}
 
 		const cfTokens = await repos.cfTokens.findVerifiedByAccount();
 		if (!cfTokens.length) {
 			return c.json(
-				{ success: false, detail: 'No verified Cloudflare token is available for mitigation execution' },
+				{
+					success: false,
+					detail: 'No verified Cloudflare token is available for mitigation execution',
+				},
 				422,
 			);
 		}
