@@ -102,6 +102,7 @@ This file tracks the frontend work required to replace mock data with live backe
 - The developer page is now backend-backed; the UI explicitly documents that generated developer tokens are managed inventory and not an active public bearer-auth API surface
 - Dashboard and analytics pages are now backend-backed with honest empty-state handling; remaining quality work is primarily accessibility and a few local-only success screens
 - The onboarding success page now uses real account/resource summary data and no longer ships the fake invite modal
+- Dialog semantics (`role="dialog"`, `aria-modal`, label associations) have been added to the major rule/team/developer/integration/mitigation modals, but full focus-management review is still open
 - The frontend currently passes `pnpm --filter web check`, so the main remaining quality issues are product-level and accessibility-level rather than compiler errors
 - Most management pages are now backend-backed; the remaining unchecked work is concentrated in anomaly-state review plus cross-page accessibility and cleanup
 - `onboarding/connect` now matches the current backend token contract (`{ label, token }`)

@@ -315,9 +315,9 @@
       class="absolute inset-0 bg-black/30 backdrop-blur-[1px]"
       onclick={() => showInviteModal = false}
     ></button>
-    <div class="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+    <div role="dialog" aria-modal="true" aria-labelledby="team-invite-title" class="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
       <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-slate-900">Invite Member</h2>
+        <h2 id="team-invite-title" class="text-xl font-bold text-slate-900">Invite Member</h2>
         <button
           type="button"
           class="rounded p-1 text-slate-400 hover:text-slate-600"

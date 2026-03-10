@@ -281,9 +281,9 @@ Use the authenticated app routes for live management today:
 {#if showTokenModal}
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <button type="button" class="absolute inset-0 bg-black/30" aria-label="Close token modal" onclick={() => showTokenModal = false}></button>
-    <div class="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+    <div role="dialog" aria-modal="true" aria-labelledby="developer-token-title" class="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
       <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-slate-900">Create Token</h2>
+        <h2 id="developer-token-title" class="text-xl font-bold text-slate-900">Create Token</h2>
         <button type="button" class="rounded p-1 text-slate-400 hover:text-slate-600" onclick={() => showTokenModal = false}>
           <span class="material-symbols-outlined">close</span>
         </button>
@@ -327,9 +327,9 @@ Use the authenticated app routes for live management today:
 {#if showWebhookModal}
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <button type="button" class="absolute inset-0 bg-black/30" aria-label="Close webhook modal" onclick={() => showWebhookModal = false}></button>
-    <div class="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+    <div role="dialog" aria-modal="true" aria-labelledby="developer-webhook-title" class="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
       <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-slate-900">Add Webhook Endpoint</h2>
+        <h2 id="developer-webhook-title" class="text-xl font-bold text-slate-900">Add Webhook Endpoint</h2>
         <button type="button" class="rounded p-1 text-slate-400 hover:text-slate-600" onclick={() => showWebhookModal = false}>
           <span class="material-symbols-outlined">close</span>
         </button>

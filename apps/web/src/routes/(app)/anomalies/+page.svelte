@@ -1,5 +1,7 @@
 <script lang="ts">
-import type { PageData } from './$types.js';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { api } from '$lib/api.js';
+	import type { PageData } from './$types.js';
 
 interface Attribution {
 	label?: string;
@@ -22,30 +24,27 @@ interface Anomaly {
 	attribution?: string | Attribution[] | null;
 }
 
-let { data }: { data: PageData } = $props();
+	let { data }: { data: PageData } = $props();
 
-const anomalies = $derived((data.anomalies ?? []) as Anomaly[]);
+	const anomalies = $derived((data.anomalies ?? []) as Anomaly[]);
 
-const severityBadge: Record<string, string> = {
-	critical: 'bg-red-100 text-red-700',
-	high: 'bg-orange-100 text-orange-700',
-	warning: 'bg-yellow-100 text-yellow-700',
-	info: 'bg-blue-100 text-blue-700',
-};
+	const severityBadge: Record<string, string> = {
+		critical: 'bg-red-100 text-red-700',
+		high: 'bg-orange-100 text-orange-700',
+		warning: 'bg-yellow-100 text-yellow-700',
+		info: 'bg-blue-100 text-blue-700',
+	};
 
-const severityDot: Record<string, string> = {
-	critical: 'bg-red-500',
-	high: 'bg-orange-500',
-	warning: 'bg-yellow-400',
-	info: 'bg-blue-400',
-};
+	const severityDot: Record<string, string> = {
+		critical: 'bg-red-500',
+		high: 'bg-orange-500',
+		warning: 'bg-yellow-400',
+		info: 'bg-blue-400',
+	};
 
-let filter = $state('active');
-let selected = $state<string | null>(null);
-
-const filtered = $derived(
-	filter === 'all' ? anomalies : anomalies.filter((a) => a.status === filter),
-);
+	let selected = $state<string | null>(null);
+	let dismissingId = $state<string | null>(null);
+	const filter = $derived((data.status ?? 'all') as 'active' | 'dismissed' | 'resolved' | 'all');
 
 function parseAttribution(raw: string | Attribution[] | null | undefined): Attribution[] {
 	if (!raw) return [];
@@ -71,9 +70,19 @@ function formatDetectedAt(iso: string): string {
 }
 
 async function dismiss(id: string) {
-	await fetch(`/api/anomalies/${id}/dismiss`, { method: 'PATCH', credentials: 'include' });
-	// Reload page to reflect updated status
-	window.location.reload();
+		dismissingId = id;
+		try {
+			await api.patch(`/anomalies/${id}/dismiss`);
+			await invalidateAll();
+			if (selected === id) selected = null;
+		} finally {
+			dismissingId = null;
+		}
+}
+
+async function applyFilter(next: 'active' | 'dismissed' | 'all') {
+	const target = next === 'all' ? '/anomalies' : `/anomalies?status=${next}`;
+	await goto(target, { keepFocus: true, noScroll: true });
 }
 </script>
 
@@ -82,26 +91,29 @@ async function dismiss(id: string) {
 		<h1 class="text-2xl font-bold text-slate-900">Anomalies</h1>
 		<p class="text-sm text-gray-500 mt-0.5">Detected traffic and cost anomalies across your infrastructure.</p>
 	</div>
-	<div class="flex items-center gap-2">
-		<button onclick={() => filter = 'active'} class="px-3 py-1.5 text-sm rounded-lg {filter === 'active' ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}">Active</button>
-		<button onclick={() => filter = 'dismissed'} class="px-3 py-1.5 text-sm rounded-lg {filter === 'dismissed' ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}">Dismissed</button>
-		<button onclick={() => filter = 'all'} class="px-3 py-1.5 text-sm rounded-lg {filter === 'all' ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}">All</button>
+	<div role="tablist" aria-label="Anomaly status filters" class="flex items-center gap-2">
+		<button type="button" role="tab" aria-selected={filter === 'active'} onclick={() => applyFilter('active')} class="px-3 py-1.5 text-sm rounded-lg {filter === 'active' ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}">Active</button>
+		<button type="button" role="tab" aria-selected={filter === 'dismissed'} onclick={() => applyFilter('dismissed')} class="px-3 py-1.5 text-sm rounded-lg {filter === 'dismissed' ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}">Dismissed</button>
+		<button type="button" role="tab" aria-selected={filter === 'all'} onclick={() => applyFilter('all')} class="px-3 py-1.5 text-sm rounded-lg {filter === 'all' ? 'bg-orange-500 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}">All</button>
 	</div>
 </div>
 
-{#if filtered.length === 0}
+{#if anomalies.length === 0}
 	<div class="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-12 text-center">
 		<p class="text-gray-400 text-sm">No {filter === 'all' ? '' : filter + ' '}anomalies found.</p>
 	</div>
 {:else}
 	<div class="space-y-3">
-		{#each filtered as anomaly}
+		{#each anomalies as anomaly}
 			{@const attribution = parseAttribution(anomaly.attribution)}
 			<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
 				<div class="flex">
 					<div class="w-1 {severityDot[anomaly.severity] ?? 'bg-gray-300'} shrink-0"></div>
 					<button
+						type="button"
 						class="flex-1 px-5 py-4 text-left hover:bg-gray-50/50 w-full"
+						aria-expanded={selected === anomaly.id}
+						aria-controls={`anomaly-detail-${anomaly.id}`}
 						onclick={() => selected = selected === anomaly.id ? null : anomaly.id}
 					>
 						<div class="flex items-start justify-between gap-4">
@@ -140,16 +152,18 @@ async function dismiss(id: string) {
 						>View</a>
 						{#if anomaly.status === 'active'}
 							<button
+								type="button"
 								class="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100"
+								disabled={dismissingId === anomaly.id}
 								onclick={() => dismiss(anomaly.id)}
-							>Dismiss</button>
+							>{dismissingId === anomaly.id ? 'Dismissing…' : 'Dismiss'}</button>
 						{/if}
 					</div>
 				</div>
 
 				<!-- Expanded detail -->
 				{#if selected === anomaly.id && attribution.length > 0}
-					<div class="px-6 pb-5 pt-2 border-t border-gray-50">
+					<div id={`anomaly-detail-${anomaly.id}`} class="px-6 pb-5 pt-2 border-t border-gray-50">
 						<p class="text-xs font-medium text-gray-500 mb-3">Spike Contributors</p>
 						<div class="space-y-2">
 							{#each attribution as contrib}

@@ -305,9 +305,9 @@
 {#if showModal}
 	<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
 		<button type="button" aria-label="Close modal" class="absolute inset-0 bg-black/30 backdrop-blur-[1px]" onclick={() => showModal = false}></button>
-		<div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+		<div role="dialog" aria-modal="true" aria-labelledby="rule-modal-title" class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
 			<div class="flex items-center justify-between mb-7">
-				<h2 class="text-xl font-bold text-slate-900">Create New Rule</h2>
+				<h2 id="rule-modal-title" class="text-xl font-bold text-slate-900">Create New Rule</h2>
 				<button type="button" onclick={() => showModal = false} class="p-1 text-slate-400 hover:text-slate-600 rounded">
 					<span class="material-symbols-outlined">close</span>
 				</button>

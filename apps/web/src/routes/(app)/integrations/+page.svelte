@@ -298,10 +298,10 @@
       aria-label="Close integration modal"
       onclick={() => selectedType = null}
     ></button>
-    <div class="relative w-full max-w-xl rounded-2xl bg-white p-8 shadow-2xl">
+    <div role="dialog" aria-modal="true" aria-labelledby="integration-modal-title" class="relative w-full max-w-xl rounded-2xl bg-white p-8 shadow-2xl">
       <div class="mb-6 flex items-center justify-between">
         <div>
-          <h2 class="text-xl font-bold text-slate-900">{modalTitle()}</h2>
+          <h2 id="integration-modal-title" class="text-xl font-bold text-slate-900">{modalTitle()}</h2>
           <p class="mt-1 text-sm text-slate-500">Manage alert delivery for your {currentPlanLabel()}.</p>
         </div>
         <button

@@ -551,9 +551,9 @@
 {#if showModal}
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <button type="button" class="absolute inset-0 bg-black/30" aria-label="Close mitigation modal" onclick={() => showModal = false}></button>
-    <div class="relative w-full max-w-2xl rounded-2xl bg-white p-8 shadow-2xl">
+    <div role="dialog" aria-modal="true" aria-labelledby="mitigation-modal-title" class="relative w-full max-w-2xl rounded-2xl bg-white p-8 shadow-2xl">
       <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-xl font-bold text-slate-900">{editingId ? 'Edit Mitigation Rule' : 'Create Mitigation Rule'}</h2>
+        <h2 id="mitigation-modal-title" class="text-xl font-bold text-slate-900">{editingId ? 'Edit Mitigation Rule' : 'Create Mitigation Rule'}</h2>
         <button type="button" class="rounded p-1 text-slate-400 hover:text-slate-600" onclick={() => showModal = false}>
           <span class="material-symbols-outlined">close</span>
         </button>
