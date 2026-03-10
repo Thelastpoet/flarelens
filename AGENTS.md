@@ -31,7 +31,7 @@ Recent history favors short, imperative commit subjects such as `Add SvelteKit f
 
 ## Security & Configuration Tips
 
-Do not commit secrets. Cloudflare bindings and secrets are defined through Wrangler, and sensitive values such as `TOKEN_ENCRYPTION_KEY`, session secrets, and API keys must stay in local or deployed Worker configuration. When changing D1 schema or token handling, update both migration files and the repositories that depend on them.
+Do not commit secrets. Cloudflare bindings and secrets are defined through Wrangler, and sensitive values such as `TOKEN_ENCRYPTION_KEY`, session secrets, and API keys must stay in local or deployed Worker configuration. The deployment Cloudflare account ID for this repository is `__CLOUDFLARE_ACCOUNT_ID__`; use that account for Cloudflare MCP or Wrangler-targeted work unless the user says otherwise. When changing D1 schema or token handling, update both migration files and the repositories that depend on them.
 
 ## No Fallback Compatibility
 
