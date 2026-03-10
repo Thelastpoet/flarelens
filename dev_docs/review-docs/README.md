@@ -21,8 +21,10 @@ This folder groups the backend audit artifacts by purpose so the next contributo
 - Product scope: `../flarelens.md`
 - Current backend architecture: `../technical_architecture.md`
 - Remediation tasks: `../api-review-remediation-tasks.md`
+- Deployed validation tasks: `../backend-deployed-validation-tasks.md`
 - Remediation plan: `plans/api-review-remediation-plan.md`
 - Traceability matrix: `plans/api-review-traceability-matrix.md`
+- Deployed validation plan: `plans/backend-deployed-validation-plan.md`
 
 ## Recommended Reading Order
 
@@ -31,6 +33,8 @@ This folder groups the backend audit artifacts by purpose so the next contributo
 3. `summaries/api-redundancy-conflict-review.md`
 4. `plans/api-review-remediation-plan.md`
 5. `../api-review-remediation-tasks.md`
+6. `plans/backend-deployed-validation-plan.md`
+7. `../backend-deployed-validation-tasks.md`
 
 ## Intent
 
@@ -38,3 +42,4 @@ This folder groups the backend audit artifacts by purpose so the next contributo
 - `plans/api-review-traceability-matrix.md` answers: which tasks close which findings
 - `summaries/` answer: what patterns repeat across the backend
 - `plans/` answer: what to fix first
+- `plans/backend-deployed-validation-plan.md` and `../backend-deployed-validation-tasks.md` answer: what still needs live production validation after remediation
