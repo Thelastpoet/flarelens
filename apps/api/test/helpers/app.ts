@@ -5,6 +5,7 @@ import { authRoutes } from '../../src/routes/auth.js';
 import { billingRoutes } from '../../src/routes/billing.js';
 import { cfTokensRoutes } from '../../src/routes/cf-tokens.js';
 import { developerRoutes } from '../../src/routes/developer.js';
+import { integrationsRoutes } from '../../src/routes/integrations.js';
 import { mitigationsRoutes } from '../../src/routes/mitigations.js';
 import { notificationsRoutes } from '../../src/routes/notifications.js';
 import { rulesRoutes } from '../../src/routes/rules.js';
@@ -21,6 +22,7 @@ export function createTestApp() {
 	app.route('/mitigations', mitigationsRoutes);
 	app.route('/notifications', notificationsRoutes);
 	app.route('/developer', developerRoutes);
+	app.route('/integrations', integrationsRoutes);
 	app.route('/rules', rulesRoutes);
 	app.route('/settings', settingsRoutes);
 	app.route('/team', teamRoutes);

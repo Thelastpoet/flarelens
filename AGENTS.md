@@ -35,33 +35,47 @@ Do not commit secrets. Cloudflare bindings and secrets are defined through Wrang
 
 ## No Fallback Compatibility
 
-Do **not** add or keep fallback code to avoid breaking changes or preserve existing workflows unless the user explicitly asks for it.
+Do **not** add or keep fallback code to soften breaking changes, guess around platform errors, or preserve legacy behavior unless the user explicitly asks for it.
 
-Assume the user will migrate existing data, update callers, or fix workflows themselves. Write code that expects the new shape.
+Assume this repository should be corrected at the source:
+- update the schema instead of tolerating missing fields forever
+- fix the Cloudflare query or capability check instead of silently switching to a weaker path
+- migrate stored data instead of carrying dual-format parsing
+- fail clearly when required configuration, permissions, or resources are missing
 
-### Example: New Required Field
+Write code that expects the intended contract to be true.
 
-Adding a new required field `type` to a model:
+### Examples In This Repository
 
 ```typescript
-// ❌ BAD: Fallback for missing 'type'
-function process(item: Item) {
-  const type = item.type ?? "legacy"; // Don't do this
-  // ...
-}
+// ❌ BAD: hide a real contract problem with a fallback
+const cfAccountId = token.cf_account_id ?? account.id;
 
-// ✅ GOOD: Assume 'type' exists
-function process(item: Item) {
-  const type = item.type; // Item.type is required
-  // ...
+// ✅ GOOD: require the verified token shape
+const cfAccountId = token.cf_account_id;
+if (!cfAccountId) {
+  throw new ValidationError('Verified Cloudflare account ID is required');
 }
 ```
 
-Do not add `?? "default"`, `if (!item.type)`, or similar logic to handle missing `type`. Assume existing items will be updated to include `type` unless the user says otherwise.
+```typescript
+// ❌ BAD: silently degrade a broken analytics path
+const traffic = await get1mTraffic().catch(() => getHourlyTraffic());
 
-### When to Add Fallbacks
+// ✅ GOOD: fix the query, permission model, or schedule assumptions
+const traffic = await get1mTraffic();
+```
 
-Only add backward-compatibility fallbacks when the user explicitly requests them (e.g. "keep it working for items without type" or "support both old and new format during migration").
+Do not add `??` defaults, silent `catch` fallbacks, dual-read logic, or compatibility branches just to keep old code limping along. If the contract is changing, change it directly and update migrations, callers, tests, and docs.
+
+### When Fallbacks Are Allowed
+
+Only add compatibility or graceful-degradation logic when the user explicitly requests it and the intended scope is clear, for example:
+- temporary dual-read during a named migration
+- optional non-critical UX degradation in the frontend
+- explicit support for two external payload versions
+
+If a fallback is requested, document its removal condition in the code or task doc.
 
 ## Compatibility Policy
 

@@ -121,6 +121,27 @@ export async function dispatchAlert(anomaly: Anomaly, repos: Repos, env: Env): P
 
 					await repos.integrations.markUsed(integration.id);
 				} catch (err) {
+					const message = err instanceof Error ? err.message : 'Unknown delivery failure';
+					try {
+						await repos.auditLogs.create({
+							id: newId(),
+							user_id: null,
+							user_email: null,
+							action: 'system',
+							entity_type: 'integration',
+							entity_id: integration.id,
+							description: `Alert delivery failed for ${integration.type} integration "${integration.name}"`,
+							metadata: {
+								outcome: 'failed',
+								integration_id: integration.id,
+								integration_type: integration.type,
+								anomaly_id: anomaly.id,
+								error: message,
+							},
+						});
+					} catch (auditErr) {
+						console.error('[Dispatcher] integration failure audit log failed:', auditErr);
+					}
 					console.error(`[Dispatcher] ${integration.type} channel failed:`, err);
 				}
 			}),

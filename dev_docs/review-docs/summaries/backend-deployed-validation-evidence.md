@@ -134,31 +134,29 @@ This note records live production validation results for the deployed API after 
 ### Webhook Failure Path
 
 - Task: `V005`
-- Result: validated, revealed a gap
+- Result: passed
 - Validation steps:
   - created a webhook integration targeting `https://httpbin.org/status/500`
   - ran `POST /integrations/webhook/test?id=...`
 - Observed:
   - HTTP `400 VALIDATION_ERROR`
   - message: `Test failed: Webhook returned 500`
-- Gap found:
-  - integration creation is audit-logged
-  - integration test failure itself is not audit-logged
+  - failed test execution is now audit-logged with `entity_type: "integration"` and `metadata.outcome: "failed"`
 
 ### Integration Plan Limits
 
 - Task: `V006`
-- Result: failed
+- Result: passed after fix
 - Validation steps:
   - used a disposable `free` plan FlareLens account
   - created one webhook integration successfully
-  - created a second webhook integration successfully
-- Expected:
-  - second integration should have been rejected because `free.max_integrations = 1`
-- Actual:
-  - second webhook creation succeeded
+  - attempted to create a second webhook integration
+- Observed:
+  - first webhook creation returned HTTP `201`
+  - second webhook creation returned HTTP `400`
+  - error: `Plan limit reached: max 1 integration`
 - Conclusion:
-  - live plan-limit enforcement is still bypassable on the webhook route
+  - live plan-limit enforcement is now active on the webhook route and uses the same plan gate as the other integration families
 
 ### Chat / Incident Integrations
 
@@ -172,20 +170,18 @@ This note records live production validation results for the deployed API after 
 ### Controlled Anomaly Setup
 
 - Tasks: `V007`, `V008`, `V009`
-- Result: blocked by upstream polling failure
+- Result: passed after fix
 - Validation steps:
-  - rehydrated a disposable account with a verified token and synced resources
-  - created a zone-scoped threshold rule that should always trigger on the next 5-minute poll
+  - created a disposable account with a verified token and synced zone resources
+  - created a zone-scoped threshold rule with `metric=requests`, `operator=gte`, `threshold=1`, `window=5m`
   - observed the next `*/5 * * * *` cron in Worker tail
 - Observed:
   - cron fired on schedule
-  - `metrics-poll` failed for every synced zone with Cloudflare GraphQL access errors
-  - no anomaly rows were created
-  - no downstream notifications were created
-- Representative runtime error:
-  - `ExternalServiceError: Cloudflare: zone '<zone_id>' does not have access to the path`
+  - `metrics-poll` pushed live updates and enqueued `flarelens-anomaly-check` queue messages without the old GraphQL access failures
+  - a real anomaly row was created for the disposable account and threshold rule
+  - Worker tail showed a downstream `flarelens-alert-dispatch` queue message after anomaly creation
 - Conclusion:
-  - queue and alert fan-out could not be validated end to end because the live polling stage failed before snapshot and anomaly creation
+  - scheduled polling, queue fan-out, anomaly creation, and alert-dispatch attempt now work end to end in production
 
 ## Mitigation Validation
 
@@ -216,17 +212,18 @@ This note records live production validation results for the deployed API after 
 ### Polling Cron
 
 - Task: `V013`
-- Result: completed
+- Result: passed
 - Observed:
-  - `*/5 * * * *` cron triggered in production Worker logs
-  - no useful snapshot writes were produced for the disposable account because the GraphQL query path failed
+  - `*/5 * * * *` cron triggered in production Worker logs on the deployed Worker
+  - the cron produced `POST https://internal/push` activity, anomaly-check queue batches, and a live anomaly for the disposable account after rule setup
 
 ### Cron Error Health
 
 - Task: `V015`
-- Result: failed
+- Result: passed for the polling path
 - Observed:
-  - repeating runtime errors appeared during the polling cycle for every synced zone
+  - the earlier repeating `metrics-poll` GraphQL access errors were no longer observed after the adaptive-query poller change
+  - Worker tail showed the expected cron and queue activity instead
 
 ### Longer-Window Cron Coverage
 
@@ -238,12 +235,5 @@ This note records live production validation results for the deployed API after 
 ## Not Yet Validated
 
 - live chat or incident integration delivery with real external credentials
-- anomaly creation through queue-driven processing after the polling query failure is fixed
 - confirmed live mitigation execution on an explicitly safe resource
 - longer-window cron behavior for baseline, digest, and housekeeping schedules
-
-## Follow-Up Fixes Discovered During Validation
-
-- restore live `max_integrations` enforcement for webhook and non-Slack integration routes
-- add audit coverage for failed integration test executions or delivery failures
-- fix the `metrics-poll` GraphQL query or access model so scheduled polling can create snapshots and anomalies in production

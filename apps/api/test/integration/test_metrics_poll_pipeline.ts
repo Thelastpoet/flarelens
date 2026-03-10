@@ -132,22 +132,28 @@ describe('metrics poll pipeline', () => {
 							viewer: {
 								zones: [
 									{
-										httpRequests1mGroups: [
+										httpRequestsAdaptiveGroups: [
 											{
-												dimensions: { datetime: '2026-03-10T10:00:00.000Z' },
-												sum: {
-													requests: 200,
-													cachedRequests: 80,
-													bytes: 5000,
-													cachedBytes: 2000,
-													threats: 7,
-													pageViews: 30,
-													countryMap: [
-														{ clientCountryName: 'KE', requests: 120, bytes: 3000, threats: 4 },
-														{ clientCountryName: 'US', requests: 80, bytes: 2000, threats: 3 },
-													],
-													responseStatusMap: [],
+												count: 120,
+												dimensions: {
+													datetimeMinute: '2026-03-10T10:00:00.000Z',
+													cacheStatus: 'hit',
+													clientCountryName: 'KE',
+													edgeResponseStatus: 200,
+													securityAction: 'managed_challenge',
 												},
+												sum: { edgeResponseBytes: 3000, visits: 18 },
+											},
+											{
+												count: 80,
+												dimensions: {
+													datetimeMinute: '2026-03-10T10:00:00.000Z',
+													cacheStatus: 'none',
+													clientCountryName: 'US',
+													edgeResponseStatus: 404,
+													securityAction: 'unknown',
+												},
+												sum: { edgeResponseBytes: 2000, visits: 12 },
 											},
 										],
 									},
@@ -167,13 +173,14 @@ describe('metrics poll pipeline', () => {
 			expect.arrayContaining([
 				expect.objectContaining({ metric: 'requests', current_value: 200 }),
 				expect.objectContaining({ metric: 'bytes', current_value: 5000 }),
-				expect.objectContaining({ metric: 'cached_requests', current_value: 80 }),
-				expect.objectContaining({ metric: 'threats', current_value: 7 }),
+				expect.objectContaining({ metric: 'cached_requests', current_value: 120 }),
+				expect.objectContaining({ metric: 'threats', current_value: 120 }),
 			]),
 		);
 
 		const [storedSnapshot] = [...db.zoneSnapshots.values()];
-		expect(storedSnapshot.threats).toBe(7);
+		expect(storedSnapshot.cached_requests).toBe(120);
+		expect(storedSnapshot.threats).toBe(120);
 		expect(storedSnapshot.page_views).toBe(30);
 		expect(JSON.parse(storedSnapshot.top_countries)).toEqual(
 			expect.arrayContaining([
@@ -181,5 +188,29 @@ describe('metrics poll pipeline', () => {
 				expect.objectContaining({ country: 'US', requests: 80 }),
 			]),
 		);
+	});
+
+	it('skips polling when no verified analytics-capable token is available', async () => {
+		const token = db.cfTokens.get('cftok_poll');
+		if (!token) throw new Error('Expected seeded CF token in test database');
+		db.cfTokens.set(token.id, {
+			...token,
+			capabilities: JSON.stringify(['zones:read']),
+		});
+
+		const env = createTestEnv({
+			DB: db,
+			ANOMALY_CHECK_QUEUE: anomalyQueue as unknown as Queue,
+			CACHE: new FakeKVNamespace(),
+		});
+
+		const fetchSpy = vi.fn();
+		vi.stubGlobal('fetch', fetchSpy);
+
+		await runMetricsPoll(env);
+
+		expect(fetchSpy).not.toHaveBeenCalled();
+		expect(anomalyQueue.messages).toHaveLength(0);
+		expect(db.zoneSnapshots.size).toBe(0);
 	});
 });

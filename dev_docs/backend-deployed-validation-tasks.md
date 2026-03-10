@@ -20,16 +20,16 @@ This file tracks the post-remediation live validation work for the deployed API.
 - [ ] V004 Create and verify at least one chat or incident integration delivery (`slack`, `discord`, `pagerduty`, or `teams`) where credentials are available
   Status: blocked. No live external credentials were available for this validation window.
 - [x] V005 Validate one negative-path integration delivery and confirm failure status plus audit trail
-  Outcome: partial. Failure status was confirmed (`400 VALIDATION_ERROR`), but failed integration test executions are not currently audit-logged.
+  Outcome: passed. Failure status was confirmed (`400 VALIDATION_ERROR`) and the failed webhook test now writes an integration audit log entry.
 - [x] V006 Confirm plan-limit enforcement across all integration creation routes during live validation
-  Outcome: failed. A disposable free-plan account was able to create two webhook integrations even though `max_integrations = 1`.
+  Outcome: passed. A disposable free-plan account was blocked from creating a second webhook integration and received `Plan limit reached: max 1 integration`.
 
 - [x] V007 Trigger a controlled anomaly condition against a safe test resource
-  Outcome: blocked by polling failure. The rule and resource setup was created, but the scheduled polling query failed before anomaly creation.
+  Outcome: passed. A verified disposable account was synced, a zone-scoped threshold rule was created, and the next scheduled poll evaluated it successfully.
 - [x] V008 Confirm snapshot persistence, queue enqueue, queue consumer execution, and anomaly row creation for that condition
-  Outcome: failed. The `*/5` polling cron ran, but scheduled zone polling failed with Cloudflare GraphQL access errors, so no anomaly row was created.
+  Outcome: passed. The scheduled poll produced queue traffic and created a real anomaly row for the disposable account.
 - [x] V009 Confirm alert dispatch was attempted for the anomaly and deduplication did not suppress the first valid alert
-  Outcome: blocked. No anomaly was created because the polling stage failed first.
+  Outcome: passed. Worker tail showed `flarelens-alert-dispatch` queue activity immediately after the first anomaly on the disposable account.
 
 - [x] V010 Validate mitigation dry-run behavior on a non-critical resource
   Outcome: passed. A dry-run rate-limit mitigation returned the expected simulated provider action without executing a live change.
@@ -39,18 +39,18 @@ This file tracks the post-remediation live validation work for the deployed API.
   Outcome: partial. Dry-run execution metadata and audit logging were confirmed. Live rollback or expiry behavior was not exercised because `V011` remains blocked.
 
 - [x] V013 Observe the `*/5 * * * *` polling cron over at least one normal cycle and record the resulting writes
-  Outcome: completed. The cron fired on schedule, but useful writes were blocked by zone polling errors.
+  Outcome: passed. The cron fired on schedule and produced snapshot/anomaly pipeline activity for the disposable account.
 - [ ] V014 Observe baseline, digest, or housekeeping cron behavior over at least one expected cycle and record outcomes
 - [x] V015 Confirm no repeating runtime errors appear in Worker tail logs during the cron observation window
-  Outcome: failed. Repeating `metrics-poll` GraphQL access errors were observed for synced zones during the cron cycle.
+  Outcome: passed for the polling path. After the adaptive-query change, the old repeating `metrics-poll` GraphQL access errors were no longer observed during cron validation.
 
-- [ ] V016 Write the final deployed-validation close-out summary with passed, failed, blocked, and untested items
+- [x] V016 Write the final deployed-validation close-out summary with passed, failed, blocked, and untested items
 
 ## Follow-Up Fix Tasks
 
-- [ ] V017 Fix live plan-limit enforcement for webhook and non-Slack integration routes
-- [ ] V018 Add audit coverage for failed integration test executions or external delivery failures
-- [ ] V019 Fix the scheduled `metrics-poll` GraphQL query or access model so live polling can create snapshots and anomalies
+- [x] V017 Fix live plan-limit enforcement for webhook and non-Slack integration routes
+- [x] V018 Add audit coverage for failed integration test executions or external delivery failures
+- [x] V019 Fix the scheduled `metrics-poll` GraphQL query or access model so live polling can create snapshots and anomalies
 
 ## Exit Criteria
 
@@ -59,4 +59,4 @@ This file tracks the post-remediation live validation work for the deployed API.
 - [x] anomaly and queue path is documented
 - [x] mitigation safety checks are documented
 - [x] cron observation is documented
-- [ ] final close-out summary exists
+- [x] final close-out summary exists

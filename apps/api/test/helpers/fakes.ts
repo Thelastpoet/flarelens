@@ -4,6 +4,7 @@ import type {
 	Baseline,
 	CfToken,
 	DeveloperToken,
+	Integration,
 	Mitigation,
 	Notification,
 	Resource,
@@ -64,6 +65,7 @@ type RuleRecord = Rule;
 type AnomalyRecord = Anomaly;
 type NotificationRecord = Notification;
 type DeveloperTokenRecord = DeveloperToken;
+type IntegrationRecord = Integration;
 
 function normalizeSql(query: string): string {
 	return query.replace(/\s+/g, ' ').trim();
@@ -136,6 +138,7 @@ export class FakeD1Database implements D1Database {
 	anomalies = new Map<string, AnomalyRecord>();
 	notifications = new Map<string, NotificationRecord>();
 	developerTokens = new Map<string, DeveloperTokenRecord>();
+	integrations = new Map<string, IntegrationRecord>();
 	mitigations = new Map<string, Mitigation>();
 	billingSnapshots = new Map<string, BillingSnapshotRecord>();
 	zoneSnapshots = new Map<string, ZoneSnapshotRecord>();
@@ -226,6 +229,18 @@ export class FakeD1Database implements D1Database {
 			const token = this.developerTokens.get(String(params[0]));
 			if (!token || token.account_id !== params[1]) return null;
 			return token as T;
+		}
+
+		if (sql === 'SELECT * FROM integrations WHERE id = ? AND account_id = ?') {
+			const integration = this.integrations.get(String(params[0]));
+			if (!integration || integration.account_id !== params[1]) return null;
+			return integration as T;
+		}
+
+		if (sql === "SELECT * FROM integrations WHERE account_id = ? AND type = ? AND type != 'webhook'") {
+			return ([...this.integrations.values()].find(
+				(integration) => integration.account_id === params[0] && integration.type === params[1] && integration.type !== 'webhook',
+			) ?? null) as T | null;
 		}
 
 		if (sql === 'SELECT * FROM cf_tokens WHERE id = ? AND account_id = ?') {
@@ -336,6 +351,25 @@ export class FakeD1Database implements D1Database {
 			return [...this.cfTokens.values()].filter(
 				(token) => token.account_id === params[0] && token.status === 'active',
 			) as T[];
+		}
+
+		if (sql === 'SELECT * FROM integrations WHERE account_id = ? ORDER BY type ASC, created_at ASC') {
+			return [...this.integrations.values()]
+				.filter((integration) => integration.account_id === params[0])
+				.sort((a, b) =>
+					a.type === b.type
+						? a.created_at.localeCompare(b.created_at)
+						: a.type.localeCompare(b.type),
+				) as T[];
+		}
+
+		if (
+			sql ===
+			"SELECT * FROM integrations WHERE account_id = ? AND type = 'webhook' ORDER BY created_at ASC"
+		) {
+			return [...this.integrations.values()]
+				.filter((integration) => integration.account_id === params[0] && integration.type === 'webhook')
+				.sort((a, b) => a.created_at.localeCompare(b.created_at)) as T[];
 		}
 
 		if (
@@ -993,6 +1027,74 @@ export class FakeD1Database implements D1Database {
 			return { success: true, meta: { duration: 0 } } as D1Result;
 		}
 
+		if (sql === 'INSERT INTO integrations (id, account_id, type, name, config) VALUES (?, ?, ?, ?, ?)') {
+			const now = new Date().toISOString();
+			this.insertIntegration({
+				id: String(params[0]),
+				account_id: String(params[1]),
+				type: params[2] as Integration['type'],
+				name: String(params[3]),
+				config: String(params[4]),
+				status: 'active',
+				last_used_at: null,
+				created_at: now,
+				updated_at: now,
+			});
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql ===
+			`INSERT INTO integrations (id, account_id, type, name, config) VALUES (?, ?, ?, ?, ?) ON CONFLICT (account_id, type) WHERE type != 'webhook' DO UPDATE SET name = excluded.name, config = excluded.config, status = 'active', updated_at = datetime('now')`
+		) {
+			const accountId = String(params[1]);
+			const type = params[2] as Integration['type'];
+			const existing = [...this.integrations.values()].find(
+				(integration) => integration.account_id === accountId && integration.type === type && integration.type !== 'webhook',
+			);
+			const now = new Date().toISOString();
+			if (existing) {
+				existing.name = String(params[3]);
+				existing.config = String(params[4]);
+				existing.status = 'active';
+				existing.updated_at = now;
+				this.integrations.set(existing.id, existing);
+			} else {
+				this.insertIntegration({
+					id: String(params[0]),
+					account_id: accountId,
+					type,
+					name: String(params[3]),
+					config: String(params[4]),
+					status: 'active',
+					last_used_at: null,
+					created_at: now,
+					updated_at: now,
+				});
+			}
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (
+			sql === "UPDATE integrations SET last_used_at = datetime('now') WHERE id = ? AND account_id = ?"
+		) {
+			const integration = this.integrations.get(String(params[0]));
+			if (integration && integration.account_id === params[1]) {
+				integration.last_used_at = new Date().toISOString();
+				integration.updated_at = new Date().toISOString();
+				this.integrations.set(integration.id, integration);
+			}
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
+		if (sql === 'DELETE FROM integrations WHERE id = ? AND account_id = ?') {
+			const integration = this.integrations.get(String(params[0]));
+			if (integration && integration.account_id === params[1]) {
+				this.integrations.delete(integration.id);
+			}
+			return { success: true, meta: { duration: 0 } } as D1Result;
+		}
+
 		throw new Error(`Unsupported run() query in FakeD1Database: ${sql}`);
 	}
 
@@ -1035,6 +1137,10 @@ export class FakeD1Database implements D1Database {
 
 	insertDeveloperToken(token: DeveloperTokenRecord) {
 		this.developerTokens.set(token.id, token);
+	}
+
+	insertIntegration(integration: IntegrationRecord) {
+		this.integrations.set(integration.id, integration);
 	}
 
 	insertMitigation(mitigation: Mitigation) {

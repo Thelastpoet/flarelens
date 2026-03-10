@@ -18,6 +18,7 @@ import type { AppContext } from '../middleware/auth.js';
 import { authMiddleware } from '../middleware/auth.js';
 import { rateLimit } from '../middleware/rate-limit.js';
 import { requireRole } from '../middleware/rbac.js';
+import type { Repos } from '../middleware/repos.js';
 import { reposMiddleware } from '../middleware/repos.js';
 import { validate } from '../middleware/validate.js';
 import { testDiscordWebhook } from '../services/alerts/channels/discord.js';
@@ -28,6 +29,18 @@ import { testWebhook } from '../services/alerts/channels/webhook.js';
 
 const integrations = new Hono<AppContext>();
 integrations.use('*', authMiddleware, reposMiddleware);
+
+async function enforceIntegrationLimit(repos: Repos): Promise<void> {
+	const account = await repos.accounts.findById();
+	const plan = account?.plan ?? 'free';
+	const limit = PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS]?.max_integrations ?? 1;
+	const existing = await repos.integrations.list();
+	if (existing.length >= limit) {
+		throw new ValidationError(
+			`Plan limit reached: max ${limit} integration${limit === 1 ? '' : 's'}`,
+		);
+	}
+}
 
 // GET /integrations
 integrations.get('/', rateLimit('reads'), async (c) => {
@@ -49,13 +62,7 @@ integrations.post(
 		const repos = c.get('repos');
 		const { TOKEN_ENCRYPTION_KEY } = c.env;
 
-		const account = await repos.accounts.findById();
-		const limit = PLAN_LIMITS[account?.plan as keyof typeof PLAN_LIMITS]?.max_integrations ?? 1;
-		const existing = await repos.integrations.list();
-		if (existing.length >= limit)
-			throw new ValidationError(
-				`Plan limit reached: max ${limit} integration${limit === 1 ? '' : 's'}`,
-			);
+		await enforceIntegrationLimit(repos);
 
 		const encryptedUrl = await encryptToken(input.webhook_url, TOKEN_ENCRYPTION_KEY);
 		const integration = await repos.integrations.upsert({
@@ -86,6 +93,8 @@ integrations.post(
 		const repos = c.get('repos');
 		const { TOKEN_ENCRYPTION_KEY } = c.env;
 
+		await enforceIntegrationLimit(repos);
+
 		const encryptedUrl = await encryptToken(input.webhook_url, TOKEN_ENCRYPTION_KEY);
 		const integration = await repos.integrations.upsert({
 			id: newId(),
@@ -115,6 +124,8 @@ integrations.post(
 		const repos = c.get('repos');
 		const { TOKEN_ENCRYPTION_KEY } = c.env;
 
+		await enforceIntegrationLimit(repos);
+
 		const encryptedKey = await encryptToken(input.routing_key, TOKEN_ENCRYPTION_KEY);
 		const integration = await repos.integrations.upsert({
 			id: newId(),
@@ -143,6 +154,8 @@ integrations.post(
 		const input = c.get('validatedBody') as TeamsIntegrationInput;
 		const repos = c.get('repos');
 		const { TOKEN_ENCRYPTION_KEY } = c.env;
+
+		await enforceIntegrationLimit(repos);
 
 		const encryptedUrl = await encryptToken(input.webhook_url, TOKEN_ENCRYPTION_KEY);
 		const integration = await repos.integrations.upsert({
@@ -180,6 +193,8 @@ integrations.post(
 		const input = c.get('validatedBody') as WebhookIntegrationInput;
 		const repos = c.get('repos');
 		const { TOKEN_ENCRYPTION_KEY } = c.env;
+
+		await enforceIntegrationLimit(repos);
 
 		const encryptedUrl = await encryptToken(input.url, TOKEN_ENCRYPTION_KEY);
 		const encryptedSecret = input.secret
@@ -273,29 +288,34 @@ integrations.post('/:type/test', requireRole('admin', 'editor'), rateLimit('writ
 
 	// For webhooks, allow ?id= param
 	const webhookId = c.req.query('id');
+	let integrationMeta: { id: string | null; name: string; type: string } | null = null;
 
 	try {
 		if (type === 'slack') {
 			const integration = await repos.integrations.findByType('slack');
 			if (!integration) throw new ValidationError('Slack integration not configured');
+			integrationMeta = { id: integration.id, name: integration.name, type: integration.type };
 			const cfg = JSON.parse(integration.config) as { encrypted_webhook_url: string };
 			const url = await decryptToken(cfg.encrypted_webhook_url, TOKEN_ENCRYPTION_KEY);
 			await testSlackWebhook(url);
 		} else if (type === 'discord') {
 			const integration = await repos.integrations.findByType('discord');
 			if (!integration) throw new ValidationError('Discord integration not configured');
+			integrationMeta = { id: integration.id, name: integration.name, type: integration.type };
 			const cfg = JSON.parse(integration.config) as { encrypted_webhook_url: string };
 			const url = await decryptToken(cfg.encrypted_webhook_url, TOKEN_ENCRYPTION_KEY);
 			await testDiscordWebhook(url);
 		} else if (type === 'pagerduty') {
 			const integration = await repos.integrations.findByType('pagerduty');
 			if (!integration) throw new ValidationError('PagerDuty integration not configured');
+			integrationMeta = { id: integration.id, name: integration.name, type: integration.type };
 			const cfg = JSON.parse(integration.config) as { encrypted_routing_key: string };
 			const key = await decryptToken(cfg.encrypted_routing_key, TOKEN_ENCRYPTION_KEY);
 			await testPagerDutyIntegration(key);
 		} else if (type === 'teams') {
 			const integration = await repos.integrations.findByType('teams');
 			if (!integration) throw new ValidationError('MS Teams integration not configured');
+			integrationMeta = { id: integration.id, name: integration.name, type: integration.type };
 			const cfg = JSON.parse(integration.config) as { encrypted_webhook_url: string };
 			const url = await decryptToken(cfg.encrypted_webhook_url, TOKEN_ENCRYPTION_KEY);
 			await testTeamsWebhook(url);
@@ -303,6 +323,7 @@ integrations.post('/:type/test', requireRole('admin', 'editor'), rateLimit('writ
 			if (!webhookId) throw new ValidationError('Provide ?id= for the webhook to test');
 			const integration = await repos.integrations.findById(webhookId);
 			if (!integration) throw new NotFoundError('Webhook', webhookId);
+			integrationMeta = { id: integration.id, name: integration.name, type: integration.type };
 			const cfg = JSON.parse(integration.config) as {
 				encrypted_url: string;
 				encrypted_secret?: string;
@@ -317,6 +338,21 @@ integrations.post('/:type/test', requireRole('admin', 'editor'), rateLimit('writ
 			throw new ValidationError(`Unknown integration type: ${type}`);
 		}
 	} catch (err) {
+		const message =
+			err instanceof Error ? err.message : `Unknown ${type} integration test failure`;
+		if (integrationMeta) {
+			await logAudit(c, {
+				action: 'update',
+				entity_type: 'integration',
+				entity_id: integrationMeta.id,
+				description: `Integration test failed for ${integrationMeta.type} "${integrationMeta.name}"`,
+				metadata: {
+					outcome: 'failed',
+					integration_type: integrationMeta.type,
+					error: message,
+				},
+			});
+		}
 		if (err instanceof ValidationError || err instanceof NotFoundError) throw err;
 		throw new ValidationError(`Test failed: ${(err as Error).message}`);
 	}

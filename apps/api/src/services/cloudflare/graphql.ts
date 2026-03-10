@@ -129,6 +129,27 @@ interface RawZoneTrafficResponse {
 	};
 }
 
+interface RawAdaptiveZoneTrafficResponse {
+	viewer: {
+		zones: Array<{
+			httpRequestsAdaptiveGroups?: Array<{
+				count: number;
+				dimensions: {
+					datetimeMinute: string;
+					cacheStatus?: string;
+					clientCountryName?: string;
+					edgeResponseStatus?: number;
+					securityAction?: string;
+				};
+				sum: {
+					edgeResponseBytes: number;
+					visits: number;
+				};
+			}>;
+		}>;
+	};
+}
+
 interface RawTopEndpointsResponse {
 	viewer: {
 		zones: Array<{
@@ -314,36 +335,36 @@ function zoneTrafficRecent(
 	zoneTag: string,
 	from: string,
 	to: string,
-	limit = 5,
+	limit = 1000,
 ): GqlQueryDef<ZoneTrafficResult> {
+	const cachedStatuses = new Set(['hit', 'stale', 'expired', 'revalidated', 'updating']);
+	const threatActions = new Set([
+		'block',
+		'challenge',
+		'managed_challenge',
+		'jschallenge',
+		'connection_close',
+		'drop',
+	]);
+
 	const query = `
     query ZoneTrafficRecent($zoneTag: string!, $from: string!, $to: string!, $limit: int!) {
       viewer {
         zones(filter: { zoneTag: $zoneTag }) {
-          httpRequests1mGroups(
+          httpRequestsAdaptiveGroups(
             limit: $limit,
             filter: { datetime_geq: $from, datetime_leq: $to },
-            orderBy: [datetime_ASC]
+            orderBy: [datetimeMinute_ASC]
           ) {
-            dimensions { datetime }
-            sum {
-              requests
-              cachedRequests
-              bytes
-              cachedBytes
-              threats
-              pageViews
-              countryMap {
-                clientCountryName
-                requests
-                bytes
-                threats
-              }
-              responseStatusMap {
-                edgeResponseStatus
-                requests
-              }
+            count
+            dimensions {
+              datetimeMinute
+              cacheStatus
+              clientCountryName
+              edgeResponseStatus
+              securityAction
             }
+            sum { edgeResponseBytes visits }
           }
         }
       }
@@ -351,44 +372,70 @@ function zoneTrafficRecent(
   `;
 
 	const parseResponse = (raw: unknown): ZoneTrafficResult => {
-		const data = raw as RawZoneTrafficResponse;
-		const groups = data?.viewer?.zones?.[0]?.httpRequests1mGroups ?? [];
+		const data = raw as RawAdaptiveZoneTrafficResponse;
+		const groups = data?.viewer?.zones?.[0]?.httpRequestsAdaptiveGroups ?? [];
 
-		const buckets: ZoneTrafficBucket[] = groups.map((g) => ({
-			datetime: g.dimensions.datetime,
-			requests: g.sum.requests ?? 0,
-			cachedRequests: g.sum.cachedRequests ?? 0,
-			uncachedRequests: (g.sum.requests ?? 0) - (g.sum.cachedRequests ?? 0),
-			bytes: g.sum.bytes ?? 0,
-			cachedBytes: g.sum.cachedBytes ?? 0,
-			threats: g.sum.threats ?? 0,
-			pageViews: g.sum.pageViews ?? 0,
-		}));
-
+		const bucketMap = new Map<string, ZoneTrafficBucket>();
 		const countryAgg: Record<string, ZoneCountryData> = {};
-		for (const g of groups) {
-			for (const c of g.sum.countryMap ?? []) {
-				const key = c.clientCountryName;
-				if (!countryAgg[key]) {
-					countryAgg[key] = { country: key, requests: 0, bytes: 0, threats: 0 };
-				}
-				countryAgg[key].requests += c.requests ?? 0;
-				countryAgg[key].bytes += c.bytes ?? 0;
-				countryAgg[key].threats += c.threats ?? 0;
-			}
-		}
-		const countryMap = Object.values(countryAgg).sort((a, b) => b.requests - a.requests);
-
 		const statusAgg: Record<number, ErrorStatusData> = {};
+
 		for (const g of groups) {
-			for (const s of g.sum.responseStatusMap ?? []) {
-				const code = s.edgeResponseStatus;
-				if (code >= 400) {
-					if (!statusAgg[code]) statusAgg[code] = { status: code, requests: 0 };
-					statusAgg[code].requests += s.requests ?? 0;
+			const datetime = g.dimensions.datetimeMinute;
+			const requests = g.count ?? 0;
+			const bytes = g.sum.edgeResponseBytes ?? 0;
+			const pageViews = g.sum.visits ?? 0;
+			const cacheStatus = (g.dimensions.cacheStatus ?? '').toLowerCase();
+			const securityAction = (g.dimensions.securityAction ?? '').toLowerCase();
+			const isCached = cachedStatuses.has(cacheStatus);
+			const isThreat = threatActions.has(securityAction);
+
+			const bucket = bucketMap.get(datetime) ?? {
+				datetime,
+				requests: 0,
+				cachedRequests: 0,
+				uncachedRequests: 0,
+				bytes: 0,
+				cachedBytes: 0,
+				threats: 0,
+				pageViews: 0,
+			};
+
+			bucket.requests += requests;
+			bucket.bytes += bytes;
+			bucket.pageViews += pageViews;
+			if (isCached) {
+				bucket.cachedRequests += requests;
+				bucket.cachedBytes += bytes;
+			}
+			if (isThreat) {
+				bucket.threats += requests;
+			}
+			bucket.uncachedRequests = bucket.requests - bucket.cachedRequests;
+			bucketMap.set(datetime, bucket);
+
+			const country = g.dimensions.clientCountryName;
+			if (country) {
+				if (!countryAgg[country]) {
+					countryAgg[country] = { country, requests: 0, bytes: 0, threats: 0 };
+				}
+				countryAgg[country].requests += requests;
+				countryAgg[country].bytes += bytes;
+				if (isThreat) {
+					countryAgg[country].threats += requests;
 				}
 			}
+
+			const status = g.dimensions.edgeResponseStatus;
+			if (typeof status === 'number' && status >= 400) {
+				if (!statusAgg[status]) {
+					statusAgg[status] = { status, requests: 0 };
+				}
+				statusAgg[status].requests += requests;
+			}
 		}
+
+		const buckets = [...bucketMap.values()].sort((a, b) => a.datetime.localeCompare(b.datetime));
+		const countryMap = Object.values(countryAgg).sort((a, b) => b.requests - a.requests);
 		const errorStatusMap = Object.values(statusAgg).sort((a, b) => b.requests - a.requests);
 
 		return { buckets, countryMap, errorStatusMap };

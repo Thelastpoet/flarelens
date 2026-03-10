@@ -34,12 +34,15 @@ export async function runMetricsPoll(env: Env): Promise<void> {
 
 async function pollAccount(accountId: string, DB: D1Database, env: Env): Promise<void> {
 	const cfTokens = new CfTokensRepository(DB, accountId);
-	const tokens = await cfTokens.findActiveByAccount();
+	const tokens = await cfTokens.findVerifiedByAccount(['zones.analytics:read']);
 	if (!tokens.length) return;
 
 	const token = tokens[0];
 	const plainToken = await decryptToken(token.encrypted_token, env.TOKEN_ENCRYPTION_KEY);
-	const cfAccountId = token.cf_account_id ?? accountId;
+	if (!token.cf_account_id) {
+		throw new Error('Verified Cloudflare token is missing cf_account_id');
+	}
+	const cfAccountId = token.cf_account_id;
 	const client = new CloudflareClient(plainToken, cfAccountId);
 
 	const resources = new ResourcesRepository(DB, accountId);
@@ -54,7 +57,7 @@ async function pollAccount(accountId: string, DB: D1Database, env: Env): Promise
 	for (const zone of zones) {
 		if (zone.monitoring_status !== 'active') continue;
 		try {
-			const query = GqlQueries.zoneTrafficRecent(zone.cf_resource_id, from, to, 5);
+			const query = GqlQueries.zoneTrafficRecent(zone.cf_resource_id, from, to);
 			const data = await client.graphql(query.query, query.variables);
 			const parsed = query.parseResponse(data);
 
