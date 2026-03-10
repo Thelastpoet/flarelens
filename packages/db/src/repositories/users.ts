@@ -2,6 +2,14 @@ import type { User } from '@flarelens/shared';
 import { BaseRepository } from '../repository.js';
 
 export class UsersRepository extends BaseRepository {
+	async findByOAuthIdentity(provider: string, oauth_id: string): Promise<User | null> {
+		return this.first<User>(
+			'SELECT * FROM users WHERE oauth_provider = ? AND oauth_id = ?',
+			provider,
+			oauth_id,
+		);
+	}
+
 	async findByEmail(email: string): Promise<User | null> {
 		return this.first<User>('SELECT * FROM users WHERE email = ?', email);
 	}
@@ -68,6 +76,18 @@ export class UsersRepository extends BaseRepository {
 	async markEmailVerified(id: string): Promise<void> {
 		await this.run(
 			"UPDATE users SET email_verified = 1, updated_at = datetime('now') WHERE id = ?",
+			id,
+		);
+	}
+
+	async updateOAuthIdentity(
+		id: string,
+		data: { oauth_provider: string; oauth_id: string },
+	): Promise<void> {
+		await this.run(
+			"UPDATE users SET oauth_provider = ?, oauth_id = ?, updated_at = datetime('now') WHERE id = ?",
+			data.oauth_provider,
+			data.oauth_id,
 			id,
 		);
 	}

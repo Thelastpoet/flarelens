@@ -32,6 +32,15 @@ export class ResourcesRepository extends BaseRepository {
 		);
 	}
 
+	async findByCfResourceIdType(cf_resource_id: string, type: string): Promise<Resource | null> {
+		return this.first<Resource>(
+			'SELECT * FROM resources WHERE account_id = ? AND cf_resource_id = ? AND type = ?',
+			this.account_id,
+			cf_resource_id,
+			type,
+		);
+	}
+
 	async create(data: {
 		id: string;
 		cf_token_id: string;
@@ -102,7 +111,7 @@ export class ResourcesRepository extends BaseRepository {
 		await this.run(
 			`INSERT INTO resources (id, account_id, cf_token_id, cf_resource_id, type, name, metadata, last_synced_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
-       ON CONFLICT (account_id, cf_resource_id)
+       ON CONFLICT (account_id, type, cf_resource_id)
        DO UPDATE SET name = excluded.name, metadata = excluded.metadata,
          last_synced_at = datetime('now'), updated_at = datetime('now')`,
 			data.id,
@@ -113,7 +122,7 @@ export class ResourcesRepository extends BaseRepository {
 			data.name,
 			JSON.stringify(data.metadata ?? {}),
 		);
-		const resource = await this.findByCfResourceId(data.cf_resource_id);
+		const resource = await this.findByCfResourceIdType(data.cf_resource_id, data.type);
 		if (!resource) throw new Error('Failed to upsert resource');
 		return resource;
 	}

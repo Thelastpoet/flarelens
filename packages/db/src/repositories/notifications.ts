@@ -84,7 +84,29 @@ export class NotificationsRepository extends BaseRepository {
 		return notification;
 	}
 
-	async markRead(id: string): Promise<void> {
+	async findAccessibleById(id: string, user_id?: string | null): Promise<Notification | null> {
+		const conditions = ['id = ?', 'account_id = ?'];
+		const params: unknown[] = [id, this.account_id];
+		if (user_id !== undefined) {
+			conditions.push('(user_id = ? OR user_id IS NULL)');
+			params.push(user_id);
+		}
+		return this.first<Notification>(
+			`SELECT * FROM notifications WHERE ${conditions.join(' AND ')}`,
+			...params,
+		);
+	}
+
+	async markRead(id: string, user_id?: string | null): Promise<void> {
+		if (user_id !== undefined) {
+			await this.run(
+				'UPDATE notifications SET read = 1 WHERE id = ? AND account_id = ? AND (user_id = ? OR user_id IS NULL)',
+				id,
+				this.account_id,
+				user_id,
+			);
+			return;
+		}
 		await this.run(
 			'UPDATE notifications SET read = 1 WHERE id = ? AND account_id = ?',
 			id,

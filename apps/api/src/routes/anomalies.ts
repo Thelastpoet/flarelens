@@ -1,5 +1,6 @@
-import { NotFoundError } from '@flarelens/shared';
+import { NotFoundError, ValidationError } from '@flarelens/shared';
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { logAudit } from '../middleware/audit.js';
 import type { AppContext } from '../middleware/auth.js';
 import { authMiddleware } from '../middleware/auth.js';
@@ -10,21 +11,33 @@ import { reposMiddleware } from '../middleware/repos.js';
 const anomalies = new Hono<AppContext>();
 anomalies.use('*', authMiddleware, reposMiddleware);
 
+const AnomalyListQuerySchema = z.object({
+	status: z.enum(['active', 'dismissed', 'resolved']).optional(),
+	severity: z.enum(['warning', 'high', 'critical']).optional(),
+	resource_id: z.string().optional(),
+	page: z.coerce.number().int().positive().optional(),
+	per_page: z.coerce.number().int().positive().max(100).optional(),
+});
+
 // GET /anomalies — list anomalies with optional filters
 anomalies.get('/', rateLimit('reads'), async (c) => {
 	const repos = c.get('repos');
-	const status = c.req.query('status');
-	const severity = c.req.query('severity');
-	const resource_id = c.req.query('resource_id');
-	const page = c.req.query('page');
-	const per_page = c.req.query('per_page');
+	const parsed = AnomalyListQuerySchema.safeParse({
+		status: c.req.query('status'),
+		severity: c.req.query('severity'),
+		resource_id: c.req.query('resource_id'),
+		page: c.req.query('page'),
+		per_page: c.req.query('per_page'),
+	});
+	if (!parsed.success) throw new ValidationError('Validation failed', parsed.error.issues);
+	const { status, severity, resource_id, page, per_page } = parsed.data;
 
 	const result = await repos.anomalies.list({
 		status,
 		severity,
 		resource_id,
-		page: page ? +page : undefined,
-		per_page: per_page ? +per_page : undefined,
+		page,
+		per_page,
 	});
 
 	return c.json(result);

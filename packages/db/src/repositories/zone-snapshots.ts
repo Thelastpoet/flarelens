@@ -23,7 +23,17 @@ export class ZoneSnapshotsRepository extends BaseRepository {
         threats, page_views, unique_visitors, estimated_cost,
         top_endpoints, top_countries, top_user_agents)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT DO NOTHING`,
+       ON CONFLICT (account_id, resource_id, timestamp)
+       DO UPDATE SET requests = excluded.requests,
+         cached_requests = excluded.cached_requests,
+         bytes = excluded.bytes,
+         threats = excluded.threats,
+         page_views = excluded.page_views,
+         unique_visitors = excluded.unique_visitors,
+         estimated_cost = excluded.estimated_cost,
+         top_endpoints = excluded.top_endpoints,
+         top_countries = excluded.top_countries,
+         top_user_agents = excluded.top_user_agents`,
 			data.id,
 			this.account_id,
 			data.resource_id,

@@ -165,19 +165,21 @@
 
 ### Tests for User Story 5 ⚠️
 
-- [ ] T046 [P] [US5] Add integration tests for invite acceptance, invited-user completion, and OAuth account linking in `apps/api/test/integration/test_auth_identity_flows.ts`
-- [ ] T047 [P] [US5] Add integration tests for settings account updates, notification ownership, and query validation in `apps/api/test/integration/test_api_consistency.ts`
-- [ ] T048 [P] [US5] Add persistence and retry-safety tests for resource uniqueness, snapshot upserts, alert deduplication, and queue idempotency in `apps/api/test/unit/test_persistence_integrity.ts` and `apps/api/test/integration/test_queue_idempotency.ts`
+- [x] T046 [P] [US5] Add integration tests for invite acceptance, invited-user completion, and OAuth account linking in `apps/api/test/integration/test_auth_identity_flows.ts`
+- [x] T047 [P] [US5] Add integration tests for settings account updates, notification ownership, and query validation in `apps/api/test/integration/test_api_consistency.ts`
+- [x] T048 [P] [US5] Add persistence and retry-safety tests for resource uniqueness, snapshot upserts, alert deduplication, and queue idempotency in `apps/api/test/unit/test_persistence_integrity.ts` and `apps/api/test/integration/test_queue_idempotency.ts`
+  Phase 7 resolution: retry-safety verification is covered through persistence/idempotency and alert-dedup tests in `test_persistence_integrity.ts`; no separate queue-specific integration file was required once natural-key upserts and narrower dedup semantics were in place.
 
 ### Implementation for User Story 5
 
-- [ ] T049 [US5] Fix `POST /auth/accept-invite` so invite acceptance cannot create a session without authenticating the invited user and so invited-user completion can finish without creating a new standalone account in `apps/api/src/routes/auth.ts` and related shared auth schemas
-- [ ] T050 [US5] Persist and validate OAuth provider identity (`oauth_id`) in `apps/api/src/routes/auth.ts`, `packages/db/src/repositories/users.ts`, and any related D1 migration updates
-- [ ] T051 [US5] Make `resources` identity type-aware and update migration/repository logic for safe uniqueness in `packages/db/migrations/` and `packages/db/src/repositories/resources.ts`
-- [ ] T052 [US5] Add natural-key idempotency for `zone_snapshots` and align retention semantics between repository cleanup and housekeeping in `packages/db/migrations/`, `packages/db/src/repositories/zone-snapshots.ts`, and `apps/api/src/crons/housekeeping.ts`
-- [ ] T053 [US5] Tighten alert dedup keys and queue retry idempotency in `apps/api/src/services/alerts/dedup.ts`, `apps/api/src/services/alerts/dispatcher.ts`, `apps/api/src/services/detection/index.ts`, and related persistence or cache logic
-- [ ] T054 [US5] Fix `PATCH /settings/account`, notification mutation ownership, and not-found semantics in `apps/api/src/routes/settings.ts`, `apps/api/src/routes/notifications.ts`, and `packages/db/src/repositories/notifications.ts`
-- [ ] T055 [US5] Standardize query validation for paginated/filter routes and reassess the custom `validate()` middleware in `apps/api/src/middleware/validate.ts` and affected routes under `apps/api/src/routes/`
+- [x] T049 [US5] Fix `POST /auth/accept-invite` so invite acceptance cannot create a session without authenticating the invited user and so invited-user completion can finish without creating a new standalone account in `apps/api/src/routes/auth.ts` and related shared auth schemas
+- [x] T050 [US5] Persist and validate OAuth provider identity (`oauth_id`) in `apps/api/src/routes/auth.ts`, `packages/db/src/repositories/users.ts`, and any related D1 migration updates
+- [x] T051 [US5] Make `resources` identity type-aware and update migration/repository logic for safe uniqueness in `packages/db/migrations/` and `packages/db/src/repositories/resources.ts`
+- [x] T052 [US5] Add natural-key idempotency for `zone_snapshots` and align retention semantics between repository cleanup and housekeeping in `packages/db/migrations/`, `packages/db/src/repositories/zone-snapshots.ts`, and `apps/api/src/crons/housekeeping.ts`
+- [x] T053 [US5] Tighten alert dedup keys and queue retry idempotency in `apps/api/src/services/alerts/dedup.ts`, `apps/api/src/services/alerts/dispatcher.ts`, `apps/api/src/services/detection/index.ts`, and related persistence or cache logic
+- [x] T054 [US5] Fix `PATCH /settings/account`, notification mutation ownership, and not-found semantics in `apps/api/src/routes/settings.ts`, `apps/api/src/routes/notifications.ts`, and `packages/db/src/repositories/notifications.ts`
+- [x] T055 [US5] Standardize query validation for paginated/filter routes and reassess the custom `validate()` middleware in `apps/api/src/middleware/validate.ts` and affected routes under `apps/api/src/routes/`
+  Phase 7 resolution: body validation remains on the existing JSON middleware, but paginated/filter query validation is now explicit on the affected routes; a broader framework-level validator replacement remains optional future cleanup rather than a blocker.
 - [ ] T056 [US5] Ensure budget state can be persisted independently of an active billing snapshot in `packages/db/src/repositories/billing-snapshots.ts`, `apps/api/src/routes/billing.ts`, and any supporting account/settings storage
 
 **Checkpoint**: Persistence rules, identity flows, and API behavior are explicit and retry-safe

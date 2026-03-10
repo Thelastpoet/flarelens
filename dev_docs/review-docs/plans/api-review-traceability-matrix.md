@@ -29,9 +29,9 @@ Use it to answer four questions quickly:
 
 ### Section 01: Auth, Sessions, and Tenant Isolation
 
-- `S01-F01` High. Invite acceptance can create a session without authenticating the invited user. Tasks: `T046`, `T049`. Status: `Mapped`
-- `S01-F02` Medium. Invite flow is incomplete for brand-new users. Tasks: `T046`, `T049`. Status: `Mapped`
-- `S01-F03` Medium. OAuth identity linking is email-based instead of provider-subject-based. Tasks: `T046`, `T050`. Status: `Mapped`
+- `S01-F01` High. Invite acceptance can create a session without authenticating the invited user. Tasks: `T046`, `T049`. Status: `Resolved`
+- `S01-F02` Medium. Invite flow is incomplete for brand-new users. Tasks: `T046`, `T049`. Status: `Resolved`
+- `S01-F03` Medium. OAuth identity linking is email-based instead of provider-subject-based. Tasks: `T046`, `T050`. Status: `Resolved`
 - `S01-F04` Medium. Local development session cookies are still likely broken. Tasks: `T008`, `T009`, `T012`, `T017`. Status: `Resolved`
 
 ### Section 02: Secrets, Tokens, and Security
@@ -50,15 +50,15 @@ Use it to answer four questions quickly:
 
 ### Section 04: Data Model and Persistence
 
-- `S04-F01` High. Resource identity is keyed too broadly and can collide across Cloudflare product types. Tasks: `T048`, `T051`. Status: `Mapped`
-- `S04-F02` High. Zone snapshot “upsert” is not idempotent because there is no natural-key conflict target. Tasks: `T048`, `T052`. Status: `Mapped`
-- `S04-F03` Medium. Snapshot retention logic is inconsistent about whether age is based on event time or insert time. Tasks: `T048`, `T052`. Status: `Mapped`
+- `S04-F01` High. Resource identity is keyed too broadly and can collide across Cloudflare product types. Tasks: `T048`, `T051`. Status: `Resolved`
+- `S04-F02` High. Zone snapshot “upsert” is not idempotent because there is no natural-key conflict target. Tasks: `T048`, `T052`. Status: `Resolved`
+- `S04-F03` Medium. Snapshot retention logic is inconsistent about whether age is based on event time or insert time. Tasks: `T048`, `T052`. Status: `Resolved`
 - `S04-F04` Medium. Budget persistence is tied to the existence of an active billing snapshot. Tasks: `T026`, `T028`, `T030`, `T031`, `T056`. Status: `Resolved`
 
 ### Section 05: Detection, Queues, and Cron Jobs
 
-- `S05-F01` High. Alert deduplication is keyed too broadly and can suppress distinct incidents. Tasks: `T048`, `T053`. Status: `Mapped`
-- `S05-F02` High. Queue processing is not idempotent enough to prevent duplicate anomalies or duplicate alert fan-out. Tasks: `T048`, `T053`. Status: `Mapped`
+- `S05-F01` High. Alert deduplication is keyed too broadly and can suppress distinct incidents. Tasks: `T048`, `T053`. Status: `Resolved`
+- `S05-F02` High. Queue processing is not idempotent enough to prevent duplicate anomalies or duplicate alert fan-out. Tasks: `T048`, `T053`. Status: `Resolved`
 - `S05-F03` Medium. Polling cron stores placeholder values as if they were measured analytics. Tasks: `T033`, `T034`, `T036`. Status: `Resolved`
 - `S05-F04` Medium. End-to-end detection pipeline currently covers only request-count anomalies. Tasks: `T032`, `T033`, `T035`, `T037`, `T062`. Status: `Resolved`
 
@@ -71,9 +71,9 @@ Use it to answer four questions quickly:
 
 ### Section 07: Validation, Error Handling, and API Consistency
 
-- `S07-F01` Medium. `PATCH /settings/account` accepts `name` but does not update the account name column. Tasks: `T047`, `T054`. Status: `Mapped`
-- `S07-F02` Medium. Notification mutation routes do not enforce per-user ownership and do not report not-found cases. Tasks: `T047`, `T054`. Status: `Mapped`
-- `S07-F03` Medium. Query parameter validation is inconsistent and largely absent. Tasks: `T047`, `T055`. Status: `Mapped`
+- `S07-F01` Medium. `PATCH /settings/account` accepts `name` but does not update the account name column. Tasks: `T047`, `T054`. Status: `Resolved`
+- `S07-F02` Medium. Notification mutation routes do not enforce per-user ownership and do not report not-found cases. Tasks: `T047`, `T054`. Status: `Resolved`
+- `S07-F03` Medium. Query parameter validation is inconsistent and largely absent. Tasks: `T047`, `T055`. Status: `Resolved`
 - `S07-F04` Medium. The custom validation layer is narrower than the framework patterns the API already depends on. Tasks: `T055`. Status: `Mapped`
 
 ### Section 08: Redundancy and Dead Code

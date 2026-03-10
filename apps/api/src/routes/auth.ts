@@ -5,6 +5,8 @@ import {
 	LoginSchema,
 	RegisterSchema,
 	ResetPasswordSchema,
+	AcceptInviteSchema,
+	type AcceptInviteInput,
 	type ForgotPasswordInput,
 	type LoginInput,
 	type RegisterInput,
@@ -239,9 +241,10 @@ auth.post('/reset-password', rateLimitByIp('auth'), validate(ResetPasswordSchema
 });
 
 // POST /auth/accept-invite
-auth.post('/accept-invite', async (c) => {
+auth.post('/accept-invite', validate(AcceptInviteSchema), async (c) => {
 	const { DB, CACHE, SESSIONS } = c.env;
-	const { token } = await c.req.json<{ token: string }>();
+	const input = c.get('validatedBody') as AcceptInviteInput;
+	const { token } = input;
 
 	if (!token) throw new ValidationError('Invite token is required');
 
@@ -254,18 +257,40 @@ auth.post('/accept-invite', async (c) => {
 
 	// Find the pending team member
 	const members = new TeamMembersRepository(DB, accountId);
-	const member = await members.list().then((list) => list.find((m) => m.id === memberId));
+	const member = await members.findById(memberId);
 	if (!member || member.status !== 'pending') {
 		throw new ValidationError('This invite has already been accepted or is no longer valid');
 	}
 
-	// Find or create user by email
+	// Find existing user by email
 	const users = new UsersRepository(DB, accountId);
 	let user = await users.findByEmail(member.email);
 
 	if (!user) {
-		// User doesn't exist yet — they need to register first, redirect with token preserved
-		return c.json({ requires_registration: true, email: member.email, token });
+		if (!input.password || !input.name) {
+			return c.json({ requires_registration: true, email: member.email, token });
+		}
+
+		const userId = newId();
+		const password_hash = await hashPassword(input.password);
+		await users.create({
+			id: userId,
+			email: member.email,
+			name: input.name,
+			password_hash,
+		});
+		user = await users.findById(userId);
+	}
+
+	if (!user) throw new NotFoundError('User');
+
+	if (!input.password || !user.password_hash) {
+		return c.json({ requires_login: true, email: member.email, token });
+	}
+
+	if (user.password_hash) {
+		const valid = await verifyPassword(input.password, user.password_hash);
+		if (!valid) throw new UnauthorizedError('Invalid email or password');
 	}
 
 	// Accept the invite
@@ -401,6 +426,10 @@ auth.get('/oauth/:provider/callback', async (c) => {
 	});
 	if (!userRes.ok) return c.redirect(`${c.env.WEB_URL}/login?error=oauth_user`);
 	const profile = await userRes.json() as Record<string, unknown>;
+	const providerSubject = String(
+		(provider === 'google' ? profile['sub'] : profile['id']) ?? '',
+	);
+	if (!providerSubject) return c.redirect(`${c.env.WEB_URL}/login?error=oauth_subject`);
 
 	const email = (provider === 'google'
 		? (profile['email'] as string)
@@ -424,7 +453,21 @@ auth.get('/oauth/:provider/callback', async (c) => {
 	const { UsersRepository, AccountsRepository, TeamMembersRepository } = await import('@flarelens/db');
 
 	const usersLookup = new UsersRepository(DB, 'oauth');
-	let user = await usersLookup.findByEmail(email);
+	let user = await usersLookup.findByOAuthIdentity(provider, providerSubject);
+	if (!user) {
+		user = await usersLookup.findByEmail(email);
+		if (user) {
+			if (user.oauth_provider && user.oauth_id && (user.oauth_provider !== provider || user.oauth_id !== providerSubject)) {
+				return c.redirect(`${c.env.WEB_URL}/login?error=oauth_conflict`);
+			}
+			await usersLookup.updateOAuthIdentity(user.id, {
+				oauth_provider: provider,
+				oauth_id: providerSubject,
+			});
+			if (avatar_url) await usersLookup.updateProfile(user.id, { avatar_url });
+			user = await usersLookup.findById(user.id);
+		}
+	}
 
 	if (!user) {
 		// Auto-register
@@ -432,7 +475,13 @@ auth.get('/oauth/:provider/callback', async (c) => {
 		const accountId = newId();
 		const accounts = new AccountsRepository(DB, accountId);
 		await accounts.create({ id: accountId, name: `${name}'s Account` });
-		await usersLookup.create({ id: userId, email, name, oauth_provider: provider });
+		await usersLookup.create({
+			id: userId,
+			email,
+			name,
+			oauth_provider: provider,
+			oauth_id: providerSubject,
+		});
 		if (avatar_url) await usersLookup.updateProfile(userId, { avatar_url });
 		const members = new TeamMembersRepository(DB, accountId);
 		await members.create({ id: newId(), email, role: 'admin', invited_by: userId, user_id: userId });

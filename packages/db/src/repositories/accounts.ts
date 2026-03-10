@@ -26,6 +26,23 @@ export class AccountsRepository extends BaseRepository {
 		);
 	}
 
+	async updateProfile(data: { name?: string; settings?: Record<string, unknown> }): Promise<void> {
+		const sets: string[] = ["updated_at = datetime('now')"];
+		const params: unknown[] = [];
+
+		if (data.name !== undefined) {
+			sets.push('name = ?');
+			params.push(data.name);
+		}
+		if (data.settings !== undefined) {
+			sets.push('settings = ?');
+			params.push(JSON.stringify(data.settings));
+		}
+
+		params.push(this.account_id);
+		await this.run(`UPDATE accounts SET ${sets.join(', ')} WHERE id = ?`, ...params);
+	}
+
 	async updatePlan(plan: string, plan_period_end?: string): Promise<void> {
 		await this.run(
 			"UPDATE accounts SET plan = ?, plan_period_end = ?, updated_at = datetime('now') WHERE id = ?",

@@ -14,7 +14,14 @@ import { sendWebhookAlert } from './channels/webhook.js';
 
 export async function dispatchAlert(anomaly: Anomaly, repos: Repos, env: Env): Promise<void> {
 	// 1. Dedup check
-	const duplicate = await isDuplicate(env, anomaly.account_id, anomaly.rule_id, anomaly.resource_id);
+	const duplicate = await isDuplicate(
+		env,
+		anomaly.account_id,
+		anomaly.rule_id,
+		anomaly.resource_id,
+		anomaly.metric,
+		anomaly.severity,
+	);
 	if (duplicate) {
 		console.log(`[Dispatcher] Skipping duplicate alert for anomaly ${anomaly.id}`);
 		return;
@@ -131,5 +138,13 @@ export async function dispatchAlert(anomaly: Anomaly, repos: Repos, env: Env): P
 			if (rule) notifyFrequency = rule.notify_frequency as 'instant' | 'hourly' | 'daily';
 		} catch { /* use default */ }
 	}
-	await markSent(env, anomaly.account_id, anomaly.rule_id, anomaly.resource_id, notifyFrequency);
+	await markSent(
+		env,
+		anomaly.account_id,
+		anomaly.rule_id,
+		anomaly.resource_id,
+		anomaly.metric,
+		anomaly.severity,
+		notifyFrequency,
+	);
 }

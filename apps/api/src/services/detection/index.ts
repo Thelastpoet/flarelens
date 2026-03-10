@@ -92,14 +92,15 @@ export async function runDetection(
 
 	const finalSeverity: Severity = topSeverity ?? 'warning';
 
-	// Dedup: skip if anomaly already exists in the last hour for this resource+metric
+	// Dedup: skip if the same metric+severity is already active in the recent window.
 	const recentAnomalies = await repos.anomalies.findByResource(resourceId, 10);
-	const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+	const recentWindowStart = new Date(Date.now() - 15 * 60 * 1000).toISOString();
 	const alreadyExists = recentAnomalies.some(
 		(a) =>
 			a.metric === metric &&
+			a.severity === finalSeverity &&
 			a.status === 'active' &&
-			a.detected_at >= oneHourAgo,
+			a.detected_at >= recentWindowStart,
 	);
 
 	if (alreadyExists) {

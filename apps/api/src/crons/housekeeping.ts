@@ -15,7 +15,7 @@ export async function runHousekeeping(env: Env): Promise<void> {
 
 			// Delete old zone snapshots beyond retention
 			await DB.prepare(
-				'DELETE FROM zone_snapshots WHERE account_id = ? AND created_at < ?',
+				'DELETE FROM zone_snapshots WHERE account_id = ? AND timestamp < ?',
 			).bind(accountId, cutoff).run();
 
 			// Purge soft-deleted rules > 30 days

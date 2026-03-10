@@ -106,9 +106,11 @@ settings.patch('/account', rateLimit('writes'), validate(UpdateAccountSchema), a
 	const updatedSettings = {
 		...existingSettings,
 		...(input.settings ?? {}),
-		...(input.name ? { account_name: input.name } : {}),
 	};
-	await repos.accounts.updateSettings(updatedSettings);
+	await repos.accounts.updateProfile({
+		...(input.name !== undefined ? { name: input.name } : {}),
+		settings: updatedSettings,
+	});
 	return c.json({ success: true });
 });
 

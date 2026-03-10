@@ -17,6 +17,14 @@ export class TeamMembersRepository extends BaseRepository {
 		);
 	}
 
+	async findById(id: string): Promise<TeamMember | null> {
+		return this.first<TeamMember>(
+			'SELECT * FROM team_members WHERE id = ? AND account_id = ?',
+			id,
+			this.account_id,
+		);
+	}
+
 	async findByEmail(email: string): Promise<TeamMember | null> {
 		return this.first<TeamMember>(
 			'SELECT * FROM team_members WHERE account_id = ? AND email = ?',
