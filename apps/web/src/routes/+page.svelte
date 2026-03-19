@@ -1,5 +1,4 @@
 <script lang="ts">
-// Landing page — from stitch landing_page_overview_3 + landing_page_pricing_section
 let mobileNavOpen = $state(false);
 </script>
 
@@ -305,7 +304,7 @@ let mobileNavOpen = $state(false);
 		<div class="flex items-center gap-2">
 			<span class="material-symbols-outlined text-primary text-xl">shield_lock</span>
 			<span class="font-bold text-slate-900">FlareLens</span>
-			<span>© 2024. All rights reserved.</span>
+			<span>© 2026. All rights reserved.</span>
 		</div>
 		<div class="flex gap-6">
 			<a href="/privacy" class="hover:text-primary transition-colors">Privacy</a>
