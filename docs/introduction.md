@@ -1,12 +1,12 @@
 # Introduction
 
-FlareLens is an open-source Cloudflare budget guard designed for teams that want to catch abnormal usage before it turns into an operational issue or an expensive surprise.
+FlareLens is an open-source Cloudflare budget guard designed for anyone that wants to catch abnormal usage before it turns into an operational issue or an expensive surprise.
 
 Cloudflare's generous free tiers and powerful paid features are excellent, but unexpected spikes in traffic or misconfigured workers can lead to unforeseen costs. FlareLens acts as an early warning system, connecting to your Cloudflare account to monitor traffic, detect anomalies, and alert you before your bill escalates.
 
 ## Core Mission
 
-The mission of FlareLens is to provide **visibility and control** over Cloudflare usage. We believe that teams should never be surprised by their infrastructure bill.
+The mission of FlareLens is to provide **visibility and control** over Cloudflare usage. We believe that no one should ever be surprised by their infrastructure bill.
 
 ## Key Features
 
@@ -18,10 +18,10 @@ The mission of FlareLens is to provide **visibility and control** over Cloudflar
 
 ## Who is FlareLens for?
 
-- **DevOps Engineers:** Who need to monitor infrastructure costs and performance.
-- **SRE Teams:** Who want early warnings for potential DDoS attacks or misconfigurations.
-- **Startups:** Who need to keep a close eye on their Cloudflare spend as they scale.
-- **Open Source Projects:** Who want to protect their infrastructure from abuse.
+- **Developers & Engineers:** Who need to monitor infrastructure costs and performance.
+- **Site Reliability:** Those who want early warnings for potential DDoS attacks or misconfigurations.
+- **Startups & Individual Projects:** Those who need to keep a close eye on their Cloudflare spend as they scale.
+- **Open Source Projects:** Those who want to protect their infrastructure from abuse.
 
 ## How it Works (High Level)
 
