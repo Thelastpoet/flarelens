@@ -120,6 +120,3 @@
     </div>
   </div>
 </div>
-*** Delete File: /home/manu/development/flarelens/apps/web/src/routes/(app)/onboarding/connect/+page.svelte
-*** Delete File: /home/manu/development/flarelens/apps/web/src/routes/(app)/onboarding/zones/+page.svelte
-*** Delete File: /home/manu/development/flarelens/apps/web/src/routes/(app)/onboarding/success/+page.svelte

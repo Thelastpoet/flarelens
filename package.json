@@ -1,6 +1,7 @@
 {
 	"name": "flarelens",
 	"private": true,
+	"license": "MIT",
 	"scripts": {
 		"dev": "pnpm -r --parallel dev",
 		"preview": "pnpm -r --parallel preview",
