@@ -1,0 +1,40 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "web",
+	// Copy this file to wrangler.local.jsonc and replace every __YOUR_*__ value
+	// with resources from your own Cloudflare account before running
+	// `pnpm run preview`, `pnpm run deploy`, or `pnpm run cf-typegen`.
+	"account_id": "__YOUR_CLOUDFLARE_ACCOUNT_ID__",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_date": "2025-09-27",
+	"compatibility_flags": ["nodejs_compat", "nodejs_als"],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".svelte-kit/cloudflare"
+	},
+	"observability": {
+		"enabled": true
+	},
+
+	// Service binding to the API worker
+	"services": [
+		{
+			"binding": "API",
+			"service": "api"
+		}
+	],
+
+	// KV for session store
+	"kv_namespaces": [
+		{
+			"binding": "SESSIONS",
+			"id": "__YOUR_SESSIONS_KV_NAMESPACE_ID__"
+		}
+	],
+
+	// Environment Variables
+	"vars": {
+		"ENVIRONMENT": "production",
+		"API_URL": "__YOUR_API_URL__"
+	}
+}

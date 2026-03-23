@@ -13,8 +13,8 @@ declare namespace Cloudflare {
 		ALERT_DISPATCH_QUEUE: Queue;
 		ANOMALY_CHECK_QUEUE: Queue;
 		ENVIRONMENT: "production";
-		WEB_URL: "__YOUR_WEB_URL__";
-		API_URL: "__YOUR_API_URL__";
+		WEB_URL: string;
+		API_URL: string;
 		TOKEN_ENCRYPTION_KEY: string;
 		LIVE_FEED: DurableObjectNamespace<import("./src/index").AccountLiveFeed>;
 	}

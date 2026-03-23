@@ -1,42 +1,30 @@
-# sv
+# FlareLens Web
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+This app is the SvelteKit frontend for FlareLens.
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
+## Local Setup
 
 ```sh
-# create a new project
-npx sv create my-app
+pnpm install
+cp wrangler.example.jsonc wrangler.local.jsonc
+pnpm run dev
 ```
 
-To recreate this project with the same configuration:
+Before running Worker-specific commands, copy `wrangler.example.jsonc` to `wrangler.local.jsonc` and replace every `__YOUR_*__` placeholder with resources from your own Cloudflare account.
+
+`wrangler.local.jsonc` is intentionally ignored by git so open source contributors do not commit personal Cloudflare account details.
+
+## Build And Deploy
 
 ```sh
-# recreate this project
-pnpm dlx sv@0.12.4 create --template minimal --types ts --install pnpm web
+pnpm run build
+pnpm run deploy
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Type Generation
 
 ```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+pnpm run cf-typegen
 ```
 
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+The type generation command scrubs URL literals from the generated Worker bindings file before it is left in the repo.

@@ -3,11 +3,11 @@
 	"license": "MIT",
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
-		"build": "vite build",
-		"preview": "wrangler dev",
-		"deploy": "$npm_execpath run build && wrangler deploy",
-		"cf-typegen": "wrangler types --env-interface CloudflareBindings",
+		"dev": "node ../../scripts/require-wrangler-config.mjs apps/api && vite",
+		"build": "node ../../scripts/require-wrangler-config.mjs apps/api && vite build",
+		"preview": "node ../../scripts/require-wrangler-config.mjs apps/api && wrangler dev --config wrangler.local.jsonc",
+		"deploy": "node ../../scripts/require-wrangler-config.mjs apps/api && $npm_execpath run build && wrangler deploy --config wrangler.local.jsonc",
+		"cf-typegen": "node ../../scripts/require-wrangler-config.mjs apps/api && wrangler types --config wrangler.local.jsonc --env-interface CloudflareBindings && node ../../scripts/scrub-worker-types.mjs worker-configuration.d.ts WEB_URL API_URL",
 		"test": "vitest run --config vitest.config.ts"
 	},
 	"dependencies": {

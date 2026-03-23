@@ -1,0 +1,92 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "api",
+	// Copy this file to wrangler.local.jsonc and replace every __YOUR_*__ value
+	// with resources from your own Cloudflare account before running
+	// `pnpm run dev`, `pnpm run preview`, `pnpm run deploy`, or `pnpm run cf-typegen`.
+	"account_id": "__YOUR_CLOUDFLARE_ACCOUNT_ID__",
+	"compatibility_date": "2025-08-03",
+	"compatibility_flags": ["nodejs_compat"],
+	"main": "./src/index.tsx",
+
+	// Local dev port (hooks.server.ts proxies /api/* to this port)
+	"dev": {
+		"port": 5174
+	},
+
+	// D1 Database
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "flarelens-db",
+			"database_id": "__YOUR_D1_DATABASE_ID__",
+			"migrations_dir": "../../packages/db/migrations"
+		}
+	],
+
+	// KV Namespaces
+	"kv_namespaces": [
+		{
+			"binding": "SESSIONS",
+			"id": "__YOUR_SESSIONS_KV_NAMESPACE_ID__"
+		},
+		{
+			"binding": "CACHE",
+			"id": "__YOUR_CACHE_KV_NAMESPACE_ID__"
+		}
+	],
+
+	// Queues
+	"queues": {
+		"producers": [
+			{
+				"binding": "ALERT_DISPATCH_QUEUE",
+				"queue": "flarelens-alert-dispatch"
+			},
+			{
+				"binding": "ANOMALY_CHECK_QUEUE",
+				"queue": "flarelens-anomaly-check"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "flarelens-alert-dispatch",
+				"max_batch_size": 10,
+				"max_retries": 3
+			},
+			{
+				"queue": "flarelens-anomaly-check",
+				"max_batch_size": 10,
+				"max_retries": 3
+			}
+		]
+	},
+
+	// Durable Objects
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "LIVE_FEED",
+				"class_name": "AccountLiveFeed"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_classes": ["AccountLiveFeed"]
+		}
+	],
+
+	// Cron Triggers
+	"triggers": {
+		"crons": ["*/5 * * * *", "0 */6 * * *", "0 8 * * *", "0 */12 * * *", "0 3 * * *"]
+	},
+
+	// Environment Variables (non-secret)
+	"vars": {
+		"ENVIRONMENT": "production",
+		"WEB_URL": "__YOUR_WEB_URL__",
+		"API_URL": "__YOUR_API_URL__"
+	}
+}

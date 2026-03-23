@@ -29,11 +29,20 @@ For detailed information on how to use FlareLens, please refer to our documentat
    ```bash
    pnpm install
    ```
-2. **Set Up Environment:** Create `.dev.vars` in `apps/api/`.
-3. **Run Development Mode:**
+2. **Create Local Wrangler Configs:** Copy `apps/api/wrangler.example.jsonc` to `apps/api/wrangler.local.jsonc` and `apps/web/wrangler.example.jsonc` to `apps/web/wrangler.local.jsonc`, then replace every `__YOUR_*__` placeholder with resources from your own Cloudflare account.
+3. **Set Up Environment:** Create `.dev.vars` in `apps/api/`.
+4. **Run Development Mode:**
    ```bash
    pnpm dev
    ```
+
+## Cloudflare Configuration
+
+This repository is open source. Real Cloudflare account IDs, namespace IDs, database IDs, worker URLs, and other deploy-target details must stay out of version control.
+
+- `apps/api/wrangler.example.jsonc` and `apps/web/wrangler.example.jsonc` are committed templates.
+- `apps/api/wrangler.local.jsonc` and `apps/web/wrangler.local.jsonc` are ignored local files for your own account.
+- Secrets such as `TOKEN_ENCRYPTION_KEY` still belong in Wrangler secrets or `.dev.vars`, not in config files.
 
 ## Repository Overview
 

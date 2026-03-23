@@ -8,6 +8,10 @@ coverage
 .env.*
 !.env.example
 .dev.vars
+apps/api/wrangler.jsonc
+apps/api/wrangler.local.jsonc
+apps/web/wrangler.jsonc
+apps/web/wrangler.local.jsonc
 .DS_Store
 stitch_platform_settings/
 screenshots/
