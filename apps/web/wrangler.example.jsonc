@@ -1,6 +1,6 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "web",
+	"name": "flarelens-web",
 	// Copy this file to wrangler.local.jsonc and replace every __YOUR_*__ value
 	// with resources from your own Cloudflare account before running
 	// `pnpm run preview`, `pnpm run deploy`, or `pnpm run cf-typegen`.
@@ -20,7 +20,7 @@
 	"services": [
 		{
 			"binding": "API",
-			"service": "api"
+			"service": "flarelens-api"
 		}
 	],
 
