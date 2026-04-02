@@ -45,6 +45,17 @@ This repository is open source. Real Cloudflare account IDs, namespace IDs, data
 - `apps/api/wrangler.example.jsonc` includes required API observability settings, and Cloudflare commands for `apps/api` fail fast if your local copied config removes them.
 - Secrets such as `TOKEN_ENCRYPTION_KEY` still belong in Wrangler secrets or `.dev.vars`, not in config files.
 
+## Cloudflare Connection Flow
+
+FlareLens now guides users through Cloudflare's account-owned API token flow instead of expecting them to assemble permissions manually.
+
+- The web app opens the Cloudflare token creation screen with FlareLens read scopes preselected for zones, analytics, Workers, KV, D1, and R2.
+- Users still need to set Cloudflare resource scope correctly on that page:
+  - `Zone Resources` -> `Include - All zones`
+  - `Account Resources` -> `Include - All accounts` or the specific account they want to connect
+- After token creation, the user pastes the generated Cloudflare token into FlareLens and clicks `Verify & Connect`.
+- The API stores that token encrypted with `TOKEN_ENCRYPTION_KEY`, resolves the Cloudflare account, verifies the token with the account-owned token endpoint, and then probes usable capabilities.
+
 ## Repository Overview
 
 - `apps/web` — SvelteKit user interface

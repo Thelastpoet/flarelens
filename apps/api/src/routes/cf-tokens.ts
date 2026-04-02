@@ -87,9 +87,15 @@ cfTokens.post('/:id/verify', requireRole('admin'), rateLimit('writes'), async (c
 	const plainToken = await decryptToken(tokenRow.encrypted_token, c.env.TOKEN_ENCRYPTION_KEY);
 	const client = new CloudflareClient(plainToken, tokenRow.cf_account_id);
 
+	let account: {
+		id: string;
+		name: string | null;
+		source: import('@flarelens/shared').CfAccountSource;
+	};
 	let verifyResult: import('../services/cloudflare/client.js').CfTokenVerifyResult;
 	try {
-		verifyResult = await client.verifyToken();
+		account = await client.resolveAccount(tokenRow.cf_account_id);
+		verifyResult = await client.verifyToken(account.id);
 	} catch (err) {
 		if (
 			err instanceof ValidationError ||
@@ -149,18 +155,12 @@ cfTokens.post('/:id/verify', requireRole('admin'), rateLimit('writes'), async (c
 		throw new ValidationError(`Token status is '${verifyResult.status}', expected 'active'`);
 	}
 
-	let account: {
-		id: string;
-		name: string | null;
-		source: import('@flarelens/shared').CfAccountSource;
-	};
 	let capabilityResult: {
 		capabilities: import('@flarelens/shared').CfCapability[];
 		probes: import('@flarelens/shared').CfCapabilityProbe[];
 	};
 	let verificationDetails: import('@flarelens/shared').CfTokenVerificationDetails;
 	try {
-		account = await client.resolveAccount(tokenRow.cf_account_id);
 		capabilityResult = await client.probeCapabilities(account.id);
 		verificationDetails = client.buildVerificationDetails({
 			verifyResult,

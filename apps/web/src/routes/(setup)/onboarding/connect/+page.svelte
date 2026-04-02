@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { getCloudflareTokenTemplateUrl } from '$lib/cloudflare-token-template.js';
 	import type { ActionData } from './$types.js';
 
 	let { form }: { form: ActionData } = $props();
 	let submitting = $state(false);
+	const createTokenUrl = getCloudflareTokenTemplateUrl();
 </script>
 
 <!-- Onboarding Step 2: Connect Cloudflare — split left/right panel layout -->
@@ -111,7 +113,7 @@
           <div class="text-center lg:text-left mb-8 mt-4">
             <h2 class="text-3xl font-bold tracking-tight text-slate-900">Connect your Cloudflare Account</h2>
             <p class="mt-2 text-sm text-slate-600">
-              Provide your API credentials to start monitoring your usage and costs.
+              Create a Cloudflare API token with the FlareLens read scopes, then paste it here to start monitoring your usage and costs.
             </p>
           </div>
 
@@ -129,10 +131,34 @@
               }}
             >
               <div class="space-y-5">
+                <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="flex items-start justify-between gap-4">
+                    <div>
+                      <h3 class="text-sm font-semibold text-slate-900">Create your Cloudflare token first</h3>
+                      <p class="mt-1 text-sm text-slate-600">
+                        This opens Cloudflare with FlareLens read scopes preselected for zones, analytics, Workers, KV, D1, and R2.
+                      </p>
+                      <p class="mt-2 text-sm text-slate-600">
+                        In Cloudflare, also set <span class="font-semibold text-slate-900">Zone Resources</span> to
+                        <span class="font-semibold text-slate-900">Include - All zones</span> and
+                        <span class="font-semibold text-slate-900">Account Resources</span> to
+                        <span class="font-semibold text-slate-900">Include - All accounts</span> or the account you want to connect.
+                      </p>
+                    </div>
+                    <a
+                      class="shrink-0 rounded-md bg-slate-900 px-3 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                      href={createTokenUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Create Cloudflare Token
+                    </a>
+                  </div>
+                </div>
                 <div>
                   <div class="flex items-center justify-between">
                     <label class="block text-sm font-medium leading-6 text-slate-900" for="token">Cloudflare API Token</label>
-                    <a class="text-xs font-medium text-[var(--color-primary)] hover:text-[var(--color-primary)]/80" href="/docs/api-token">Where do I find my API token?</a>
+                    <span class="text-xs font-medium text-slate-500">Use Create Cloudflare Token above</span>
                   </div>
                   <div class="mt-2">
                     <input

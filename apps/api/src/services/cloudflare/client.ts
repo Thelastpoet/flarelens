@@ -119,8 +119,9 @@ export class CloudflareClient {
 		throw new ExternalServiceError('Cloudflare', 'Rate limit exceeded after retries');
 	}
 
-	async verifyToken(): Promise<CfTokenVerifyResult> {
-		return this.request<CfTokenVerifyResult>('/user/tokens/verify');
+	async verifyToken(accountId?: string | null): Promise<CfTokenVerifyResult> {
+		const resolvedAccountId = this.requireAccountId(accountId);
+		return this.request<CfTokenVerifyResult>(`/accounts/${resolvedAccountId}/tokens/verify`);
 	}
 
 	async listAccounts(): Promise<CfAccount[]> {

@@ -71,7 +71,13 @@ describe('POST /cf-tokens/:id/verify failure modes', () => {
 			'fetch',
 			vi.fn(async (input: RequestInfo | URL) => {
 				const url = String(input);
-				if (url.endsWith('/user/tokens/verify')) {
+				if (url.includes('/accounts?per_page=50')) {
+					return Response.json({
+						success: true,
+						result: [{ id: cfAccountId, name: 'Primary CF Account' }],
+					});
+				}
+				if (url.endsWith('/accounts/cf_account_failure/tokens/verify')) {
 					return Response.json({
 						success: true,
 						result: { id: 'verify_failure', status: 'disabled' },
@@ -101,7 +107,7 @@ describe('POST /cf-tokens/:id/verify failure modes', () => {
 			'fetch',
 			vi.fn(async (input: RequestInfo | URL) => {
 				const url = String(input);
-				if (url.endsWith('/user/tokens/verify')) {
+				if (url.endsWith(`/accounts/${cfAccountId}/tokens/verify`)) {
 					return Response.json({
 						success: true,
 						result: { id: 'verify_failure', status: 'active' },

@@ -71,7 +71,7 @@ describe('Cloudflare token verification', () => {
 			'fetch',
 			vi.fn(async (input: RequestInfo | URL) => {
 				const url = String(input);
-				if (url.endsWith('/user/tokens/verify')) {
+				if (url.endsWith(`/accounts/${cfAccountId}/tokens/verify`)) {
 					return Response.json({
 						success: true,
 						result: {
@@ -154,7 +154,7 @@ describe('Cloudflare token verification', () => {
 			'fetch',
 			vi.fn(async (input: RequestInfo | URL) => {
 				const url = String(input);
-				if (url.endsWith('/user/tokens/verify')) {
+				if (url.endsWith(`/accounts/${cfAccountId}/tokens/verify`)) {
 					return Response.json({
 						success: true,
 						result: { id: 'verify_123', status: 'active' },

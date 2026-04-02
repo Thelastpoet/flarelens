@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { api, ApiRequestError } from '$lib/api.js';
+	import { getCloudflareTokenTemplateUrl } from '$lib/cloudflare-token-template.js';
 	import type { CfTokensPageToken } from '$lib/server/cf-tokens.js';
 	import type { PageData } from './$types.js';
 
@@ -18,6 +19,7 @@
 	let { data }: { data: PageData } = $props();
 
 	const tokens = $derived(data.tokens);
+	const createTokenUrl = getCloudflareTokenTemplateUrl();
 
 	let addForm = $state<AddTokenFormState>({
 		label: '',
@@ -126,14 +128,37 @@
 	<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
 		<div class="flex items-center justify-between gap-4 mb-5">
 			<h2 class="text-sm font-semibold text-slate-900">Add Token</h2>
-			<button
-				type="button"
-				class="text-xs font-semibold text-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
-				onclick={() => invalidateAll()}
-				disabled={busyAction !== null}
-			>
-				Refresh
-			</button>
+			<div class="flex items-center gap-3">
+				<a
+					class="text-xs font-semibold text-primary hover:underline"
+					href={createTokenUrl}
+					target="_blank"
+					rel="noreferrer"
+				>
+					Create Cloudflare Token
+				</a>
+				<button
+					type="button"
+					class="text-xs font-semibold text-primary hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+					onclick={() => invalidateAll()}
+					disabled={busyAction !== null}
+				>
+					Refresh
+				</button>
+			</div>
+		</div>
+
+		<p class="mb-4 text-sm text-slate-600">
+			Use <a class="font-semibold text-primary hover:underline" href={createTokenUrl} target="_blank" rel="noreferrer">Create Cloudflare Token</a>
+			to open Cloudflare with FlareLens read scopes preselected for zones, analytics, Workers,
+			KV, D1, and R2. Then paste the generated token below and verify it.
+		</p>
+		<div class="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+			In the Cloudflare token screen, also set <span class="font-semibold">Zone Resources</span> to
+			<span class="font-semibold">Include - All zones</span> and
+			<span class="font-semibold">Account Resources</span> to
+			<span class="font-semibold">Include - All accounts</span> or the specific account you want FlareLens
+			to monitor.
 		</div>
 
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
