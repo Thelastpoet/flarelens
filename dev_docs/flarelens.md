@@ -40,6 +40,15 @@ Supported monitored metrics:
 - `bytes`
 - `threats`
 
+Current user-facing anomaly categories include:
+
+- traffic surge or drop
+- bandwidth surge or drop
+- cache activity changes
+- threat traffic changes
+
+In practice, most current anomaly cards may appear as traffic and bandwidth because those signals trigger most often in current data. That is an implementation outcome, not a product boundary. FlareLens should keep expanding from raw metric changes toward richer issue interpretation such as cost spikes, attack patterns, cache regressions, deploy-related breakage, and outage signals where the underlying Cloudflare data supports it.
+
 Stored contributor data is limited and pragmatic:
 
 - top countries are stored in snapshots
@@ -106,6 +115,12 @@ The MVP should be documented as:
 - attribution
 - multi-channel alerting
 - estimated budget monitoring
+
+The MVP anomaly story should reflect both current implementation and intended direction:
+
+- it currently detects changes in traffic, bandwidth, cache activity, and threat traffic
+- it should continue evolving toward higher-level issue interpretation such as outage signals, cost spikes, attack patterns, cache regressions, and release-related incidents
+- when those interpretations are missing, the product should gain them rather than redefining them away
 
 The MVP should not claim:
 

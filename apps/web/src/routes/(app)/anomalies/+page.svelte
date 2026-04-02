@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
+	import { presentAnomaly } from '$lib/anomaly-presentation.js';
 	import { api } from '$lib/api.js';
 	import type { PageData } from './$types.js';
 
@@ -75,6 +76,7 @@ async function applyFilter(next: 'active' | 'dismissed' | 'all') {
 	<div class="space-y-3">
 		{#each anomalies as anomaly}
 			{@const attribution = anomaly.attribution}
+			{@const presented = presentAnomaly(anomaly)}
 			<div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
 				<div class="flex">
 					<div class="w-1 {severityDot[anomaly.severity]} shrink-0"></div>
@@ -89,24 +91,18 @@ async function applyFilter(next: 'active' | 'dismissed' | 'all') {
 							<div class="flex items-start gap-3">
 								<div>
 									<div class="flex items-center gap-2 mb-1">
-										<span class="text-sm font-semibold text-slate-900">{anomaly.resource_id ?? anomaly.id}</span>
-										{#if anomaly.detection_type}
-											<span class="text-xs text-gray-400">{anomaly.detection_type}</span>
-										{/if}
+										<span class="text-sm font-semibold text-slate-900">{presented.resourceLabel}</span>
 											<span class="text-xs font-medium px-2 py-0.5 rounded-full {severityBadge[anomaly.severity]}">{anomaly.severity}</span>
 										{#if anomaly.status === 'dismissed'}
 											<span class="text-xs text-gray-400 italic">dismissed</span>
 										{/if}
 									</div>
-									<div class="text-sm text-gray-600">
-										{anomaly.metric} spiked to <span class="font-semibold text-red-600">{anomaly.current_value}</span>
-										{#if anomaly.baseline_value != null}
-											(baseline: {anomaly.baseline_value}{#if anomaly.deviation != null} · <span class="text-red-500 font-medium">+{(anomaly.deviation * 100).toFixed(0)}%</span>{/if})
-										{/if}
-									</div>
-									{#if attribution.length > 0}
+									<div class="text-sm font-medium text-slate-800">{presented.shortHeadline}</div>
+									<div class="text-sm text-gray-600 mt-1">{presented.summary}</div>
+									<div class="text-xs text-gray-500 mt-1">{presented.impact}</div>
+									{#if presented.contributorSummary}
 										<div class="text-xs text-gray-400 mt-1">
-												Top contributors: {attribution.map((a) => `${a.value} (${a.contribution_pct}%)`).join(' · ')}
+											{presented.contributorSummary}
 										</div>
 									{/if}
 								</div>
@@ -131,20 +127,39 @@ async function applyFilter(next: 'active' | 'dismissed' | 'all') {
 				</div>
 
 				<!-- Expanded detail -->
-				{#if selected === anomaly.id && attribution.length > 0}
+				{#if selected === anomaly.id}
 					<div id={`anomaly-detail-${anomaly.id}`} class="px-6 pb-5 pt-2 border-t border-gray-50">
-						<p class="text-xs font-medium text-gray-500 mb-3">Spike Contributors</p>
-						<div class="space-y-2">
-							{#each attribution as contrib}
-								<div class="flex items-center gap-3">
-										<span class="text-xs text-slate-700 w-44 shrink-0">{contrib.value}</span>
-										<div class="flex-1 h-2 rounded-full bg-gray-100">
-											<div class="h-2 rounded-full bg-orange-400" style="width: {contrib.contribution_pct}%"></div>
-										</div>
-										<span class="text-xs font-semibold text-slate-900 w-8 text-right">{contrib.contribution_pct}%</span>
-								</div>
-							{/each}
+						<div class="grid gap-4 md:grid-cols-2">
+							<div>
+								<p class="text-xs font-medium text-gray-500 mb-2">Why this matters</p>
+								<p class="text-sm text-slate-700">{presented.impact}</p>
+							</div>
+							<div>
+								<p class="text-xs font-medium text-gray-500 mb-2">What to check next</p>
+								<ul class="space-y-1 text-sm text-slate-700">
+									{#each presented.nextChecks as item}
+										<li>{item}</li>
+									{/each}
+								</ul>
+							</div>
 						</div>
+						{#if presented.presentedAttribution.length > 0}
+							<div class="mt-4">
+								<p class="text-xs font-medium text-gray-500 mb-3">Likely contributors</p>
+								<div class="space-y-2">
+									{#each presented.presentedAttribution as contrib}
+										<div class="flex items-center gap-3">
+											<span class="text-xs text-slate-700 w-28 shrink-0">{contrib.label}</span>
+											<span class="text-xs text-slate-700 w-44 shrink-0">{contrib.value}</span>
+											<div class="flex-1 h-2 rounded-full bg-gray-100">
+												<div class="h-2 rounded-full bg-orange-400" style="width: {contrib.contributionPct}%"></div>
+											</div>
+											<span class="text-xs font-semibold text-slate-900 w-8 text-right">{contrib.contributionPct}%</span>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
 					</div>
 				{/if}
 			</div>

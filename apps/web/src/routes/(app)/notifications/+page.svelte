@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { presentAnomaly } from '$lib/anomaly-presentation.js';
 	import { api } from '$lib/api.js';
 	import type { NotificationSeverity, NotificationType } from '@flarelens/shared';
 	import type { PageData } from './$types.js';
@@ -147,6 +148,7 @@
 {:else}
 	<div class="flex flex-col gap-4">
 		{#each notifications as notification}
+			{@const presented = notification.anomaly ? presentAnomaly(notification.anomaly) : null}
 			<div
 				class={`relative flex gap-4 overflow-hidden rounded-xl p-4 ${cardStyles[notification.severity]}`}
 			>
@@ -162,15 +164,18 @@
 					<div class="flex min-w-0 flex-1 flex-col">
 						<div class="mb-1 flex items-center justify-between gap-2">
 							<h3 class={`truncate text-base font-semibold ${titleStyles[notification.severity]}`}>
-								{notification.title}
+								{presented?.headline ?? notification.title}
 							</h3>
 							<span class="shrink-0 text-xs font-medium text-slate-500">
 								{relativeTime(notification.created_at)}
 							</span>
 						</div>
 						<p class={`mb-3 line-clamp-2 text-sm ${bodyStyles[notification.severity]}`}>
-							{notification.body}
+							{presented?.summary ?? notification.body}
 						</p>
+						{#if presented?.impact}
+							<p class="mb-3 text-sm text-slate-500">{presented.impact}</p>
+						{/if}
 						<div class="flex gap-3">
 							{#if notification.link}
 								<a

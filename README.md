@@ -12,6 +12,15 @@ It connects to Cloudflare, monitors traffic and usage signals, detects unusual s
 - **Root Cause Attribution:** Identify likely contributors behind usage spikes.
 - **Response Workflows:** Support controlled response workflows when intervention is needed.
 
+Current anomaly coverage includes changes in:
+
+- traffic
+- bandwidth
+- cache activity
+- threat traffic
+
+Most live anomalies currently show up as traffic or bandwidth changes. That reflects the current implementation and recent data, not a product ceiling. FlareLens should keep expanding its interpretation layer so these signals roll up into clearer issue categories such as cost spikes, attack patterns, cache regressions, deploy-related breakage, and outage signals.
+
 ## Documentation
 
 For detailed information on how to use FlareLens, please refer to our documentation:

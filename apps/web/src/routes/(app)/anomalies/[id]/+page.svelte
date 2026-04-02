@@ -1,10 +1,12 @@
 <script lang="ts">
 import { goto } from '$app/navigation';
+import { presentAnomaly } from '$lib/anomaly-presentation.js';
 import type { PageData } from './$types.js';
 
 let { data }: { data: PageData } = $props();
 
 const anomaly = $derived(data.anomaly);
+const presented = $derived(anomaly ? presentAnomaly(anomaly) : null);
 
 const severityBadge: Record<'critical' | 'high' | 'warning' | 'info', string> = {
 	critical: 'bg-red-100 text-red-700 border border-red-200',
@@ -61,37 +63,28 @@ async function dismiss() {
 		<div class="flex items-start justify-between gap-4 mb-6">
 			<div>
 				<div class="flex items-center gap-2 mb-1">
-					<h2 class="text-lg font-semibold text-slate-900">{anomaly.metric}</h2>
+					<h2 class="text-lg font-semibold text-slate-900">{presented?.headline}</h2>
 					<span class="text-sm font-medium px-2.5 py-0.5 rounded-full {severityBadge[anomaly.severity]}">{anomaly.severity}</span>
 				</div>
-				{#if anomaly.resource_id}
-					<p class="text-sm text-gray-500">Resource: <span class="font-medium text-slate-700">{anomaly.resource_id}</span></p>
-				{/if}
-				{#if anomaly.detection_type}
-					<p class="text-sm text-gray-500">Detection type: <span class="font-medium text-slate-700">{anomaly.detection_type}</span></p>
+				{#if presented}
+					<p class="text-sm text-gray-500">{presented.summary}</p>
 				{/if}
 			</div>
 			<span class="text-sm text-gray-400 whitespace-nowrap">Detected {formatDate(anomaly.detected_at)}</span>
 		</div>
 
-		<div class="grid grid-cols-3 gap-4">
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 			<div class="bg-slate-50 rounded-lg p-4">
-				<p class="text-xs font-medium text-gray-500 mb-1">Current Value</p>
-				<p class="text-xl font-bold text-red-600">{anomaly.current_value}</p>
+				<p class="text-xs font-medium text-gray-500 mb-1">Why this matters</p>
+				<p class="text-sm text-slate-700">{presented?.impact}</p>
 			</div>
 			<div class="bg-slate-50 rounded-lg p-4">
-				<p class="text-xs font-medium text-gray-500 mb-1">Baseline Value</p>
-				<p class="text-xl font-bold text-slate-700">{anomaly.baseline_value ?? '—'}</p>
-			</div>
-			<div class="bg-slate-50 rounded-lg p-4">
-				<p class="text-xs font-medium text-gray-500 mb-1">Deviation</p>
-				<p class="text-xl font-bold text-orange-600">
-					{#if anomaly.deviation != null}
-						+{(anomaly.deviation * 100).toFixed(1)}%
-					{:else}
-						—
-					{/if}
-				</p>
+				<p class="text-xs font-medium text-gray-500 mb-1">What to check next</p>
+				<ul class="space-y-1 text-sm text-slate-700">
+					{#each presented?.nextChecks ?? [] as item}
+						<li>{item}</li>
+					{/each}
+				</ul>
 			</div>
 		</div>
 	</div>
@@ -99,21 +92,51 @@ async function dismiss() {
 	<!-- Attribution breakdown -->
 	{#if anomaly.attribution.length > 0}
 		<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-4">
-			<h3 class="text-sm font-semibold text-slate-900 mb-4">Spike Contributors</h3>
+			<h3 class="text-sm font-semibold text-slate-900 mb-4">Likely contributors</h3>
 			<div class="space-y-3">
-				{#each anomaly.attribution as contrib}
+				{#each presented?.presentedAttribution ?? [] as contrib}
 					<div class="flex items-center gap-3">
+						<span class="text-sm text-slate-500 w-28 shrink-0">{contrib.label}</span>
 						<span class="text-sm text-slate-700 w-48 shrink-0 truncate">{contrib.value}</span>
 						<div class="flex-1 h-3 rounded-full bg-gray-100">
-							<div class="h-3 rounded-full bg-orange-400 transition-all" style="width: {contrib.contribution_pct}%"></div>
+							<div class="h-3 rounded-full bg-orange-400 transition-all" style="width: {contrib.contributionPct}%"></div>
 						</div>
-						<span class="text-sm font-semibold text-slate-900 w-12 text-right">{contrib.contribution_pct}%</span>
-						<span class="text-xs text-gray-400 w-20 text-right">{contrib.current_value}</span>
+						<span class="text-sm font-semibold text-slate-900 w-12 text-right">{contrib.contributionPct}%</span>
 					</div>
 				{/each}
 			</div>
 		</div>
 	{/if}
+
+	<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-4">
+		<h3 class="text-sm font-semibold text-slate-900 mb-4">Technical details</h3>
+		<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+			<div class="bg-slate-50 rounded-lg p-4">
+				<p class="text-xs font-medium text-gray-500 mb-1">Resource</p>
+				<p class="text-sm font-semibold text-slate-700">{anomaly.resource_name ?? anomaly.resource_id ?? '—'}</p>
+			</div>
+			<div class="bg-slate-50 rounded-lg p-4">
+				<p class="text-xs font-medium text-gray-500 mb-1">Metric</p>
+				<p class="text-sm font-semibold text-slate-700">{anomaly.metric}</p>
+			</div>
+			<div class="bg-slate-50 rounded-lg p-4">
+				<p class="text-xs font-medium text-gray-500 mb-1">Detection method</p>
+				<p class="text-sm font-semibold text-slate-700">{anomaly.detection_type}</p>
+			</div>
+			<div class="bg-slate-50 rounded-lg p-4">
+				<p class="text-xs font-medium text-gray-500 mb-1">Current value</p>
+				<p class="text-sm font-semibold text-slate-700">{anomaly.current_value.toLocaleString()}</p>
+			</div>
+			<div class="bg-slate-50 rounded-lg p-4">
+				<p class="text-xs font-medium text-gray-500 mb-1">Baseline value</p>
+				<p class="text-sm font-semibold text-slate-700">{anomaly.baseline_value?.toLocaleString() ?? '—'}</p>
+			</div>
+			<div class="bg-slate-50 rounded-lg p-4">
+				<p class="text-xs font-medium text-gray-500 mb-1">Deviation</p>
+				<p class="text-sm font-semibold text-slate-700">{anomaly.deviation != null ? anomaly.deviation.toFixed(2) : '—'}</p>
+			</div>
+		</div>
+	</div>
 
 	<!-- Actions -->
 	{#if anomaly.status === 'active'}
