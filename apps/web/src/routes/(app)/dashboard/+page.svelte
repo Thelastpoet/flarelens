@@ -139,7 +139,9 @@ const recentActivity = $derived.by(() => {
 	<div class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
 		<h1 class="text-2xl font-bold text-slate-900">Dashboard temporarily unavailable</h1>
 		<p class="mt-3 text-sm text-slate-500">{data.message}</p>
-		<p class="mt-2 text-sm text-slate-400">Reconnect the Cloudflare account or try again after analytics data becomes available.</p>
+		<p class="mt-2 text-sm text-slate-400">
+			Reconnect the Cloudflare account from <a class="text-primary hover:underline font-medium" href="/settings/cloudflare">Settings → Cloudflare</a>, or try again after analytics data becomes available.
+		</p>
 	</div>
 {:else if overview && traffic}
 <!-- Header row -->

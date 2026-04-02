@@ -47,13 +47,15 @@ function formatErrorStatus(status: number): string {
 
 {#if isUnavailable}
 	<div class="max-w-[1200px] mx-auto">
-		<div class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-			<h1 class="text-2xl font-bold text-slate-900">Analytics temporarily unavailable</h1>
-			<p class="mt-3 text-sm text-slate-500">{data.message}</p>
-			<p class="mt-2 text-sm text-slate-400">Reconnect the Cloudflare account or try again after analytics data becomes available.</p>
+			<div class="rounded-xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+				<h1 class="text-2xl font-bold text-slate-900">Analytics temporarily unavailable</h1>
+				<p class="mt-3 text-sm text-slate-500">{data.message}</p>
+				<p class="mt-2 text-sm text-slate-400">
+					Reconnect the Cloudflare account from <a class="text-primary hover:underline font-medium" href="/settings/cloudflare">Settings → Cloudflare</a>, or try again after analytics data becomes available.
+				</p>
+			</div>
 		</div>
-	</div>
-{:else if trafficData && performanceData && errorsData}
+	{:else if trafficData && performanceData && errorsData}
 <div class="max-w-[1200px] mx-auto flex flex-col gap-6">
 	<!-- Page header -->
 	<div class="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 pb-2">

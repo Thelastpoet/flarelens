@@ -137,6 +137,22 @@
 <div class="max-w-2xl">
 	<h1 class="text-2xl font-bold text-slate-900 mb-6">Settings</h1>
 
+	<!-- Cloudflare -->
+	<div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-4">
+		<h2 class="text-sm font-semibold text-slate-900 mb-2">Cloudflare</h2>
+		<p class="text-xs text-slate-500">
+			Manage the Cloudflare API token used for analytics, monitoring, and resource sync.
+		</p>
+		<div class="flex justify-end mt-4">
+			<a
+				href="/settings/cloudflare"
+				class="px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600"
+			>
+				Manage Connection
+			</a>
+		</div>
+	</div>
+
 	<!-- Profile -->
 	<div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-4">
 		<h2 class="text-sm font-semibold text-slate-900 mb-5">Profile</h2>
