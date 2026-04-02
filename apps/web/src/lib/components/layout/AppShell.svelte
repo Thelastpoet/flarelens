@@ -55,7 +55,7 @@ const sideNav = $derived([
 	{ label: 'Overview', href: '/dashboard', icon: 'grid_view', badge: 0 },
 	{ label: 'Rules', href: '/rules', icon: 'rule', badge: 0 },
 	{ label: 'Alerts', href: '/notifications', icon: 'notifications', badge: unreadNotifications },
-	{ label: 'Billing', href: '/billing', icon: 'payments', badge: 0 },
+	{ label: 'Usage Costs', href: '/billing', icon: 'payments', badge: 0 },
 	{ label: 'Integrations', href: '/integrations', icon: 'integration_instructions', badge: 0 },
 	{ label: 'Settings', href: '/settings', icon: 'settings', badge: 0 },
 ]);
@@ -138,7 +138,7 @@ function initialsFor(name: string | null | undefined): string {
 
 			<!-- Upgrade CTA -->
 			<div class="mx-4 mb-6 mt-4">
-				<a href="/billing"
+				<a href="/settings#workspace"
 					onclick={closeMenu}
 					class="flex items-center justify-center w-full h-10 bg-primary text-white text-sm font-semibold rounded-lg hover:bg-primary/90 transition-colors">
 					Upgrade to Pro
@@ -191,7 +191,7 @@ function initialsFor(name: string | null | undefined): string {
 					</nav>
 
 					<!-- Upgrade — hidden on smallest screens -->
-					<a href="/billing"
+					<a href="/settings#workspace"
 						class="hidden sm:flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-9 px-4 bg-primary text-white text-sm font-semibold leading-normal tracking-[0.015em] hover:bg-primary/90 transition-colors shrink-0">
 						Upgrade
 					</a>

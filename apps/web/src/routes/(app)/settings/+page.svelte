@@ -272,7 +272,7 @@
 		</div>
 	</div>
 
-	<div class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-4">
+	<div id="workspace" class="bg-white rounded-xl border border-gray-100 shadow-sm p-6 mb-4 scroll-mt-24">
 		<h2 class="text-sm font-semibold text-slate-900 mb-5">Workspace</h2>
 		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 			<div>
@@ -282,6 +282,23 @@
 			<div>
 				<div class="text-xs uppercase tracking-wide text-slate-500">Timezone</div>
 				<div class="mt-2 text-sm font-medium text-slate-800">{data.account.settings.timezone ?? 'Not configured'}</div>
+			</div>
+		</div>
+		<div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+				<div>
+					<div class="text-sm font-medium text-slate-900">FlareLens plan</div>
+					<p class="text-sm text-slate-500">
+						Your workspace plan is separate from Cloudflare usage costs. Use this section for FlareLens subscription context.
+					</p>
+				</div>
+				<button
+					type="button"
+					disabled
+					class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-400 cursor-not-allowed"
+				>
+					Plan changes coming soon
+				</button>
 			</div>
 		</div>
 	</div>

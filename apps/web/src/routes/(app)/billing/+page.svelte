@@ -83,7 +83,7 @@
 
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
 	<div class="flex flex-col gap-1">
-		<h1 class="text-slate-900 text-2xl sm:text-[28px] font-bold leading-tight">Billing Overview</h1>
+		<h1 class="text-slate-900 text-2xl sm:text-[28px] font-bold leading-tight">Cloudflare Usage Costs</h1>
 		<div class="flex items-center gap-2">
 			<div class="size-2 rounded-full {overview.source === 'none' ? 'bg-slate-400' : overview.is_estimated ? 'bg-amber-500' : 'bg-emerald-500'}"></div>
 			<p class="text-slate-500 text-sm font-medium leading-normal">
@@ -93,6 +93,9 @@
 				{/if}
 			</p>
 		</div>
+		<p class="text-sm text-slate-500">
+			This page tracks estimated Cloudflare usage costs, not your FlareLens subscription.
+		</p>
 	</div>
 	<div class="flex items-center gap-3">
 		<div class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm">
@@ -225,6 +228,9 @@
 		<div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
 			<h3 class="text-slate-900 text-base font-semibold leading-normal mb-4">Budget Limit</h3>
 			<div class="space-y-3">
+				<p class="text-sm text-slate-500">
+					Set a Cloudflare usage budget threshold for anomaly and cost visibility. FlareLens plan changes are managed separately from this page.
+				</p>
 				<div>
 					<label for="billing-budget-limit" class="mb-2 block text-sm font-medium text-slate-700">Monthly budget</label>
 					<input
