@@ -9,6 +9,12 @@
 		token: string;
 	}
 
+	interface TokenActionFeedback {
+		tokenId: string;
+		error: string | null;
+		message: string | null;
+	}
+
 	let { data }: { data: PageData } = $props();
 
 	const tokens = $derived(data.tokens);
@@ -18,8 +24,9 @@
 		token: '',
 	});
 	let busyAction = $state<string | null>(null);
-	let error = $state<string | null>(null);
-	let message = $state<string | null>(null);
+	let addError = $state<string | null>(null);
+	let addMessage = $state<string | null>(null);
+	let tokenActionFeedback = $state<TokenActionFeedback | null>(null);
 
 	function formatDate(iso: string | null): string {
 		if (!iso) return 'Never';
@@ -34,8 +41,9 @@
 	}
 
 	async function addAndVerify() {
-		error = null;
-		message = null;
+		addError = null;
+		addMessage = null;
+		tokenActionFeedback = null;
 		busyAction = 'add';
 		try {
 			const res = await api.post<{ token: { id: string } }>('/cf-tokens', {
@@ -44,10 +52,10 @@
 			});
 			await api.post(`/cf-tokens/${res.token.id}/verify`);
 			addForm = { label: '', token: '' };
-			message = 'Cloudflare token verified and connected.';
+			addMessage = 'Cloudflare token verified and connected.';
 			await invalidateAll();
 		} catch (e) {
-			error = e instanceof ApiRequestError ? e.message : 'Unable to add or verify token.';
+			addError = e instanceof ApiRequestError ? e.message : 'Unable to add or verify token.';
 			await invalidateAll();
 		} finally {
 			busyAction = null;
@@ -55,15 +63,24 @@
 	}
 
 	async function verifyToken(id: string) {
-		error = null;
-		message = null;
+		addError = null;
+		addMessage = null;
+		tokenActionFeedback = null;
 		busyAction = `verify:${id}`;
 		try {
 			await api.post(`/cf-tokens/${id}/verify`);
-			message = 'Token verified.';
+			tokenActionFeedback = {
+				tokenId: id,
+				error: null,
+				message: 'Token verified.',
+			};
 			await invalidateAll();
 		} catch (e) {
-			error = e instanceof ApiRequestError ? e.message : 'Unable to verify token.';
+			tokenActionFeedback = {
+				tokenId: id,
+				error: e instanceof ApiRequestError ? e.message : 'Unable to verify token.',
+				message: null,
+			};
 			await invalidateAll();
 		} finally {
 			busyAction = null;
@@ -71,15 +88,24 @@
 	}
 
 	async function revokeToken(id: string) {
-		error = null;
-		message = null;
+		addError = null;
+		addMessage = null;
+		tokenActionFeedback = null;
 		busyAction = `revoke:${id}`;
 		try {
 			await api.delete(`/cf-tokens/${id}`);
-			message = 'Token revoked.';
+			tokenActionFeedback = {
+				tokenId: id,
+				error: null,
+				message: 'Token revoked.',
+			};
 			await invalidateAll();
 		} catch (e) {
-			error = e instanceof ApiRequestError ? e.message : 'Unable to revoke token.';
+			tokenActionFeedback = {
+				tokenId: id,
+				error: e instanceof ApiRequestError ? e.message : 'Unable to revoke token.',
+				message: null,
+			};
 			await invalidateAll();
 		} finally {
 			busyAction = null;
@@ -139,10 +165,10 @@
 			</div>
 		</div>
 
-		{#if error}
-			<p class="mt-4 text-sm text-red-600">{error}</p>
-		{:else if message}
-			<p class="mt-4 text-sm text-emerald-600">{message}</p>
+		{#if addError}
+			<p class="mt-4 text-sm text-red-600">{addError}</p>
+		{:else if addMessage}
+			<p class="mt-4 text-sm text-emerald-600">{addMessage}</p>
 		{/if}
 
 		<div class="flex justify-end mt-4">
@@ -202,13 +228,25 @@
 									{busyAction === `revoke:${token.id}` ? 'Revoking…' : 'Revoke'}
 								</button>
 							</div>
-						</div>
-
-						{#if token.verification_error}
-							<div class="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg p-3">
-								{token.verification_error}
 							</div>
-						{/if}
+
+							{#if tokenActionFeedback?.tokenId === token.id}
+								<div
+									class={`text-xs rounded-lg p-3 border ${
+										tokenActionFeedback.error
+											? 'text-red-700 bg-red-50 border-red-100'
+											: 'text-emerald-700 bg-emerald-50 border-emerald-100'
+									}`}
+								>
+									{tokenActionFeedback.error ?? tokenActionFeedback.message}
+								</div>
+							{/if}
+
+							{#if token.verification_error}
+								<div class="text-xs text-red-700 bg-red-50 border border-red-100 rounded-lg p-3">
+									{token.verification_error}
+								</div>
+							{/if}
 
 						{#if token.capabilities.length > 0}
 							<div class="flex flex-wrap gap-1.5">
@@ -225,4 +263,3 @@
 		{/if}
 	</section>
 </div>
-
