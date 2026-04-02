@@ -27,7 +27,16 @@ Before you begin, ensure you have the following:
    pnpm install
    ```
 
-3. **Set Up Your Environment:**
+3. **Create local Wrangler configs:**
+
+   ```bash
+   cp apps/api/wrangler.example.jsonc apps/api/wrangler.local.jsonc
+   cp apps/web/wrangler.example.jsonc apps/web/wrangler.local.jsonc
+   ```
+
+   Replace every `__YOUR_*__` placeholder with your Cloudflare account resources.
+
+4. **Set Up Your Environment:**
 
    Create a `.dev.vars` file in `apps/api/` with the following variables:
 
@@ -39,14 +48,14 @@ Before you begin, ensure you have the following:
    RESEND_API_KEY=re_123456789
    ```
 
-4. **Initialize the Database:**
+5. **Initialize the Database:**
 
    ```bash
-   cd packages/db
-   pnpm wrangler d1 migrations apply DB --local
+   cd apps/api
+   pnpm exec wrangler d1 migrations apply DB --local --config wrangler.local.jsonc
    ```
 
-5. **Start the Development Servers:**
+6. **Start the Development Servers:**
 
    From the root directory:
 
@@ -63,41 +72,50 @@ To deploy FlareLens to your own Cloudflare account, follow these steps:
 1. **Create the D1 Database:**
 
    ```bash
-   npx wrangler d1 create flarelens-db
+   pnpm --filter api exec wrangler d1 create flarelens-db
    ```
 
-   Update the `database_id` in `apps/api/wrangler.jsonc` and `apps/web/wrangler.jsonc`.
+   Update the `database_id` in `apps/api/wrangler.local.jsonc`.
 
 2. **Create the KV Namespaces:**
 
    ```bash
-   npx wrangler kv:namespace create SESSIONS
-   npx wrangler kv:namespace create CACHE
+   pnpm --filter api exec wrangler kv namespace create SESSIONS
+   pnpm --filter api exec wrangler kv namespace create CACHE
    ```
 
-   Update the `id` for each namespace in `apps/api/wrangler.jsonc` and `apps/web/wrangler.jsonc`.
+   Update the namespace IDs in `apps/api/wrangler.local.jsonc` and `apps/web/wrangler.local.jsonc`.
 
 3. **Create the Queues:**
 
    ```bash
-   npx wrangler queues create alert-dispatch-queue
-   npx wrangler queues create anomaly-check-queue
+   pnpm --filter api exec wrangler queues create flarelens-alert-dispatch
+   pnpm --filter api exec wrangler queues create flarelens-anomaly-check
    ```
 
-   Update the `queue` names in `apps/api/wrangler.jsonc`.
+   Update the queue names in `apps/api/wrangler.local.jsonc` if you choose different names.
 
-4. **Deploy the Backend:**
+4. **Create local Wrangler configs from the committed templates:**
+
+   ```bash
+   cp apps/api/wrangler.example.jsonc apps/api/wrangler.local.jsonc
+   cp apps/web/wrangler.example.jsonc apps/web/wrangler.local.jsonc
+   ```
+
+   Set the Worker names to `flarelens-api` and `flarelens-web`, and make sure `apps/web/wrangler.local.jsonc` uses `flarelens-api` as its service binding target.
+
+5. **Deploy the Backend:**
 
    ```bash
    cd apps/api
-   pnpm deploy
+   pnpm run deploy
    ```
 
-5. **Deploy the Frontend:**
+6. **Deploy the Frontend:**
 
    ```bash
    cd apps/web
-   pnpm deploy
+   pnpm run deploy
    ```
 
 ## Next Steps
