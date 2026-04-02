@@ -8,6 +8,9 @@
 	"compatibility_date": "2025-08-03",
 	"compatibility_flags": ["nodejs_compat"],
 	"main": "./src/index.tsx",
+	"observability": {
+		"enabled": true
+	},
 
 	// Local dev port (hooks.server.ts proxies /api/* to this port)
 	"dev": {

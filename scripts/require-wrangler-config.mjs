@@ -29,3 +29,14 @@ if (configText.includes('__YOUR_')) {
 	);
 	process.exit(1);
 }
+
+const observabilityEnabled = /"observability"\s*:\s*\{[\s\S]*?"enabled"\s*:\s*true[\s\S]*?\}/m.test(
+	configText,
+);
+
+if (!observabilityEnabled) {
+	console.error(
+		`[flarelens] ${path.relative(repoRoot, configPath)} must enable Wrangler observability with "observability": { "enabled": true } before running Cloudflare commands.`,
+	);
+	process.exit(1);
+}
